@@ -49,45 +49,50 @@ OpenEMS 顶层划分为三大层级：**边缘控制（Edge）**、**云端聚�
 
 ```mermaid
 graph TD
+    classDef uiLayer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1;
+    classDef cloudLayer fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c;
+    classDef edgeLayer fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
+    classDef deviceLayer fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100;
+
     subgraph Layer1 ["1. 交互呈现层 (OpenEMS UI)"]
-        WebUI["Angular SPA 界面 (Nginx 端口 80 / 4200)"]
-        LiveChart["实时能量流拓扑 / 历史趋势图 / 动态配置管理"]
+        WebUI["Angular Web SPA 应用 (Nginx 端口 80 / 4200)"]:::uiLayer
+        Mobile["移动自适应面板 (实时能量流拓扑 / 告警与设置)"]:::uiLayer
     end
 
-    subgraph Layer2 ["2. 云端聚合层 (OpenEMS Backend - 多租户支持)"]
-        Backend["OpenEMS Backend 微服务 (Java 21)"]
-        CloudDB["集中式海量时序库 (TimescaleDB / InfluxDB)"]
-        MetaDB["设备/租户元数据 (PostgreSQL / Odoo)"]
+    subgraph Layer2 ["2. 云端聚合层 (OpenEMS Backend - 集中式/多租户)"]
+        Backend["OpenEMS Backend 微服务 (Java 21)"]:::cloudLayer
+        CloudDB[("大规模时序库 (InfluxDB / TimescaleDB)")]:::cloudLayer
+        MetaDB[("设备/租户元数据库 (PostgreSQL / Odoo)")]:::cloudLayer
         Backend --> CloudDB
         Backend --> MetaDB
     end
 
-    subgraph Layer3 ["3. 边缘控制核心 (OpenEMS Edge - 本机实际运行)"]
-        Edge["OpenEMS Edge 运行时 (OSGi Felix / Java 21)"]
-        Cycle["1000ms Cycle 周期控制扫描引擎 (PLC-like)"]
-        Solver["Ess.Power 约束解算器 (Simplex 线性规划)"]
-        Scheduler["Scheduler 控制器执行编排管线"]
-        Drivers["南向驱动引擎 (Modbus RTU/TCP, CANopen, MQTT, REST)"]
+    subgraph Layer3 ["3. 边缘控制核心 (OpenEMS Edge - 本机主力运行)"]
+        Edge["OpenEMS Edge 运行时 (OSGi Apache Felix)"]:::edgeLayer
+        Cycle["1000ms Cycle 周期控制扫描引擎"]:::edgeLayer
+        Scheduler["Scheduler 控制器执行编排管线"]:::edgeLayer
+        Solver["Ess.Power 约束解算器 (Simplex 线性规划)"]:::edgeLayer
+        Drivers["南向协议驱动引擎 (Modbus, CAN, MQTT, REST, M-Bus)"]:::edgeLayer
         Edge --> Cycle
         Cycle --> Scheduler
         Scheduler --> Solver
         Cycle --> Drivers
     end
 
-    subgraph Layer4 ["4. 现场物理与仿真微网设备 (Devices)"]
-        ESS["储能变流器与电池系统 (PCS & BMS / ess0)"]
-        PV["光伏并网逆变器 (PV Inverter / meter1)"]
-        Grid["电网关口总表 (Grid Meter / meter0)"]
-        EVCS["智能交流/直流充电桩 (EVCS / evcs0)"]
+    subgraph Layer4 ["4. 现场物理与仿真设备层 (Physical / Simulated Devices)"]
+        ESS["储能电池与变流器 (PCS & BMS / ess0)"]:::deviceLayer
+        PV["光伏并网逆变器 (PV Inverter / meter1)"]:::deviceLayer
+        Grid["电网关口总表 (Grid Meter / meter0)"]:::deviceLayer
+        EVCS["智能电动车充电桩 (EVCS / evcs0)"]:::deviceLayer
     end
 
-    WebUI <-->|JSON-RPC over WebSocket (端口 8075)| Edge
-    WebUI <-->|JSON-RPC 远程多站点透传| Backend
-    Edge <-->|反向加密 WebSocket 隧道 (8085)| Backend
-    Drivers <-->|Modbus RTU/TCP / CAN| ESS
-    Drivers <-->|Modbus RTU/TCP| PV
-    Drivers <-->|Modbus RTU/TCP| Grid
-    Drivers <-->|Modbus / OCPP| EVCS
+    WebUI <-->|"JSON-RPC over WebSocket (端口 8075)"| Edge
+    WebUI <-->|"JSON-RPC / REST 远程代理"| Backend
+    Edge <-->|"反向加密 WebSocket 隧道"| Backend
+    Drivers <-->|"RS485 / TCP / CAN"| ESS
+    Drivers <-->|"Modbus RTU/TCP"| PV
+    Drivers <-->|"Modbus RTU/TCP"| Grid
+    Drivers <-->|"Modbus / OCPP"| EVCS
 ```
 
 ### 核心设计原则
