@@ -1,10 +1,10 @@
 # OpenEMS 本机部署与微电网控制系统
 
-本项目包含针对本物理节点（`172.16.100.234`）部署的 **OpenEMS (Open Energy Management System)** 架构分析报告、核心配置及扩展开发工程。
+本项目包含针对本物理节点（`172.16.100.234`）部署的 **OpenEMS (Open Energy Management System)** 架构分析报告、云端多租户微服务规范、核心配置及扩展开发工程。
 
-## 核心文档
+## 核心技术文档
 
-- 📘 **[OpenEMS 架构与功能深度分析报告](OPENEMS_ARCHITECTURE_ANALYSIS.md)**：
+- 📘 **[OpenEMS 边缘微内核与整站架构深度分析报告](OPENEMS_ARCHITECTURE_ANALYSIS.md)**：
   - 宏观三层体系（Edge 边缘内核、Backend 云端聚合、UI 呈现）
   - OSGi 微内核、Declarative Services 与 ConfigAdmin 热重载
   - 1000ms Cycle 周期性确定性控制循环与 Simplex 约束解算器
@@ -12,6 +12,14 @@
   - 现行仿真微电网闭环拓扑（防逆流平衡、光伏、储能与智能充电桩）
   - 本地离线增强补丁剖析（AppCenter 离线 Mock 与系统更新适配）
   - 时序数据双擎架构（RRD4J + InfluxDB v2）
+
+- ☁️ **[OpenEMS 云端多租户微服务与虚拟电厂架构技术规范](OPENEMS_CLOUD_BACKEND_ARCHITECTURE.md)**：
+  - 云端多租户五层全景架构（WebUI / B2B $\leftrightarrow$ Ingress $\leftrightarrow$ Core $\leftrightarrow$ Influx/DB $\leftrightarrow$ Edge）
+  - RBAC 多租户权限隔离体系（Admin / Installer / Owner / Guest 四级模型）
+  - 边缘反向加密隧道与 NAT/防火墙无缝穿透机制（8085 端口 WSS 隧道与双向保活）
+  - 透明 JSON-RPC 路由代理机制（RPC Proxy Router 与活动句柄池）
+  - InfluxDB v2 按 `edgeId` 物理标签分区与原始流/降采样双轨存储
+  - 虚拟电厂（VPP）聚合调度与 B2B 规约互联
 
 ## 官方资源
 
