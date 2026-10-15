@@ -48,11 +48,11 @@
 OpenEMS 顶层划分为三大层级：**边缘控制（Edge）**、**云端聚合（Backend）** 与 **人机交互（UI）**。
 
 ```mermaid
-graph TD
-    classDef uiLayer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1;
-    classDef cloudLayer fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c;
-    classDef edgeLayer fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
-    classDef deviceLayer fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100;
+flowchart TD
+    classDef uiLayer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
+    classDef cloudLayer fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c
+    classDef edgeLayer fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
+    classDef deviceLayer fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100
 
     subgraph Layer1 ["1. 交互呈现层 (OpenEMS UI)"]
         WebUI["Angular Web SPA 应用 (Nginx 端口 80 / 4200)"]:::uiLayer
@@ -61,8 +61,8 @@ graph TD
 
     subgraph Layer2 ["2. 云端聚合层 (OpenEMS Backend - 集中式/多租户)"]
         Backend["OpenEMS Backend 微服务 (Java 21)"]:::cloudLayer
-        CloudDB[("大规模时序库 (InfluxDB / TimescaleDB)")]:::cloudLayer
-        MetaDB[("设备/租户元数据库 (PostgreSQL / Odoo)")]:::cloudLayer
+        CloudDB[("大规模时序库: InfluxDB / TimescaleDB")]:::cloudLayer
+        MetaDB[("设备与租户元数据库: PostgreSQL / Odoo")]:::cloudLayer
         Backend --> CloudDB
         Backend --> MetaDB
     end
@@ -86,13 +86,13 @@ graph TD
         EVCS["智能电动车充电桩 (EVCS / evcs0)"]:::deviceLayer
     end
 
-    WebUI <-->|"JSON-RPC over WebSocket (端口 8075)"| Edge
-    WebUI <-->|"JSON-RPC / REST 远程代理"| Backend
-    Edge <-->|"反向加密 WebSocket 隧道"| Backend
-    Drivers <-->|"RS485 / TCP / CAN"| ESS
-    Drivers <-->|"Modbus RTU/TCP"| PV
-    Drivers <-->|"Modbus RTU/TCP"| Grid
-    Drivers <-->|"Modbus / OCPP"| EVCS
+    WebUI <-->|JSON-RPC over WebSocket 端口 8075| Edge
+    WebUI <-->|JSON-RPC / REST 远程代理| Backend
+    Edge <-->|反向加密 WebSocket 隧道| Backend
+    Drivers <-->|RS485 / TCP / CAN| ESS
+    Drivers <-->|Modbus RTU/TCP| PV
+    Drivers <-->|Modbus RTU/TCP| Grid
+    Drivers <-->|Modbus / OCPP| EVCS
 ```
 
 ### 核心设计原则
