@@ -165,9 +165,9 @@ flowchart TD
 
     Router <-->|路由至活动连接| EdgeWs
 
-    EdgeA1 ==="反向加密 TLS 隧道 (WSS 8085)"===> EdgeWs
-    EdgeA2 ==="反向加密 TLS 隧道 (WSS 8085)"===> EdgeWs
-    EdgeB1 ==="反向加密 TLS 隧道 (WSS 8085)"===> EdgeWs
+    EdgeA1 ==>|反向加密 TLS 隧道 WSS 8085| EdgeWs
+    EdgeA2 ==>|反向加密 TLS 隧道 WSS 8085| EdgeWs
+    EdgeB1 ==>|反向加密 TLS 隧道 WSS 8085| EdgeWs
 
     EdgeWs -->|流式遥测入库| RawInflux
     RawInflux -->|降采样流计算| AggInflux
