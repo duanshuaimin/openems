@@ -270,8 +270,9 @@ OpenEMS 引入线性规划层（位于 `io.openems.edge.ess.core.power`）：
 
 | 监听端口 | 协议 | 运行服务 / 进程 | 职责与功能说明 |
 | :--- | :--- | :--- | :--- |
-| **80** | TCP | Nginx 1.28.3 | OpenEMS 前端 Web UI 入口（HTTP 反代） |
-| **4200** | TCP | Nginx 1.28.3 | OpenEMS 前端 Web UI 备用访问端口 |
+| **80** | TCP | Nginx 1.28.3 | OpenEMS Edge 前端单站 UI 入口（HTTP 反代） |
+| **8081** | TCP | Nginx 1.28.3 | **OpenEMS Backend 前端云端多租户 UI 入口**（多电站总览与登录大屏） |
+| **4200** | TCP | Nginx 1.28.3 | OpenEMS Edge 前端备用访问端口 |
 | **8075** | TCP | Java (`openems-edge.jar`) | **JSON-RPC over WebSocket**（Web UI 与 Edge 主交互通道） |
 | **502** | TCP | Java (`openems-edge.jar`) | **Modbus/TCP 从站接口**（工业上位机标准测点映射） |
 | **8080** | TCP | Java (`openems-edge.jar`) | **Apache Felix Web Console**（OSGi 运行时运维控制台） |
@@ -283,7 +284,8 @@ OpenEMS 引入线性规划层（位于 `io.openems.edge.ess.core.power`）：
 /opt/openems/
 ├── openems-edge.jar            # OpenEMS Edge 核心二进制可执行包 (v2026.10.0)
 ├── openems-backend.jar         # OpenEMS Backend 多边缘云端聚合包 (备用)
-├── ui/                         # OpenEMS 前端 Web UI (Angular 编译产物)
+├── ui/                         # OpenEMS Edge 前端 Web UI (Angular 编译产物，80端口)
+├── backend-ui/                 # OpenEMS Backend 云端多租户 Web UI (Angular 编译产物，8081端口)
 └── source/                     # 完整 OpenEMS 源代码仓库 (含所有 Bundle 源码及定制补丁)
 
 /etc/openems.d/                 # OpenEMS Edge 持久化配置目录 (OSGi ConfigAdmin)
