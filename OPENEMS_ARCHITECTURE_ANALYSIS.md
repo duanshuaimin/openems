@@ -99,6 +99,87 @@ flowchart TD
 - **边缘离线绝对自治（Edge Autonomous）**：Edge 运行完整的控制闭环和本地轻量时序库，在脱离云端时控制算法与安全逻辑 100% 独立不间断运行。
 - **协议解耦与统一通信**：内部各层统一采用规范的 **JSON-RPC 2.0** 协议通信，兼顾高内聚与低耦合。
 
+### 2.2 云端多租户微服务架构深度剖析 (OpenEMS Backend Multi-Tenant Architecture)
+
+当系统从单个独立边缘电站扩展至集团级海量分布式储能电站网络时，**OpenEMS Backend** 作为云端多租户集中管理中枢，承担着设备接入、租户数据隔离、反向隧道穿透、时序分析与 VPP 虚拟电厂调度的核心职责。
+
+```mermaid
+flowchart TD
+    classDef clientLayer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
+    classDef gatewayLayer fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#e65100
+    classDef coreLayer fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
+    classDef dbLayer fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c
+    classDef edgeLayer fill:#ede7f6,stroke:#512da8,stroke-width:2px,color:#311b92
+
+    subgraph Tier1 ["1. 多租户人机交互与外部互联层 (Clients & External Users)"]
+        UserA["租户 A 终端用户: 业主 / 工商业电站管理"]:::clientLayer
+        Installer["集成商 / 安装商: 多电站巡检与工程调试"]:::clientLayer
+        SysAdmin["云端平台管理员: 全局运维与租户鉴权"]:::clientLayer
+        VPPClient["电力交易 / VPP 聚合服务商 (B2B 系统)"]:::clientLayer
+    end
+
+    subgraph Tier2 ["2. API 网关与协议接入层 (Ingress & Protocol Gateway)"]
+        UIWs["UI WebSocket 服务 - 端口 8082<br/>(io.openems.backend.uiwebsocket)"]:::gatewayLayer
+        B2BGw["B2B REST / WebSocket 接口<br/>(io.openems.backend.b2b*)"]:::gatewayLayer
+        EdgeWs["Edge 反向隧道服务端 - 端口 8085<br/>(io.openems.backend.edge.manager)"]:::gatewayLayer
+    end
+
+    subgraph Tier3 ["3. 云端多租户微服务核心 (OpenEMS Backend Core)"]
+        AuthSvc["认证与令牌服务<br/>(OAuth2 / JWT Token Registry)"]:::coreLayer
+        MetaSvc["多租户元数据与设备关系引擎<br/>(Metadata.Odoo / Metadata.File)"]:::coreLayer
+        Router["JSON-RPC 请求代理与穿透路由器<br/>(EdgeManager / WsData Handler)"]:::coreLayer
+        AlertSvc["多租户告警与事件调度中心<br/>(io.openems.backend.alerting)"]:::coreLayer
+        Aggregator["VPP 聚合与集群能量调度引擎<br/>(Virtual Power Plant Engine)"]:::coreLayer
+    end
+
+    subgraph Tier4 ["4. 数据隔离与持久化存储层 (Multi-tenant Persistence)"]
+        OdooDB[("关系型元数据库: PostgreSQL / Odoo<br/>租户配置 / 角色权限 / 设备序列号绑定")]:::dbLayer
+        RawInflux[("时序库-原始遥测: InfluxDB v2<br/>按 edgeId 物理标签隔离秒级数据")]:::dbLayer
+        AggInflux[("时序库-降采样聚合: InfluxDB v2<br/>5分钟/天级别中长期统计分析")]:::dbLayer
+        Prom[("系统指标监控: Prometheus<br/>Backend 服务连接数/GC/性能")]:::dbLayer
+    end
+
+    subgraph Tier5 ["5. 分布式边缘储能与微网站点 (Edge Nodes Across Tenants)"]
+        subgraph TenantA ["租户 A 储能资产"]
+            EdgeA1["边缘站 1: OpenEMS Edge<br/>(EdgeId: edge001)"]:::edgeLayer
+            EdgeA2["边缘站 2: OpenEMS Edge<br/>(EdgeId: edge002)"]:::edgeLayer
+        end
+        subgraph TenantB ["租户 B 储能资产"]
+            EdgeB1["边缘站 3: OpenEMS Edge<br/>(EdgeId: edge003)"]:::edgeLayer
+        end
+    end
+
+    UserA -->|HTTPS / WSS JSON-RPC| UIWs
+    Installer -->|HTTPS / WSS 角色鉴权| UIWs
+    SysAdmin -->|跨租户全局管理| UIWs
+    VPPClient -->|B2B 协议调用| B2BGw
+
+    UIWs --> AuthSvc
+    B2BGw --> AuthSvc
+    AuthSvc --> MetaSvc
+    MetaSvc <--> OdooDB
+
+    UIWs <-->|RPC 穿透代理| Router
+    B2BGw <-->|集群调度指令| Aggregator
+    Aggregator <--> Router
+
+    Router <-->|路由至活动连接| EdgeWs
+
+    EdgeA1 ==="反向加密 TLS 隧道 (WSS 8085)"===> EdgeWs
+    EdgeA2 ==="反向加密 TLS 隧道 (WSS 8085)"===> EdgeWs
+    EdgeB1 ==="反向加密 TLS 隧道 (WSS 8085)"===> EdgeWs
+
+    EdgeWs -->|流式遥测入库| RawInflux
+    RawInflux -->|降采样流计算| AggInflux
+    EdgeWs -->|异常状态触发| AlertSvc
+```
+
+#### 云端多租户关键技术机制：
+1. **多租户权限模型 (RBAC)**：通过 `Admin`、`Installer`、`Owner`、`Guest` 四级角色划分。元数据服务维护租户与其所拥有 `edgeId` 列表的映射。
+2. **边缘反向 WebSocket 隧道 (NAT 穿透)**：各边缘电站无需公网固定 IP，主动连接云端 8085 端口建立加密长连接通道，云端反向随时下发控制指令。
+3. **透明 JSON-RPC 路由代理**：云端 UIWebSocket 收到前端请求后，Router 模块查找该设备当前活动的 WebSocket 连接并精准转发，实现云端“直连”边缘的操作体验。
+4. **多租户时序存储物理隔离**：InfluxDB 以 `edgeId` 作为一级索引 Tag 隔离各租户数据，并提供秒级原始流与长周期降采样归档。
+
 ---
 
 ## 三、OpenEMS Edge 边缘内核微观架构
