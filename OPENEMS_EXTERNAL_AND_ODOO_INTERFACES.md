@@ -4,6 +4,84 @@
 
 Edge 不连接 Odoo。浏览器和现场 Edge 都只连 OpenEMS Backend。用户、权限、设备目录由 Backend 的 `Metadata.Odoo` 再去访问 Odoo。功率、SOC 等历史不进 Odoo，由 Backend 写入 InfluxDB。
 
+## 架构
+
+浏览器和 Edge 只进入 Backend。`Metadata.Odoo` 再分成 Odoo HTTP 和 PostgreSQL。历史数据单独进 InfluxDB。
+
+```mermaid
+flowchart LR
+  subgraph clients [调用方]
+    Browser[浏览器 / 云端 UI]
+    Edge[现场 Edge<br/>ctrlBackend0]
+  end
+
+  subgraph nginx [Nginx]
+    UI[":8081 静态页面"]
+    Proxy["/openems-backend"]
+  end
+
+  subgraph backend [openems-backend]
+    Ws[Ui.Websocket :8082<br/>JSON-RPC]
+    Mgr[Edge.Manager :8085]
+    Meta[Metadata.Odoo]
+    Cache[EdgeCache / users]
+    Time[Timedata.InfluxDB]
+  end
+
+  BeProxy[openems-backend-edge :8084]
+
+  subgraph odoo [Odoo]
+    Http[":8069 HTTP<br/>会话 / 控制器 / XML-RPC"]
+    Pg[("PostgreSQL :5432<br/>库 odoo")]
+  end
+
+  Influx[("InfluxDB :8086<br/>bucket openems")]
+
+  Browser --> UI
+  Browser --> Proxy --> Ws
+  Ws --> Meta
+  Edge --> BeProxy --> Mgr
+  Mgr -->|apikey 认设备| Meta
+  Mgr -->|在线 / 状态 / 配置事件| Meta
+  Meta --> Cache
+  Meta --> Http
+  Meta --> Pg
+  Http --> Pg
+  Ws -->|历史查询| Time --> Influx
+  Ws -->|实时与配置 edgeRpc| Mgr
+```
+
+`Metadata.Odoo` 启动后先由 PostgreSQL 灌满 `EdgeCache`，再对外提供 `Metadata`。用户请求走 Odoo HTTP，Edge 接入和状态回写走数据库。
+
+```mermaid
+flowchart TB
+  subgraph comp [OSGi 组件 Metadata.Odoo]
+    Act[activate<br/>配置 REQUIRE]
+    Pools[事件池 / 请求池 / 会话刷新]
+    EH[OdooHandler]
+    PH[PostgresHandler]
+    EC[EdgeCache]
+    Users[users 内存表]
+  end
+
+  Act --> Pools
+  Act --> EH
+  Act --> PH
+  PH -->|InitializeEdgesWorker<br/>SELECT openems_device| EC
+  PH -->|setInitialized| Ready[Ui.Websocket / Edge.Manager 开始服务]
+
+  Login["/web/session/authenticate"] --> EH
+  EH -->|session_id| Info["/openems_backend/*<br/>/openems_app_center/*"]
+  EH -->|execute_kw write| Model[openems.device 等模型]
+  EH --> Users
+
+  Apikey[getEdgeIdForApikey] --> PH
+  PH --> EC
+
+  Events[Edge 事件<br/>在线 / 最后通信 / 系统状态 / 产品类型 / 配置] --> PH
+  Events -->|版本| EH
+```
+
 ## 1. 对外入口
 
 Backend 对外业务接口是 WebSocket 上的 JSON-RPC 2.0，没有单独的对外 REST API。
@@ -101,16 +179,7 @@ Influx 里的 edge 标签是数字。`edge0` 对应标签 `"0"`，measurement �
 
 ## 3. Backend 与 Odoo
 
-组件配置在 `/etc/openems-backend.d/Metadata/Odoo.config`。`Metadata.Dummy` 和 `Metadata.File` 已暂停，避免多套元数据同时绑定。
-
-```text
-浏览器或 Edge
-    │  WebSocket JSON-RPC（第 2 节、第 1 节的 8084）
-    ▼
-openems-backend  Metadata.Odoo
-    ├─ HTTP JSON-RPC   127.0.0.1:8069
-    └─ PostgreSQL      127.0.0.1:5432  数据库 odoo
-```
+组件配置在 `/etc/openems-backend.d/Metadata/Odoo.config`。`Metadata.Dummy` 和 `Metadata.File` 已暂停，避免多套元数据同时绑定。总图和组件内部分路见上文「架构」。
 
 ### 3.1 HTTP JSON-RPC
 
