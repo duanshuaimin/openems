@@ -29,6 +29,11 @@
   - 三种元数据驱动模式横向对比（`Metadata.Dummy` vs `Metadata.File` vs `Metadata.Odoo`）
   - 架构优势与企业级商业化演进路线（树状组织模型、物理硬隔离、组件级 ACL、租户流控）
 
+- 🔌 **[OpenEMS 对外通信与 Odoo 通信接口](OPENEMS_EXTERNAL_AND_ODOO_INTERFACES.md)**：
+  - 本机云端入口：UI `8081`、`Ui.Websocket` `8082`、Edge 上云 `8084` → `8085`
+  - UI JSON-RPC：登录、设备目录、用户与安装协议，以及 `edgeRpc` 下的历史查询和 Edge 转发
+  - `Metadata.Odoo` 双通道：Odoo HTTP JSON-RPC（`8069`）与 PostgreSQL 直连（设备、apikey、在线状态回写）
+
 - 🔄 **[OpenEMS 与 Odoo ERP 企业级集成实战指南](OPENEMS_ODOO_INTEGRATION_GUIDE.md)**：
   - 双轨架构驱动机制：直接 PostgreSQL JDBC 读写轨 (HikariCP) + HTTP JSON-RPC 业务鉴权轨
   - 核心元数据模型与数据表映射（`openems.device`、`openems.device_user_role`、`res.users`）
