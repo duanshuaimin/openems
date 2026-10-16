@@ -263,6 +263,32 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now odoo.service
 ```
 
+### 3.7 简体中文语言包（zh_CN）安装与中台界面汉化
+
+为了让现场运维人员能够以中文操作 Odoo ERP 运营中台，通过 Odoo 语言安装向导将官方简体中文语言包（`zh_CN`）加载至数据库，并将管理员用户默认界面语言切换为中文：
+
+```bash
+sudo -u odoo /opt/odoo/venv/bin/python /opt/odoo/odoo/odoo-bin shell -c /etc/odoo/odoo.conf -d odoo <<EOF
+# 1. 检索并激活官方简体中文语言包
+zh_lang = env['res.lang'].with_context(active_test=False).search([('code', '=', 'zh_CN')], limit=1)
+wizard = env['base.language.install'].create({
+    'lang_ids': [(6, 0, [zh_lang.id])],
+    'overwrite': True
+})
+wizard.lang_install()
+
+# 2. 将系统管理员 (Mitchell Admin) 界面语言切换为中文
+admin_user = env['res.users'].browse(2)
+admin_user.partner_id.lang = 'zh_CN'
+
+# 3. 提交事务
+env.cr.commit()
+print("Odoo 简体中文语言包加载并激活完成！")
+EOF
+```
+
+加载完成后，浏览器访问 `http://172.16.100.234:8069` 登录即可直接呈现全中文管理中台。
+
 ---
 
 ## 四、 OpenEMS Backend 生产迁移（Metadata.Odoo）
