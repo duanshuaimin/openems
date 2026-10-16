@@ -19,7 +19,17 @@
   - 边缘反向加密隧道与 NAT/防火墙无缝穿透机制（8085 端口 WSS 隧道与双向保活）
   - 透明 JSON-RPC 路由代理机制（RPC Proxy Router 与活动句柄池）
   - InfluxDB v2 按 `edgeId` 物理标签分区与原始流/降采样双轨存储
-  - 🔋 **[OpenEMS 储能电站完整演示数据集与仿真环境规范](OPENEMS_ESS_DEMO_DATASET.md)**：
+
+- 🏢 **[OpenEMS 多租户与权限隔离架构全景深度分析](OPENEMS_MULTI_TENANCY_ARCHITECTURE.md)**：
+  - 核心设计哲学：资产中心主义（Asset-Centric）、边缘优先与反向长连接隧道
+  - 端到端五层分层解耦模型（呈现层、会话层、核心 RBAC、网关代理、数据沙箱）
+  - 细粒度 RBAC 四级角色继承金字塔（Admin / Installer / Owner / Guest）与 `assertRoleIsAtLeast` 拦截
+  - 动态信令代理与反向穿透时序（`EdgeRpcRequestHandler` 与 `AuthenticatedRpcRequest`）
+  - InfluxDB v2 物理标签分区与 `FluxProxy.java` 查询语法树安全注入
+  - 三种元数据驱动模式横向对比（`Metadata.Dummy` vs `Metadata.File` vs `Metadata.Odoo`）
+  - 架构优势与企业级商业化演进路线（树状组织模型、物理硬隔离、组件级 ACL、租户流控）
+
+- 🔋 **[OpenEMS 储能电站完整演示数据集与仿真环境规范](OPENEMS_ESS_DEMO_DATASET.md)**：
   - 500kW / 1000kWh 工商业光储充微电网单线拓扑与关键参数
   - “两充两放”削峰填谷日调度策略与严格物理功率守恒闭环（残差绝对值为 0.0 W）
   - 30 天连续高分辨率 InfluxDB v2 时序历史数据集与单调递增电能量测
