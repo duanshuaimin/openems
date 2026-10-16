@@ -484,6 +484,11 @@ journalctl -u openems-backend.service -f
 | :--- | :--- | :--- |
 | **Backend 启动报错：Database connection refused** | PostgreSQL 未允许 TCP 本地连接或凭证错误 | 检查 `/etc/postgresql/18/main/pg_hba.conf` 中 `127.0.0.1/32` 是否配置 `scram-sha-256`；使用 `psql -h 127.0.0.1 -U odoo -d odoo` 验证密码。 |
 | **UI 登录报错：Invalid User or Session Expired** | Odoo 控制器未能正确依据 Session 解析用户 | 确保 `/opt/odoo/odoo-openems/openems/controllers/openems_backend.py` 包含多模式 `_get_user_rec` 增强逻辑；确认 `database="odoo"` 配置正确。 |
+| **Backend 周期性报 404：appCenter/getInstalledApps 或 updateUserSettings 失败** | Odoo 缺少 AppCenter 与用户设置写回路由 | 在 `controllers/app_center.py` 中补充 `get_installed_apps`、`get_possible_apps` 等路由；在 `openems_backend.py` 中实现 `set_user_settings` 与 `set_edge_settings`。 |
+| **Backend 打印双份 timedata0 日志且存在空转池** | `/etc/openems-backend.d/` 存在重复历史配置文件 | 清理 `/etc/openems-backend.d/Timedata/InfluxDB/timedata0.config`，仅保留 Felix 标准 factoryPid 文件；移除根目录冗余单例配置。 |
+| **InfluxDB 存在不带 edge 标签的重复点位写入** | Edge 本地 InfluxDB 组件与 Backend 产生同库双写 | 将 Edge 端 `/etc/openems.d/Timedata/InfluxDB/*.config` 的 `isReadOnly` 设为 `true`，统一由 Backend 进行带 `edge` 标签的规范入库。 |
+| **Odoo 电站跳转在线监控失败 (连接被拒绝)** | `edge_monitoring_url` 设为 `localhost:8082` | 数据库 `ir_config_parameter` 中更新 `edge_monitoring_url` 为 `http://172.16.100.234:8081/device`，端口指向 Nginx Web UI。 |
+| **Odoo 加载报错：Field lot_id with unknown comodel_name** | Odoo 18 已将 `stock.production.lot` 更名为 `stock.lot` | 修改 `models/setup_protocol.py` 将 `lot_id` 的关联模型更改为 `stock.lot`；并在 `device.py` 中为 `create` 添加 `@api.model_create_multi`。 |
 | **电站接入后 Odoo 持续显示离线（False）** | 1. apikey 不匹配<br/>2. 30秒回写周期未到<br/>3. 时钟偏差导致 | 确认 Odoo `openems_device.apikey` 与现场 Edge 配置文件完全一致；等待至少 30 秒观察 `PeriodicWriteWorker` 日志；确认系统时钟对齐 UTC。 |
 | **Odoo 服务启动崩溃：Python Syntax / Import Error** | 使用了不兼容的宿主机默认 Python 3.14 | 必须使用 `/opt/python/cpython-3.12-linux-x86_64-gnu/bin/python3.12` 及其虚拟环境 `/opt/odoo/venv` 运行 Odoo 18。 |
 
