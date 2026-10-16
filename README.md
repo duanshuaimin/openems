@@ -36,6 +36,15 @@
   - 全生命周期时序交互图（电站反向 WSS 隧道握手、30 秒批量异步状态回写、UI 多租户鉴权隔离）
   - 生产运维避坑指南（全集群 UTC 时间对齐、控制面/数据面严格分流、高并发连接池调优）
 
+- 🛠️ **[OpenEMS 与 Odoo ERP 本机原生（非 Docker）部署与全链路集成实战指南](OPENEMS_ODOO_NATIVE_HOST_INSTALLATION.md)**：
+  - 本机非容器化原生架构：共享 PostgreSQL 18.6 + TimescaleDB 2.25.1 数据库实例
+  - 运行时隔离：通过 `uv` 部署独立 Python 3.12 虚拟环境，解决 Linux 最新发行版依赖兼容难题
+  - Odoo 18.0 核心与 OpenEMS 专属模块部署、Systemd 守护服务编排
+  - Odoo 18.0 控制器原生会话与多场景租户查找适配（`_get_user_rec` 支持 Session ID、OAuth UID、Login、UID）
+  - OpenEMS Backend 生产迁移（停用 `Metadata.Dummy`，激活 `Metadata.Odoo` 双轨引擎）
+  - 物理边缘长连接上线、PostgreSQL 30秒聚合回写与 Web UI WebSocket 多租户全链路自动化验证
+
+
 - 📊 **[OpenEMS 与 Grafana 时序监控平台集成规范](OPENEMS_GRAFANA_INTEGRATION.md)**：
   - 服务入口矩阵（端口 `3000` 匿名免密直达、默认重定向至储能专业大屏）
   - 三位一体监控架构（OpenEMS Edge/Backend $\rightarrow$ InfluxDB v2 $\rightarrow$ Grafana）
