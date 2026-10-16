@@ -19,7 +19,12 @@
   - 边缘反向加密隧道与 NAT/防火墙无缝穿透机制（8085 端口 WSS 隧道与双向保活）
   - 透明 JSON-RPC 路由代理机制（RPC Proxy Router 与活动句柄池）
   - InfluxDB v2 按 `edgeId` 物理标签分区与原始流/降采样双轨存储
-  - 虚拟电厂（VPP）聚合调度与 B2B 规约互联
+  - 🔋 **[OpenEMS 储能电站完整演示数据集与仿真环境规范](OPENEMS_ESS_DEMO_DATASET.md)**：
+  - 500kW / 1000kWh 工商业光储充微电网单线拓扑与关键参数
+  - “两充两放”削峰填谷日调度策略与严格物理功率守恒闭环（残差绝对值为 0.0 W）
+  - 30 天连续高分辨率 InfluxDB v2 时序历史数据集与单调递增电能量测
+  - OpenEMS BackendEdgeApp 网关、EdgeManager 与 UI 实时双向隧道联调
+  - 多电站车队（Fleet）多租户资产管理与 Python 自动化时序生成脚本
 
 ## 官方资源
 
