@@ -50,6 +50,14 @@
   - 阶段四：全链路数据流验证与大屏联动（WSS 握手抓包、InfluxDB 标签落库、Web UI 车队概览与 Grafana 多站秒级切换）
   - 阶段五：现场运维与通信排错速查表（常见故障定位与解决对策）
 
+- 🔑 **[OpenEMS API Key 与接入密钥安全管理规范](OPENEMS_API_KEY_MANAGEMENT.md)**：
+  - 密钥分类与鉴权矩阵（边缘反向隧道密钥、InfluxDB v2 令牌、B2B VPP 调度凭证、本地 Basic Auth）
+  - 边缘反向隧道接入密钥（Edge API Key）全生命周期管控（256-bit CSPRNG 生成、Odoo 档案、Linux 640 权限加固）
+  - 传输通道强制启用 TLS 加密（WSS 防中间人嗅探与源码内核警告剖析）
+  - 零停机平滑热轮换机制（Odoo 更新 $\rightarrow$ ConfigAdmin 热重载 $\rightarrow$ WSS 隧道无感恢复）
+  - InfluxDB v2 时序令牌安全治理（最小权限 Scoped Token 与 Flux 标签注入隔离）
+  - 自动化入侵检测与应急响应（Fail2ban 自动封禁非法探测与密钥泄露 5 步 SOP）
+
 - 🔋 **[OpenEMS 储能电站完整演示数据集与仿真环境规范](OPENEMS_ESS_DEMO_DATASET.md)**：
   - 500kW / 1000kWh 工商业光储充微电网单线拓扑与关键参数
   - “两充两放”削峰填谷日调度策略与严格物理功率守恒闭环（残差绝对值为 0.0 W）
