@@ -487,11 +487,105 @@ journalctl -u openems-backend.service -f
 | **电站接入后 Odoo 持续显示离线（False）** | 1. apikey 不匹配<br/>2. 30秒回写周期未到<br/>3. 时钟偏差导致 | 确认 Odoo `openems_device.apikey` 与现场 Edge 配置文件完全一致；等待至少 30 秒观察 `PeriodicWriteWorker` 日志；确认系统时钟对齐 UTC。 |
 | **Odoo 服务启动崩溃：Python Syntax / Import Error** | 使用了不兼容的宿主机默认 Python 3.14 | 必须使用 `/opt/python/cpython-3.12-linux-x86_64-gnu/bin/python3.12` 及其虚拟环境 `/opt/odoo/venv` 运行 Odoo 18。 |
 
+
 ---
 
-## 七、 总结
+## 七、 Odoo OpenEMS 模块简体中文语言包 (i18n) 配置与维护
+
+为了让国内工商业储能、源网荷储微电网及运维人员更直观地使用 Odoo OpenEMS 电站后台，我们为 `openems` 模块构建了完整的简体中文国际化语言包（`zh_CN.po`），涵盖所有数据模型、字段描述、系统菜单、操作视图及状态枚举。
+
+### 7.1 语言包架构与规范
+
+1. **模板与翻译文件位置**：
+   - POT 模板文件：`/opt/odoo/odoo-openems/openems/i18n/openems.pot`
+   - 简体中文 PO 文件：`/opt/odoo/odoo-openems/openems/i18n/zh_CN.po`
+2. **核心术语中文映射规范**：
+   - `openems.device` $\rightarrow$ **OpenEMS 边缘设备 / 设备台账**
+   - `Devices` $\rightarrow$ **设备列表**
+   - `API-Key` $\rightarrow$ **接入密钥 (API-Key)**
+   - `Installation Key` $\rightarrow$ **安装调试密钥**
+   - `OpenEMS Is connected` $\rightarrow$ **OpenEMS 在线状态**
+   - `OpenEMS State` $\rightarrow$ **OpenEMS 运行状态**（枚举：正常 `ok` / 提示 `info` / 警告 `warning` / 故障 `fault`）
+   - `Last message` $\rightarrow$ **最后通信时间**
+   - `Setup Protocols` $\rightarrow$ **调试验收协议**
+   - `Device Configuration Updates` $\rightarrow$ **设备配置更新**
+   - `Systemmessages` $\rightarrow$ **系统消息**
+   - `Alerting Settings` $\rightarrow$ **告警策略配置**
+   - `Roles` $\rightarrow$ **在线监控访问角色**（管理员 `Admin` / 安装人员 `Installer` / 业主 `Owner` / 访客 `Guest`）
+   - `Stock Production Lot` $\rightarrow$ **生产批次/序列号**
+
+### 7.2 语言包更新与热重载步骤
+
+当修改了 `zh_CN.po` 或增加了新的模型与字段后，按照以下三步执行编译与加载：
+
+```bash
+# 1. 停止 Odoo 后台守护服务
+sudo systemctl stop odoo.service
+
+# 2. 升级 openems 模块使 Odoo 识别 PO 变更
+sudo -u odoo /opt/odoo/venv/bin/python /opt/odoo/odoo/odoo-bin \
+    -c /etc/odoo/odoo.conf -d odoo -u openems --stop-after-init
+
+# 3. 强制覆盖重载 zh_CN 语言项（Odoo Shell）
+sudo -u odoo /opt/odoo/venv/bin/python /opt/odoo/odoo/odoo-bin shell \
+    -c /etc/odoo/odoo.conf -d odoo --no-http << 'EOF'
+lang_zh = env['res.lang'].search([('code', '=', 'zh_CN')])
+installer = env['base.language.install'].create({
+    'lang_ids': [(6, 0, lang_zh.ids)],
+    'overwrite': True
+})
+installer.lang_install()
+env.cr.commit()
+print("zh_CN 语言包重载生效完毕")
+EOF
+
+# 4. 恢复 Odoo 服务运行
+sudo systemctl start odoo.service
+```
+
+### 7.3 校验与验证
+
+通过调用 Odoo JSON-RPC API 验证字段翻译是否即时生效：
+
+```python
+import requests
+s = requests.Session()
+# 登录
+auth = s.post('http://127.0.0.1:8069/web/session/authenticate', json={
+    'jsonrpc': '2.0',
+    'params': {'db': 'odoo', 'login': 'admin', 'password': 'admin'}
+}).json()['result']
+
+# 查询 openems.device 字段元数据
+fields = s.post('http://127.0.0.1:8069/web/dataset/call_kw', json={
+    'jsonrpc': '2.0',
+    'params': {
+        'model': 'openems.device',
+        'method': 'fields_get',
+        'args': [['name', 'apikey', 'openems_is_connected', 'openems_sum_state_level', 'setup_password']],
+        'kwargs': {'attributes': ['string', 'help'], 'context': auth['user_context']}
+    }
+}).json()['result']
+
+for k, v in fields.items():
+    print(f"字段 {k} -> {v.get('string')}")
+```
+
+输出验证：
+```text
+字段 name -> 设备名称/编号
+字段 apikey -> 接入密钥 (API-Key)
+字段 openems_is_connected -> OpenEMS 在线状态
+字段 openems_sum_state_level -> OpenEMS 运行状态
+字段 setup_password -> 安装调试密钥 (help: 安装商现场开通调试使用的安装密码)
+```
+
+---
+
+## 八、 总结
 
 通过本原生（Non-Docker）集成架构方案，OpenEMS 成功与本机共享的 PostgreSQL 18 & TimescaleDB 实例实现深度共存：
 1. **控制面与业务面完美分轨**：静态资产档案与多租户权限由 Odoo ERP 管理，时序采集与高频遥测直通 InfluxDB v2，互不干扰；
 2. **极速高并发**：内存高速缓存 `EdgeCache` 支撑万级边缘设备毫秒级长连接鉴权，PostgreSQL 承载 30 秒聚合防雪崩状态回写；
-3. **原生无损性能**：免去容器化额外开销，全链路服务享受 Linux 原生线程调度与 Systemd 工业级运维体验。
+3. **原生无损性能**：免去容器化额外开销，全链路服务享受 Linux 原生线程调度与 Systemd 工业级运维体验；
+4. **全链路本地化支撑**：深度汉化 Odoo OpenEMS 模块（`zh_CN.po` 192 项词条 100% 覆盖），无缝适配国内工商业储能运维及集成交付标准。
