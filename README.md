@@ -44,7 +44,7 @@
   - OpenEMS Backend 生产迁移（停用 `Metadata.Dummy`，激活 `Metadata.Odoo` 双轨引擎）
   - 物理边缘长连接上线、PostgreSQL 30秒聚合回写与 Web UI WebSocket 多租户全链路自动化验证
 
-- 🏛️ **[OpenEMS 云端多租户模块原生设计方案（去 Odoo 化）](OPENEMS_NATIVE_MULTI_TENANCY_DESIGN.md)**：
+- 🏛️ **[OpenEMS 云端多租户模块原生设计方案（去 Odoo 化）](openems_multitenant_design.md)**：
   - 原生 OSGi `Metadata.Tenant` 替代 Odoo，实现 OpenEMS 核心契约解耦与低延迟直连
   - “热路径内嵌 (PostgreSQL + HikariCP) + 管理平面外置 (REST + Admin UI)”双轨微服务架构
   - 多级树状租户模型（Closure Table 闭包表）、租户配额约束与 RBAC 两级角色映射体系
