@@ -43,6 +43,13 @@
   - 声明式自动化装配规范（Datasource & Dashboards Provisioning、iframe 嵌入与参数调优）
   - Systemd 服务运维管理与健康检测 API
 
+- 🚀 **[OpenEMS 新增电站监控与入网全流程操作指南 (Step-by-Step)](OPENEMS_ADD_STATION_STEP_BY_STEP.md)**：
+  - 阶段一：边缘工控机驱动配置（Modbus TCP/RTU 桥接、关口电表、储能 PCS、光伏逆变器与防逆流控制回路）
+  - 阶段二：安全加密反向长连接隧道与时序通道装配（`Controller.Api.Backend` 与 `Timedata.InfluxDB`）
+  - 阶段三：云端元数据资产建档与多租户 RBAC 授权（Odoo ERP 设备开户与业主/安装商角色绑定）
+  - 阶段四：全链路数据流验证与大屏联动（WSS 握手抓包、InfluxDB 标签落库、Web UI 车队概览与 Grafana 多站秒级切换）
+  - 阶段五：现场运维与通信排错速查表（常见故障定位与解决对策）
+
 - 🔋 **[OpenEMS 储能电站完整演示数据集与仿真环境规范](OPENEMS_ESS_DEMO_DATASET.md)**：
   - 500kW / 1000kWh 工商业光储充微电网单线拓扑与关键参数
   - “两充两放”削峰填谷日调度策略与严格物理功率守恒闭环（残差绝对值为 0.0 W）
