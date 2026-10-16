@@ -36,6 +36,13 @@
   - 全生命周期时序交互图（电站反向 WSS 隧道握手、30 秒批量异步状态回写、UI 多租户鉴权隔离）
   - 生产运维避坑指南（全集群 UTC 时间对齐、控制面/数据面严格分流、高并发连接池调优）
 
+- 📊 **[OpenEMS 与 Grafana 时序监控平台集成规范](OPENEMS_GRAFANA_INTEGRATION.md)**：
+  - 服务入口矩阵（端口 `3000` 匿名免密直达、默认重定向至储能专业大屏）
+  - 三位一体监控架构（OpenEMS Edge/Backend $\rightarrow$ InfluxDB v2 $\rightarrow$ Grafana）
+  - 预置工商业储能与微电网专业看板（`${edge}` 动态切换、四象限物理平衡、电池 SOC、母线电压/电流、累计量测）
+  - 声明式自动化装配规范（Datasource & Dashboards Provisioning、iframe 嵌入与参数调优）
+  - Systemd 服务运维管理与健康检测 API
+
 - 🔋 **[OpenEMS 储能电站完整演示数据集与仿真环境规范](OPENEMS_ESS_DEMO_DATASET.md)**：
   - 500kW / 1000kWh 工商业光储充微电网单线拓扑与关键参数
   - “两充两放”削峰填谷日调度策略与严格物理功率守恒闭环（残差绝对值为 0.0 W）
