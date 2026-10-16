@@ -1,300 +1,248 @@
-# OpenEMS 云端管理系统（OCMS）架构与工程设计方案（定稿版）
+# OpenEMS 云端管理系统（OCMS）架构与工程设计方案（分离部署·纯 API 集成定稿版）
 
-> **核心技术决策（已确认）**：
-> 1. **后端技术栈**：统一采用 **Java 21 + Spring Boot 3**，与 OpenEMS Backend 同语言栈，共享加密、模型与 JSON-RPC 协议定义。
-> 2. **前端与数据集成方式**：新建独立桌面级云管门户（**Vue 3 + TypeScript + ECharts 5**），**完全采用底层数据与协议级原生集成**（对接 OpenEMS Backend JSON-RPC/WebSocket 与 InfluxDB v2 时序查询 API，在云管门户内原生渲染单站拓扑、组件配置、电芯热力图与多维时序曲线，**不使用 iframe 嵌入 8081 或 3000 页面**）。
-> 3. **首期业务优先级**：在完成“多租户 + 资产开局 + 站群集控”基础上，**第一优先级落地「告警确认与运维工单闭环」**。
+> **核心架构决策（已确认）**：
+> 1. **云端分离部署 + 纯 API 集成**：**OCMS（云端综合管理系统）** 与 **OpenEMS Cloud（边缘接入与时序底座）** 独立分离部署，**不共享任何底层数据库，也不跨网直连 PostgreSQL 或 InfluxDB**，100% 通过标准 **HTTPS JSON-RPC (`B2b.Rest`)、WSS (`B2b.Websocket`) 与内部同步 REST API** 集成数据。
+> 2. **后端技术栈**：统一采用 **Java 21 + Spring Boot 3**（OCMS 服务端）+ **Java 21 OSGi**（OpenEMS 侧轻量 `Metadata.Ocms` 桥接插件）。
+> 3. **前端与数据呈现**：新建桌面级云管门户（**Vue 3 + TypeScript + ECharts 5**），通过 API 获取实时遥测、设备拓扑配置与历史时序曲线并**原生渲染**，彻底替代 OpenEMS UI (8081) 与 Grafana (3000)，**绝不使用 iframe 嵌入**。
+> 4. **首期业务优先级**：在完成“多租户 + 资产开局 + 站群集控”基础上，**第一优先级落地「告警确认与运维工单闭环」**。
 
 ---
 
-## 一、 总体架构（Java 21 全栈统一 + 原生数据级集成）
+## 一、 分离部署总体架构（OCMS 业务云 $\leftrightarrow$ OpenEMS 接入云）
 
-系统由 **内嵌插件（`Metadata.Tenant`）** 与 **云管后端（`OCMS Server`，Spring Boot 3）** 组成，通过统一的 **OCMS Web Portal** 对外提供服务，无需用户再访问 8081（原生 UI）或 3000（Grafana）。
+将整个云端体系解耦为两个物理/逻辑完全独立的集群：
+- **OpenEMS Cloud（物联网接入与时序数据面）**：可部署在公网 DMZ 区，仅负责万级 Edge 的 8085 WSS 隧道接入、高频遥测写入 InfluxDB v2、以及对外暴露标准 B2B JSON-RPC API。**无需安装 PostgreSQL，也无需承载复杂的多租户与工单业务**。
+- **OCMS Cloud（多租户运营与业务管理面）**：部署在业务内网/应用区，拥有独立的 PostgreSQL 业务库，承载多级租户、RBAC 权限校验、电站资产、告警评估与工单闭环、分时电价与收益结算，并支持 **“1 个 OCMS 对接 N 个区域 OpenEMS Cloud 集群”**。
 
 ```mermaid
 flowchart TB
     subgraph Portal["OCMS 统一前端门户 (Vue 3 + TS + ECharts 5，无 iframe)"]
         VIEW_FLEET["站群集控与 GIS 地图"]
-        VIEW_SITE["单站数字孪生拓扑 & BMS/PCS 热力图<br/>(原生替代 Grafana 3000)"]
-        VIEW_DEBUG["边缘组件配置与实时通道调试<br/>(原生替代 OpenEMS UI 8081)"]
+        VIEW_SITE["单站数字孪生拓扑 & BMS/PCS 热力图<br/>(API 数据原生渲染，替代 Grafana 3000)"]
+        VIEW_DEBUG["边缘组件配置与实时通道调试<br/>(API 数据原生渲染，替代 OpenEMS UI 8081)"]
         VIEW_ALARM["告警中心 & 运维工单闭环 (P1 优先)"]
         VIEW_TENANT["多租户组织 / 权限 / 资产开局"]
         VIEW_TOU["分时电价 (TOU) / 收益结算 / VPP (P2/P3)"]
     end
 
-    subgraph OCMS["OCMS 云管后端 (Java 21 + Spring Boot 3)"]
-        GW["Spring Security + WebSocket STOMP 推送网关"]
-        SVC_IAM["Tenant & IAM Service<br/>(多级租户 / RBAC / 配额 / 审计)"]
+    subgraph OCMS_Cluster["【集群 A】OCMS 云端管理系统 (Java 21 + Spring Boot 3)"]
+        GW["Spring Security + 多租户 RBAC 网关 + STOMP 推送"]
+        SVC_IAM["Tenant & IAM Service<br/>(租户树 / 用户 / 角色 / 配额 / 审计)"]
         SVC_ASSET["Asset & Edge Config Service<br/>(Site / Edge ZTP / 组件 CRUD / 配置 Diff)"]
-        SVC_SCADA["Realtime SCADA & Timeseries Service<br/>(B2B WS 聚合 + InfluxDB 原生查询引擎)"]
-        SVC_ALARM["Alarm & WorkOrder Engine (P1 核心)<br/>(实时规则评估 / 降噪 / 升级 / 工单流)"]
-        SVC_TOU["Dispatch & Settlement Service (P2/P3)<br/>(TOU 模板 / 峰谷套利核算 / VPP)"]
+        SVC_SCADA["Realtime & Timeseries Aggregator<br/>(实时状态树缓存 + 历史时序 API 编排)"]
+        SVC_ALARM["Alarm & WorkOrder Engine (P1 核心)<br/>(实时规则评估 / 防抖滞回 / 升级 / 工单流)"]
+        SVC_TOU["Dispatch & Settlement Service (P2/P3)<br/>(TOU 电价 / 峰谷套利核算 / VPP)"]
+        OCMS_PG[("OCMS 专属 PostgreSQL 18<br/>schema: tenant (RLS 隔离)<br/>租户 / 站点 / 告警 / 工单 / 结算")]
+         CLIENT_API["OpenEMS B2B API Client<br/>(WSS 长连接池 + HTTPS JSON-RPC 客户端)"]
     end
 
-    subgraph OpenEMS["OpenEMS Backend + Edge Gateway (Java 21 OSGi)"]
-        MT["Metadata.Tenant (OSGi Bundle)"]
-        B2B_WS["B2b.Websocket<br/>(SubscribeEdgesChannels 批量实时流)"]
-        B2B_REST["B2b.Rest / EdgeManager<br/>(JSON-RPC edgeRpc 透传控制)"]
+    subgraph OpenEMS_Cluster["【集群 B】OpenEMS Cloud 接入与时序底座 (无状态接入 + 时序存储)"]
+        B2B_WS["B2b.Websocket (8076 WSS)<br/>SubscribeEdgesChannels 实时流"]
+        B2B_REST["B2b.Rest (8075 HTTPS)<br/>CoreJsonRpc + EdgeRpc 路由"]
+        MT_OCMS["Metadata.Ocms (轻量 OSGi 插件)<br/>内存 EdgeCache + 本地加密快照兜底"]
+        EM["Edge.Manager (8083)"]
         BEG["openems-backend-edge (8085 WSS)"]
+        TD["Timedata.InfluxDB"]
+        INF[("InfluxDB v2<br/>仅在 OpenEMS 集群内部访问")]
     end
 
-    subgraph Data["存储层"]
-        PG[("PostgreSQL 18 + TimescaleDB<br/>schema: tenant (RLS 隔离)")]
-        INF[("InfluxDB v2<br/>高频遥测存储")]
-    end
+    EDGE["现场 OpenEMS Edge x N"] -- "8085 WSS (apikey)" --> BEG
+    BEG <-->|"内部隧道 + UpdateMetadataCache"| EM
+    EM <--> MT_OCMS
+    EM --> TD --> INF
 
     Portal <-->|"REST API + WebSocket"| GW
     GW --> SVC_IAM & SVC_ASSET & SVC_SCADA & SVC_ALARM & SVC_TOU
+    SVC_IAM & SVC_ASSET & SVC_ALARM & SVC_TOU <-->|"本地 JDBC"| OCMS_PG
+    SVC_ASSET & SVC_SCADA & SVC_ALARM & SVC_TOU <--> CLIENT_API
 
-    SVC_IAM & SVC_ASSET & SVC_ALARM & SVC_TOU <-->|"JDBC + SET LOCAL RLS<br/>+ LISTEN/NOTIFY"| PG
-    PG <-->|"全局缓存 + 30s 批量回写"| MT
-
-    SVC_SCADA & SVC_ALARM <-->|"① 批量实时通道流"| B2B_WS
-    SVC_ASSET & SVC_TOU -->|"② JSON-RPC 控制与组件配置"| B2B_REST
-    SVC_SCADA & SVC_TOU -->|"③ influxdb-client-java<br/>带租户/Edge 过滤"| INF
-
-    B2B_WS & B2B_REST <--> BEG
-    MT -. "UpdateMetadataCache" .-> BEG
+    CLIENT_API <==>|"【API 通道 1】WSS 实时遥测与状态订阅<br/>(subscribeEdgesChannels / getEdgesStatus)"| B2B_WS
+    CLIENT_API <==>|"【API 通道 2】HTTPS 历史时序与电量查询<br/>(edgeRpc -> queryHistoricTimeseries*)"| B2B_REST
+    CLIENT_API <==>|"【API 通道 3】HTTPS 远程配置与控制指令<br/>(edgeRpc -> getEdgeConfig / componentJsonApi)"| B2B_REST
+    CLIENT_API <==>|"【API 通道 4】HTTPS 边缘注册与状态回调<br/>(同步 Edge apikey / 接收上下线与配置变更 Webhook)"| MT_OCMS
 ```
 
 ---
 
-## 二、 如何原生集成 OpenEMS UI (8081) 与 Grafana (3000) 的全部数据能力
+## 二、 OCMS 与 OpenEMS Cloud 的四大标准 API 集成契约
 
-不嵌入任何外部页面，所有图表、拓扑与控制界面均由 **OCMS 前端组件 + Spring Boot 3 数据接口** 原生构建：
+结合 OpenEMS Backend 核心字节码（`CoreJsonRpcRequestHandlerImpl`、`EdgeRpcRequestHandler`、`Backend2BackendWebsocket`、`Backend2BackendRest`），两者通过以下 **4 条标准 API 通道** 完成全量数据与控制交互，**无需跨网暴露任何数据库端口**：
 
-### 2.1 原生接管 OpenEMS UI (8081) 的单站监控与工程调试能力
+### 2.1 【API 通道 1】实时遥测流与在线状态订阅（`B2b.Websocket` JSON-RPC over WSS）
 
-OpenEMS UI (8081) 的本质是通过 WebSocket 发送标准 JSON-RPC 消息。`OCMS Server` 在后端直接与 OpenEMS Backend 对接，转换为结构化 REST / WebSocket 接口供前端渲染：
+OCMS 启动后，由 `OpenemsB2bWsClient` 以集群服务账号连接 OpenEMS Cloud 的 `B2b.Websocket` 端口：
 
-| 原 OpenEMS UI (8081) 功能 | OCMS 原生数据集成机制（Spring Boot 3 $\leftrightarrow$ OpenEMS Backend） | 前端原生呈现方式 |
+| 交互方向 | JSON-RPC 方法 | 载荷与用途 |
 | :--- | :--- | :--- |
-| **电站实时能量流图**（光伏/储能/电网/负载功率与 SOC） | `OCMS` 通过单条长连接订阅 `B2b.Websocket` 的 `SubscribeEdgesChannelsRequest`，实时接收 `_sum/EssSoc`、`_sum/EssActivePower`、`_sum/GridActivePower`、`_sum/ProductionActivePower`、`_sum/ConsumptionActivePower` | SVG / Canvas 动态潮流单线图 |
-| **设备与组件列表**（Modbus、BMS、PCS、电表、控制器） | 在线时通过 `edgeRpc` 获取最新 `EdgeConfig`；离线时直接读取 PostgreSQL `tenant.edge_config_snapshot.config` JSONB | 树形/卡片式设备拓扑与状态面板 |
-| **OSGi 组件参数动态表单**（新增/修改/删除控制器与驱动） | 解析 `EdgeConfig.factories` 中的属性定义（`Property` 类型、默认值、必填项），前端通过动态表单（Schema-Driven Form）渲染，提交时由 `OCMS` 调用 `UpdateComponentConfigRequest` / `DeleteComponentConfigRequest` | 原生抽屉式配置表单 + 修改前后 JSON Diff 预览 |
-| **单通道实时读写调试** | 读取通过实时订阅流；写入由 `OCMS` 校验 RBAC（`INSTALLER`/`ADMIN`）与安全边界后发送 `SetChannelValueRequest` | 带二次密码/TOTP 确认的指令下发弹窗 |
-| **边缘实时日志流 (SystemLog)** | `OCMS` 代理转发 `SubscribeSystemLogRequest` 并将 `SystemLogNotification` 推送至前端调试终端 | Web 实时高亮日志控制台（支持按 INFO/WARN/ERROR 过滤） |
+| **OCMS $\rightarrow$ OpenEMS** | `subscribeEdgesChannels` | 批量订阅所有已注册 Edge 的核心实时通道：<br/>• 能量流：`_sum/EssSoc`, `_sum/EssActivePower`, `_sum/GridActivePower`, `_sum/ProductionActivePower`, `_sum/ConsumptionActivePower`<br/>• 告警与健康度：`_sum/State`, `bms0/MaxCellTemperature`, `bms0/MinCellTemperature`, `bms0/MaxCellVoltage`, `bms0/MinCellVoltage`, `pcs0/ActivePower` 等 |
+| **OpenEMS $\rightarrow$ OCMS** | `edgesCurrentData` (Notification) | OpenEMS 按周期向 OCMS 推送 `Map<edgeId, Map<ChannelAddress, JsonElement>>` 实时变更流，驱动 **OCMS 内存状态树、前端实时单线图与 `AlarmEvaluationEngine` 告警引擎** |
+| **OCMS $\rightarrow$ OpenEMS** | `getEdgesStatus` | 批量拉取指定/全部 Edge 的实时在线状态（`isOnline`） |
+| **OCMS $\rightarrow$ OpenEMS** | `getEdgesChannelsValues` | 按需即时批量读取多台 Edge 的指定通道当前值 |
 
-### 2.2 原生接管 Grafana (3000) 的专业储能时序分析能力
+### 2.2 【API 通道 2】历史时序与电量统计查询（`B2b.Rest` 替代 Grafana 3000）
 
-由 `OCMS Server` 内置的 `TimeseriesQueryService`（基于官方 `com.influxdb:influxdb-client-java`）直接查询 InfluxDB v2，并在服务端强制注入当前用户的租户/Edge 权限边界，返回标准时序数组给前端 ECharts 5 渲染：
+**OCMS 不直连 InfluxDB**，所有历史曲线、电芯历史对比与每日收益结算所需的电量数据，全部通过调用 OpenEMS Cloud `B2b.Rest` (`POST /jsonrpc`) 原生内置的 `edgeRpc` 时序接口获取（OpenEMS 内部自动通过 `TimedataManager` 查询 InfluxDB 并执行归一化处理）：
 
-| 原 Grafana (3000) 看板面板 | OCMS `TimeseriesQueryService` 原生数据接口 | 前端 ECharts 5 原生组件 |
+| 原 Grafana (3000) 面板 / 业务需求 | OCMS 调用 OpenEMS `B2b.Rest` 的 JSON-RPC 方法 | 返回结构与 OCMS 处理方式 |
 | :--- | :--- | :--- |
-| **四象限功率平衡曲线**（电网、PCS、光伏、负载有功） | `GET /api/v1/sites/{id}/timeseries/power-balance?from=&to=&resolution=`<br/>（自动按时间跨度计算 `aggregateWindow` 降采样步长） | 多轴联动面积折线图（正负象限着色、功率守恒残差校验提示） |
-| **电池簇与电芯温度/电压热力图** | `GET /api/v1/edges/{edgeId}/bms/heatmap?at=`<br/>（聚合 `bms*/Tower*/Module*/Cell*Voltage` 与 `Temperature` 通道） | ECharts Matrix Heatmap（支持点击极值电芯直接下钻该电芯历史曲线） |
-| **PCS 交直流母线电气参数**（三相电压/电流/IGBT 温度） | `GET /api/v1/edges/{edgeId}/pcs/telemetry?from=&to=` | 多通道可勾选叠加趋势图（支持十字准星同步缩放） |
-| **日/月充放电量柱状对比** | `GET /api/v1/sites/{id}/energy/daily?from=&to=`<br/>（基于 `_sum/EssActiveChargeEnergy` / `DischargeEnergy` 计算 `spread` 或直接读结算表） | 双色堆叠柱状图 + 综合效率（RTE %）折线双轴图 |
+| **四象限功率平衡曲线 / BMS 极值曲线 / PCS 交直流电气趋势** | `edgeRpc` $\rightarrow$ `queryHistoricTimeseriesData`<br/>参数：`edgeId`, `fromDate`, `toDate`, `channels[]`, `resolution`（如 `5 Minutes`） | 返回标准时间戳对齐的 `timestamps[]` + `data[channel][]`，OCMS 校验当前用户对该 `edgeId` 的租户权限后直接返回给前端 **ECharts 5** 渲染 |
+| **区间累计充放电量（每日凌晨收益结算）** | `edgeRpc` $\rightarrow$ `queryHistoricTimeseriesEnergy`<br/>参数：`edgeId`, `fromDate`, `toDate`, `channels: ["_sum/EssActiveChargeEnergy", "_sum/EssActiveDischargeEnergy", ...]` | 返回区间首尾精确差值（Wh），供 OCMS 结算引擎计算日综合转换效率（RTE） |
+| **分时段（15分钟/小时/日）电量柱状图与尖峰平谷套利核算** | `edgeRpc` $\rightarrow$ `queryHistoricTimeseriesEnergyPerPeriod`<br/>参数：`edgeId`, `fromDate`, `toDate`, `channels[]`, `resolution`（`15 Minutes` 或 `1 Day`） | 返回每个 15 分钟时间片的精确充放电量增量，OCMS 结合本地 PostgreSQL 中的 `tou_tariff_template`（尖峰平谷电价）自动核算每个时段的电费成本与放电收益 |
+| **原生 Excel 历史数据导出** | `edgeRpc` $\rightarrow$ `queryHistoricTimeseriesExportXlxs` | 直接获取 OpenEMS 生成的站点历史通道与电量 Excel 二进制流 |
+
+### 2.3 【API 通道 3】远程配置、拓扑解析与控制指令（`B2b.Rest` 替代 OpenEMS UI 8081）
+
+OCMS 在多租户 RBAC 校验通过并记录审计日志后，通过 `B2b.Rest` / `B2b.Websocket` 透传控制指令：
+
+| 原 OpenEMS UI (8081) 功能 | OCMS 调用 OpenEMS 的 JSON-RPC 方法 | 说明 |
+| :--- | :--- | :--- |
+| **获取设备树、通道元数据与 OSGi Factory Schema** | `edgeRpc` $\rightarrow$ `getEdgeConfig` | 获取完整 `EdgeConfig`（包含 `components` 实例配置与 `factories` 表单 Schema），前端据此动态生成配置表单 |
+| **新增 / 修改 / 删除 Edge 组件配置** | `edgeRpc` $\rightarrow$ `componentJsonApi` (`componentId: "_componentManager"`)<br/>子方法：`createComponentConfig` / `updateComponentConfig` / `deleteComponentConfig` | 支持远程调整 Modbus 映射、控制器参数、防逆流阈值；修改前后由 OCMS 自动计算 JSON Diff 存入 `edge_config_history` |
+| **下发分时充放电计划曲线 / 电网调度计划** | `setGridConnSchedule` 或 `edgeRpc` $\rightarrow$ `componentJsonApi` | 下发时段功率控制计划至 Edge 控制器 |
+| **单通道设定值直接写入（紧急停机 / 手动定功率）** | `edgeRpc` $\rightarrow$ `setChannelValue` | 需通过 OCMS 二次密码/TOTP 校验与功率上下限护栏检查后方可执行 |
+| **边缘实时系统日志流 (SystemLog)** | `edgeRpc` $\rightarrow$ `subscribeSystemLog` | 在 OCMS 前端调试控制台实时滚动显示现场工控机 OSGi 日志 |
+
+### 2.4 【API 通道 4】边缘生命周期同步与状态回调 API（`Metadata.Ocms` $\leftrightarrow$ `OCMS`）
+
+由于 OpenEMS Cloud 不再连接数据库，OpenEMS 侧只需部署一个极简的 **`io.openems.backend.metadata.ocms` OSGi 插件**，通过内部双向 REST API 与 OCMS 保持元数据同步：
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant OCMS as OCMS 云端管理系统
+    participant MT as OpenEMS Cloud (Metadata.Ocms)
+    participant LocalSnap as 本地加密快照 (/var/lib/openems/edges.enc)
+    participant BEG as openems-backend-edge (8085)
+    participant Edge as 现场 Edge 工控机
+
+    Note over OCMS,MT: 阶段 A：OpenEMS Cloud 启动自举（即使 OCMS 短暂维护也可兜底）
+    MT->>OCMS: 1. GET /internal/api/v1/openems/edges-bootstrap (Bearer ClusterToken)
+    alt OCMS 正常响应
+        OCMS-->>MT: 2a. 返回全量已注册 Edge 列表 [{edgeId, apikey, comment, version}]
+        MT->>LocalSnap: 2b. 异步更新本地 AES-256-GCM 加密快照文件
+    else OCMS 网络抖动不可达
+        LocalSnap-->>MT: 2c. 从本地加密快照恢复 EdgeCache，保障万级 Edge 零中断重连
+    end
+    MT->>BEG: 3. 触发 TOPIC_AFTER_IS_INITIALIZED，推送 UpdateMetadataCache(apikeyToEdgeId)
+
+    Note over OCMS,Edge: 阶段 B：OCMS 在线新开局或轮换 Edge API Key
+    OCMS->>MT: 4. POST /internal/api/v1/metadata/edges/upsert {edgeId, apikey, oldApikeyGraceUntil}
+    MT->>BEG: 5. 立即更新内存 EdgeCache 并向 8085 网关广播最新 UpdateMetadataCache
+    Edge->>BEG: 6. Edge 使用新 apikey 秒级握手上线
+
+    Note over OCMS,Edge: 阶段 C：Edge 上下线、SumState 变化与 EdgeConfig 变更回调
+    Edge->>MT: 7. 触发 Edge.Events (ON_SET_ONLINE / ON_SET_SUM_STATE / ON_SET_CONFIG)
+    MT->>OCMS: 8. POST /internal/api/v1/openems/edge-events (批量推送状态变更与最新 EdgeConfig 快照)
+```
 
 ---
 
-## 三、 Java 21 后端工程模块划分（Multi-Module 架构）
-
-采用单一代码仓库（Monorepo）多模块管理，最大化代码复用：
+## 三、 Java 21 后端工程模块划分（分离部署架构）
 
 ```text
 openems-cloud-platform/
-├── ocms-common/                        # 公共库 (Java 21，无框架依赖)
-│   ├── crypto/                         # AES-256-GCM (apikey加解密)、Argon2id + Odoo PBKDF2 双模校验
-│   ├── model/                          # Role 折算算法、Tenant/Edge/Alarm 枚举与公共记录类
-│   └── jsonrpc/                        # OpenEMS JSON-RPC 协议消息构建器
+├── ocms-common/                        # 公共协议与模型库 (Java 21)
+│   ├── jsonrpc/                        # OpenEMS B2B JSON-RPC 请求/响应 DTO (getEdgesStatus, edgeRpc 等)
+│   ├── sync/                           # OCMS <-> Metadata.Ocms 内部同步契约 DTO (EdgeSyncDto, EdgeEventWebhookDto)
+│   └── crypto/                         # AES-256-GCM、HMAC-SHA256 签名、Argon2id + PBKDF2 工具
 │
-├── openems-metadata-tenant-bundle/     # 内嵌于 OpenEMS Backend 的 OSGi 插件 (Bnd 构建)
-│   └── io.openems.backend.metadata.tenant/
-│       ├── MetadataTenant.java         # 实现 Metadata, AuthUserPasswordAuthenticationService, EventHandler
-│       ├── EdgeCache.java              # 内存缓存 + generateUpdateMetadataCacheNotification()
-│       ├── PgNotifyListener.java       # 监听 PostgreSQL LISTEN/NOTIFY 实时局部刷新缓存
-│       └── PeriodicWriteWorker.java    # 30s 批量回写 edge_status 与 edge_config_snapshot
+├── openems-metadata-ocms-bundle/       # 【部署于 OpenEMS Cloud】极简无数据库 OSGi 插件
+│   └── io.openems.backend.metadata.ocms/
+│       ├── MetadataOcms.java           # 实现 Metadata 接口，维护内存 EdgeCache 与 B2B 服务账号鉴权
+│       ├── LocalSnapshotStore.java     # 本地加密文件兜底 (/var/lib/openems/edges.enc)
+│       ├── OcmsWebhookPusher.java      # 将 Edge 上下线、SumState、EdgeConfig 变更异步批量推送给 OCMS
+│       └── MetadataSyncHttpServer.java # 接收 OCMS 推送的 Edge 新增/Key 轮换/删除指令并触发网关刷新
 │
-└── ocms-server/                        # 独立云端管理后端 (Spring Boot 3.4 + Java 21)
-    ├── config/                         # RlsTransactionInterceptor (自动注入 SET LOCAL app.current_tenant_ids)
-    ├── client/
-    │   ├── OpenemsB2bWsClient.java     # 长连接对接 Backend B2b.Websocket，订阅全网实时通道
-    │   ├── OpenemsB2bRestClient.java   # 对接 Backend B2b.Rest，下发配置与控制指令
-    │   └── InfluxTimeseriesClient.java # 封装 InfluxDB v2 Flux 安全查询模板
+└── ocms-server/                        # 【部署于 OCMS 集群】独立云端管理后端 (Spring Boot 3.4 + Java 21)
+    ├── config/                         # Spring Security + 多租户 RLS 拦截器 (SET LOCAL app.current_tenant_ids)
+    ├── openemsclient/                  # 纯 API 集成客户端层（支持对接 1~N 个 OpenEMS Cloud 集群）
+    │   ├── OpenemsB2bWsClient.java     # WSS 客户端：subscribeEdgesChannels 实时流接收与断线重连
+    │   ├── OpenemsB2bRestClient.java   # HTTPS 客户端：封装 queryHistoricTimeseries*, getEdgeConfig, componentJsonApi
+    │   └── OpenemsMetadataSyncClient.java # 向 Metadata.Ocms 推送 Edge 注册与 Key 轮换
     ├── modules/
-    │   ├── iam/                        # 租户树 (tenant_closure)、用户、角色授权、配额、审计
-    │   ├── asset/                      # 站点 (Site)、Edge ZTP 注册、Key 轮换、配置快照与回滚
-    │   ├── scada/                      # 站群 GIS 聚合、单站实时潮流、原生时序分析 API
-    │   ├── alarm/                      # 【P1 优先】告警规则引擎、生命周期状态机、通知、运维工单
-    │   └── settlement/                 # 【P2】分时电价模板、每日收益聚合、EMC 报表
-    └── web/                            # REST Controllers + WebSocket (STOMP) 实时推送端点
+    │   ├── iam/                        # 多级租户树 (tenant_closure)、用户、RBAC、配额、审计日志
+    │   ├── asset/                      # 物理站点 (Site)、Edge ZTP 开局、配置快照与版本回滚
+    │   ├── scada/                      # 站群 GIS 聚合、单站实时能量流、ECharts 原生时序与热力图接口
+    │   ├── alarm/                      # 【P1 优先】实时告警规则引擎、防抖滞回、通知、Ack 与运维工单闭环
+    │   └── settlement/                 # 【P2】分时电价 (TOU) 模板、每日收益聚合、EMC 报表
+    └── web/                            # 前端门户 REST API + WebSocket 实时推送 + OpenEMS 内部回调 Controller
 ```
 
 ---
 
 ## 四、 首期核心重点：「告警确认与运维工单闭环」详细设计
 
-针对您确认的**第一优先级业务模块**，设计完整的实时检测、降噪、通知、确认（Ack）、升级与运维工单闭环体系：
+在分离部署架构下，OCMS 的 **`AlarmEvaluationEngine`** 直接消费 `OpenemsB2bWsClient` 订阅回来的实时通道流（`EdgesCurrentDataNotification`）与 `Metadata.Ocms` 推送的上下线事件（`EdgeEventWebhookDto`），在 OCMS 内部完成毫秒级告警判定与工单流转：
 
-### 4.1 告警来源与实时评估引擎（`AlarmEvaluationEngine`）
+### 4.1 告警来源与实时评估流水线
 
 ```mermaid
 flowchart LR
-    subgraph Sources["三类实时告警源"]
-        S1["1. Edge 原生状态通道<br/>(_sum/State 及各组件 WARNING/FAULT 通道)"]
-        S2["2. 通信心跳监控<br/>(edge_status.is_online 离线超时)"]
-        S3["3. 云端自定义阈值规则<br/>(如 MaxCellTemp > 55℃ 持续 30s)"]
+    subgraph API_In["OpenEMS Cloud API 实时输入"]
+        S1["B2b.Websocket 实时流<br/>(_sum/State 及各组件状态/遥测通道)"]
+        S2["Metadata.Ocms 事件回调<br/>(Edge 在线/离线状态变化)"]
     end
 
-    subgraph Engine["Spring Boot 3 告警评估与降噪引擎"]
-        DEBOUNCE["持续时间防抖窗口<br/>(Duration Timer)"]
-        MAINT["检修静默期拦截<br/>(Maintenance Window)"]
-        DEDUP["指纹去重与合并<br/>(fingerprint = edgeId + ruleId + channel)"]
+    subgraph Engine["OCMS 告警评估与降噪引擎 (Spring Boot 3)"]
+        DEBOUNCE["持续时间防抖窗口<br/>(hold_seconds 计时器)"]
+        MAINT["检修静默窗口拦截<br/>(Maintenance Window)"]
+        DEDUP["指纹去重与峰值合并<br/>(fingerprint = edgeId:ruleId:channel)"]
         HYST["恢复滞回判定<br/>(Hysteresis)"]
     end
 
-    subgraph Lifecycle["告警与工单闭环"]
-        DB[("PostgreSQL<br/>alarm_event / work_order")]
-        WS["WebSocket 门户实时弹窗 + 声音告警"]
+    subgraph ClosedLoop["告警与运维工单闭环"]
+        DB[("OCMS PostgreSQL<br/>alarm_event / work_order")]
+        WS["门户 WebSocket 实时弹窗 + 语音播报"]
         NOTIFY["多渠道通知器<br/>(企微 / 钉钉 / 邮件 / Webhook)"]
         ESC["超时未确认升级调度器<br/>(Escalation Scheduler)"]
     end
 
-    S1 & S2 & S3 --> DEBOUNCE --> MAINT --> DEDUP
+    S1 & S2 --> DEBOUNCE --> MAINT --> DEDUP
     DEDUP -->|"首次触发 / 等级上升"| DB
     DB --> WS & NOTIFY & ESC
     HYST -->|"信号回到安全区间"| DB
 ```
 
-1. **四级告警等级定义（对齐行业标准）**：
-   - `CRITICAL`（一级/危急）：消防报警、热失控预警、PCS 严重故障跳闸、BMS 绝缘极低保护（要求立即停机并弹窗强提醒 + 电话/企微群 @所有人）；
-   - `MAJOR`（二级/重要）：单体过压/欠压保护、液冷/空调故障、关口防逆流越限、Edge 离线超阈值；
-   - `MINOR`（三级/次要）：簇间压差偏大、通信偶发丢包、风扇异常；
-   - `WARNING`（四级/提示）：SOC 偏低提示、滤网维护提醒。
-2. **防抖与滞回机制（杜绝告警风暴）**：
-   - **触发防抖（`hold_seconds`）**：通道值连续越限达到设定秒数（如 15 秒）才正式生成 `ALARM_EVENT`；
-   - **恢复滞回（`hysteresis`）**：例如温度 `> 55℃` 触发告警，需回落至 `< 52℃` 持续 30 秒才判定为信号恢复（`signal_recovered = true`），防止临界值反复震荡刷屏；
-   - **指纹归并**：同一台 Edge 的同一个通道在同一未结束周期内只维护一条活动 `ALARM_EVENT`，记录 `occurrence_count`（累计触发次数）与 `peak_value`（峰值）。
-
-### 4.2 告警与工单闭环状态机
-
-- **两条闭环路径**：
-  - **路径 A（自动/远程处置闭环）**：`ACTIVE`（触发） $\xrightarrow{\text{运维确认}}$ `ACKNOWLEDGED`（填写远程处置原因，如“电网瞬时波动已恢复”） $\xrightarrow{\text{信号恢复}}$ `RESOLVED`。
-  - **路径 B（派发运维工单现场闭环）**：`ACTIVE / ACKNOWLEDGED` $\xrightarrow{\text{一键转工单}}$ `WORK_ORDER_OPEN` $\xrightarrow{\text{指派工程师}}$ `IN_PROGRESS`（现场排查、上传处理照片与更换备件记录） $\xrightarrow{\text{提交验收 + 信号恢复}}$ `CLOSED`（自动同步将关联告警置为 `RESOLVED`）。
-- **超时自动升级（Escalation）**：
-  - 若 `CRITICAL` 告警在 **15 分钟** 内无人点击确认（Ack），系统自动从通知班组值班员（`TENANT_OPERATOR`）升级通知至租户管理员（`TENANT_ADMIN`）。
-
-### 4.3 告警与工单数据表设计（PostgreSQL `tenant` Schema）
-
-在 [`openems_multitenant_design.md`](file:///home/user01/local/openems/openems_multitenant_design.md) 基础表之上细化告警与工单表结构：
-
-```sql
--- 1. 云端告警规则模板与站点规则表 (兼容并扩展原 alert_rule)
-CREATE TABLE tenant.alarm_rule (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id       UUID NOT NULL REFERENCES tenant.tenant(id),
-    site_id         UUID REFERENCES tenant.site(id),          -- NULL 表示租户全局规则
-    edge_id         TEXT REFERENCES tenant.edge(edge_id),     -- NULL 表示站点通用规则
-    name            TEXT NOT NULL,
-    rule_type       TEXT NOT NULL,                            -- 'STATE_CHANNEL' | 'THRESHOLD' | 'OFFLINE'
-    channel_pattern TEXT NOT NULL,                            -- 如 '_sum/State' 或 'bms0/MaxCellTemperature'
-    operator        TEXT,                                     -- '>' | '>=' | '<' | '<=' | '=='
-    threshold_value NUMERIC,
-    hysteresis      NUMERIC DEFAULT 0,                        -- 恢复滞回值
-    hold_seconds    INT NOT NULL DEFAULT 10,                  -- 持续防抖秒数
-    severity        TEXT NOT NULL,                            -- 'CRITICAL' | 'MAJOR' | 'MINOR' | 'WARNING'
-    notify_channels JSONB NOT NULL DEFAULT '["WEB"]',         -- ["WEB", "EMAIL", "WECOM", "DINGTALK"]
-    escalate_min    INT DEFAULT 30,                           -- 未确认自动升级分钟数
-    is_enabled      BOOLEAN NOT NULL DEFAULT true,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- 2. 实时与历史告警事件表
-CREATE TABLE tenant.alarm_event (
-    id                 BIGSERIAL PRIMARY KEY,
-    fingerprint        TEXT NOT NULL,                         -- edge_id + ':' + rule_id + ':' + channel_address
-    tenant_id          UUID NOT NULL REFERENCES tenant.tenant(id),
-    site_id            UUID NOT NULL REFERENCES tenant.site(id),
-    edge_id            TEXT NOT NULL REFERENCES tenant.edge(edge_id),
-    rule_id            UUID REFERENCES tenant.alarm_rule(id),
-    channel_address    TEXT NOT NULL,
-    severity           TEXT NOT NULL,                         -- 'CRITICAL' | 'MAJOR' | 'MINOR' | 'WARNING'
-    status             TEXT NOT NULL DEFAULT 'ACTIVE',        -- 'ACTIVE' | 'ACKNOWLEDGED' | 'WORK_ORDER' | 'RESOLVED'
-    title              TEXT NOT NULL,
-    description        TEXT,
-    trigger_value      TEXT,
-    peak_value         TEXT,
-    occurrence_count   INT NOT NULL DEFAULT 1,
-    signal_recovered   BOOLEAN NOT NULL DEFAULT false,
-    started_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
-    last_occurred_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    acked_at           TIMESTAMPTZ,
-    acked_by           UUID REFERENCES tenant.app_user(id),
-    ack_note           TEXT,
-    resolved_at        TIMESTAMPTZ,
-    resolved_by        UUID REFERENCES tenant.app_user(id),
-    resolve_type       TEXT                                   -- 'AUTO' | 'MANUAL' | 'WORK_ORDER'
-);
-CREATE INDEX idx_alarm_event_active ON tenant.alarm_event(tenant_id, status, severity) WHERE status != 'RESOLVED';
-
--- 3. 运维工单表
-CREATE TABLE tenant.work_order (
-    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_no           TEXT NOT NULL UNIQUE,                  -- 如 WO-20261016-0001
-    tenant_id          UUID NOT NULL REFERENCES tenant.tenant(id),
-    site_id            UUID NOT NULL REFERENCES tenant.site(id),
-    edge_id            TEXT REFERENCES tenant.edge(edge_id),
-    alarm_event_id     BIGINT REFERENCES tenant.alarm_event(id),
-    title              TEXT NOT NULL,
-    priority           TEXT NOT NULL DEFAULT 'HIGH',          -- 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW'
-    status             TEXT NOT NULL DEFAULT 'OPEN',          -- 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'VERIFYING' | 'CLOSED'
-    fault_category     TEXT NOT NULL,                         -- 'BMS' | 'PCS' | 'EMS' | 'HVAC' | 'FIRE' | 'GRID'
-    creator_id         UUID NOT NULL REFERENCES tenant.app_user(id),
-    assignee_id        UUID REFERENCES tenant.app_user(id),
-    root_cause         TEXT,                                  -- 故障根因分析
-    resolution_action  TEXT,                                  -- 现场消缺措施
-    spare_parts_used   JSONB DEFAULT '[]',                    -- 备件更换记录
-    attachments        JSONB DEFAULT '[]',                    -- 现场照片/报告文件列表
-    assigned_at        TIMESTAMPTZ,
-    onsite_arrived_at  TIMESTAMPTZ,
-    resolved_at        TIMESTAMPTZ,
-    closed_at          TIMESTAMPTZ,
-    created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- 4. 工单流转日志表（支撑工单时间轴追溯）
-CREATE TABLE tenant.work_order_log (
-    id                 BIGSERIAL PRIMARY KEY,
-    work_order_id      UUID NOT NULL REFERENCES tenant.work_order(id) ON DELETE CASCADE,
-    actor_id           UUID NOT NULL REFERENCES tenant.app_user(id),
-    action             TEXT NOT NULL,                         -- 'CREATE' | 'ASSIGN' | 'ACCEPT' | 'SUBMIT_VERIFY' | 'REJECT' | 'CLOSE' | 'COMMENT'
-    from_status        TEXT,
-    to_status          TEXT,
-    comment            TEXT,
-    created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
-
-### 4.4 核心 REST API 清单（Spring Boot 3 `ocms-server`）
-
-| 领域 | HTTP 方法 & 路径 | 说明 |
-| :--- | :--- | :--- |
-| **认证与租户** | `POST /api/v1/auth/login` | 登录并返回 JWT + 当前用户可见租户树 |
-| | `GET/POST/PATCH /api/v1/tenants` | 租户 CRUD、闭包表维护、配额配置 |
-| | `GET/POST/PUT /api/v1/tenants/{id}/members` | 租户成员与角色授权管理 |
-| **站点与 Edge** | `GET/POST/PATCH /api/v1/sites` | 电站建档（装机容量、经纬度、绑定电价模板） |
-| | `POST /api/v1/edges/register` | 注册 Edge，生成一次性明文 `apikey` 与 `.config` 引导包并触发 `NOTIFY` |
-| | `POST /api/v1/edges/{edgeId}/rotate-key` | 零停机轮换 Edge API Key |
-| | `GET /api/v1/edges/{edgeId}/config` | 获取 Edge 完整组件配置与 OSGi Factory Schema（替代 8081 配置页） |
-| | `PUT /api/v1/edges/{edgeId}/components/{compId}` | 远程修改 Edge 组件参数并记录 `edge_config_history` Diff |
-| **原生监控与时序** | `GET /api/v1/fleet/overview` | 租户站群 KPI 汇总（总功率、平均 SOC、今日充放电量、在线率、告警统计） |
-| | `WS /ws/v1/realtime` | 实时推送站群 KPI、单站能量流、电芯极值与新触发告警 |
-| | `GET /api/v1/sites/{id}/timeseries` | 原生时序查询接口（功率平衡、SOC、PCS 电气量、BMS 热力矩阵，替代 Grafana 3000） |
-| **告警与工单闭环** | `GET/POST/PUT /api/v1/alarm-rules` | 告警规则与通知渠道（企微/钉钉/邮件）配置 |
-| | `GET /api/v1/alarms` | 实时/历史告警分页查询（支持按等级、状态、站点、时间过滤） |
-| | `POST /api/v1/alarms/{id}/ack` | **告警确认（Ack）**，记录确认人与处置备注 |
-| | `POST /api/v1/alarms/{id}/to-work-order` | **一键转运维工单**并指派工程师 |
-| | `GET/POST/PATCH /api/v1/work-orders` | 工单列表、派单、接单、填写根因与消缺措施、验收结单 |
-| | `GET /api/v1/stats/om-metrics` | 运维考核报表（告警响应率、平均确认时长 MTTA、平均修复时长 MTTR） |
+1. **三类告警规则全覆盖**：
+   - **边缘原生状态告警（`STATE_CHANNEL`）**：基于 `getEdgeConfig` 自动同步所有 `Level.WARNING` / `Level.FAULT` 通道定义；当 `B2b.Websocket` 推流中状态通道非 `OK` 时自动匹配触发；
+   - **通信离线告警（`OFFLINE`）**：收到 `Metadata.Ocms` 离线回调后启动延迟计时器（如离线满 5 分钟触发 `MAJOR` 告警，恢复上线自动标记 `signal_recovered = true`）；
+   - **云端自定义阈值告警（`THRESHOLD`）**：针对电芯最高温度、簇间压差、SOC 过低、变压器需量越限等遥测通道配置算子（`>, >=, <, <=, ==`）、持续防抖秒数（`hold_seconds`）与恢复滞回区间（`hysteresis`）。
+2. **闭环流转状态机**：
+   - **告警状态**：`ACTIVE`（活动未确认） $\rightarrow$ `ACKNOWLEDGED`（已确认，记录确认人与备注） $\rightarrow$ `WORK_ORDER`（已转现场运维工单） $\rightarrow$ `RESOLVED`（已解决归档）。
+   - **工单状态**：`OPEN`（待派单） $\rightarrow$ `ASSIGNED`（已指派工程师） $\rightarrow$ `IN_PROGRESS`（现场处理中，上传消缺照片/备件记录/故障根因） $\rightarrow$ `VERIFYING`（待值班长验收，且校验 OpenEMS 实时通道信号确已恢复正常） $\rightarrow$ `CLOSED`（结单并自动关闭关联告警，计算 MTTA / MTTR）。
 
 ---
 
-## 五、 实施路线图（按调整后的优先级）
+## 五、 OCMS 专属数据库 Schema（PostgreSQL `tenant` Schema）
 
-| 阶段 | 核心交付物 | 关键验收指标 |
+该数据库**完全归属 OCMS 集群独享**，包含多租户底座表与告警/工单/调度业务表：
+
+| 分类 | 表名 | 核心职责 |
 | :--- | :--- | :--- |
-| **Stage 1：Java 多租户底座 (`Metadata.Tenant`)** | 1. PostgreSQL `tenant` Schema 与基础迁移脚本；<br/>2. `io.openems.backend.metadata.tenant` OSGi 插件编译并替换 `Metadata.Odoo`；<br/>3. 验证 8085 网关 `UpdateMetadataCache` 鉴权与 30s 状态回写。 | 完全停用 Odoo 后，现有 `edge0`~`edge10` 全部在线、历史与实时数据正常 |
-| **Stage 2：Spring Boot 3 云管核心 + 原生监控集成** | 1. `ocms-server`（Spring Boot 3）对接 PostgreSQL RLS、`B2b.Websocket`、`B2b.Rest` 与 InfluxDB v2；<br/>2. Vue 3 云管门户：租户/用户/站点管理、站群集控总览、**单站原生能量流图、ECharts 时序曲线与 BMS 热力图、远程组件配置**（彻底替代 8081 与 3000 页面）。 | 单一门户完成租户切换、多站大屏、单站历史曲线分析与组件参数下发 |
-| **Stage 3：告警确认与运维工单闭环（P1 优先业务）** | 1. 实时告警评估引擎（StateChannel + 离线 + 阈值规则 + 防抖滞回）；<br/>2. 告警台（声音/弹窗提醒、一键 Ack、企微/钉钉/邮件通知）；<br/>3. 运维工单全流程（派单 $\rightarrow$ 现场消缺 $\rightarrow$ 验收结单 $\rightarrow$ MTTA/MTTR 统计）。 | 模拟电芯超温/设备离线，自动触发告警 $\rightarrow$ 确认 $\rightarrow$ 转工单 $\rightarrow$ 结单归档全闭环 |
-| **Stage 4：分时电价（TOU）、收益结算与 VPP** | 1. 分时电价模板与充放电计划曲线批量下发；<br/>2. 每日凌晨自动电量聚合与峰谷套利收益核算、EMC 结算单导出；<br/>3. VPP 虚拟电厂群控。 | 自动生成站点日/月度充放电效率（RTE）与峰谷套利财务报表 |
+| **多租户与 IAM** | `tenant.tenant` | 租户主表（编码、配额 JSONB、白标配置、状态） |
+| | `tenant.tenant_closure` | 树状租户闭包表（`ancestor_id`, `descendant_id`, `depth`） |
+| | `tenant.app_user` | 用户表（账号、姓名、邮箱、手机、Argon2id/PBKDF2 密码哈希） |
+| | `tenant.tenant_membership` | 用户-租户角色绑定（`PLATFORM_ADMIN` / `TENANT_ADMIN` / `INSTALLER` / `OPERATOR` / `VIEWER`） |
+| | `tenant.audit_log` | 全量操作与远程控制审计日志 |
+| **资产与多集群接入** | `tenant.openems_cluster` | **OpenEMS Cloud 集群连接配置表**（`id`, `name`, `b2b_rest_url`, `b2b_ws_url`, `sync_url`, `cluster_token_cipher`） |
+| | `tenant.site` | 物理储能电站表（归属租户、经纬度、装机功率/容量、绑定电价模板） |
+| | `tenant.edge` | Edge 设备表（归属站点、所属 `cluster_id`、`apikey_cipher`、`apikey_hash`、在线状态、最新 `config_snapshot` JSONB） |
+| | `tenant.edge_grant` | 单台 Edge 特例授权表 |
+| | `tenant.edge_config_history` | Edge 配置变更 JSON Diff 历史记录 |
+| **告警与工单 (P1)** | `tenant.alarm_rule` | 告警规则表（规则类型、通道模式、阈值、滞回值、防抖秒数、通知渠道、升级时间） |
+| | `tenant.alarm_event` | 告警事件表（指纹、等级、状态、触发值/峰值、累计次数、信号恢复标记、确认人、解决方式） |
+| | `tenant.work_order` | 运维工单表（工单号、关联告警、优先级、状态、故障分类、指派人、根因分析、消缺措施、附件） |
+| | `tenant.work_order_log` | 工单全流程时间轴流转日志表 |
+| **调度与结算 (P2)** | `tenant.tou_tariff_template` | 分时电价（TOU）日历模板表（夏冬令时、尖峰平谷时段与单价） |
+| | `tenant.site_daily_settlement`| 电站每日充放电量、RTE 效率与峰谷套利收益结算表 |
+
+---
+
+## 六、 分阶段实施路线图（分离部署版）
+
+| 阶段 | 里程碑目标 | 交付核心内容 | 预估周期 |
+| :--- | :--- | :--- | :---: |
+| **Stage 1：OpenEMS Cloud 纯 API 化改造** | 剥离 Odoo 与数据库依赖，开放全功能 B2B API | 1. 开发 `io.openems.backend.metadata.ocms` 轻量无数据库插件（内存 `EdgeCache` + 本地加密快照 + Webhook 状态推送）；<br/>2. 启用并验证 OpenEMS Backend 的 `B2b.Rest` 与 `B2b.Websocket` 接口；<br/>3. 完成现有 `edge0`~`edge10` 平滑切换。 | 1–1.5 周 |
+| **Stage 2：OCMS 独立后端 + 原生监控门户** | 独立部署 OCMS，通过 API 接管 8081 与 3000 全部能力 | 1. 搭建 `ocms-server`（Spring Boot 3 + 独立 PostgreSQL `tenant` 库 + `OpenemsB2bWsClient` / `OpenemsB2bRestClient`）；<br/>2. 开发 Vue 3 + ECharts 5 门户：多级租户管理、站点/Edge ZTP 注册、站群 GIS 集控、**单站原生能量流图、历史时序曲线、BMS 热力图与组件远程配置**。 | 2 周 |
+| **Stage 3：告警确认与运维工单闭环（P1 优先）** | 基于 B2B 实时流落地告警与工单全闭环 | 1. 实现 `AlarmEvaluationEngine`（实时通道流评估、防抖滞回、离线计时、指纹去重、超时升级）；<br/>2. 企微/钉钉/邮件/WebSocket 实时告警推送与一键确认（Ack）；<br/>3. 告警转运维工单、派单接单、现场消缺验收与 MTTA/MTTR 统计。 | 1.5–2 周 |
+| **Stage 4：分时电价（TOU）、收益结算与 VPP** | 基于 B2B 电量 API 落地财务结算与群控 | 1. 分时电价模板管理，每日凌晨调用 `queryHistoricTimeseriesEnergyPerPeriod` 自动核算峰谷套利收益与 RTE；<br/>2. 调用 `setGridConnSchedule` / `componentJsonApi` 批量下发调度计划。 | 2 周 |
