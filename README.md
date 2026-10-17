@@ -13,6 +13,14 @@
   - 本地离线增强补丁剖析（AppCenter 离线 Mock 与系统更新适配）
   - 时序数据双擎架构（RRD4J + InfluxDB v2）
 
+- 🌐 **[OpenEMS 各模块网络端口全景分析与通信架构规范](OPENEMS_MODULE_PORTS_AND_NETWORK_COMMUNICATION.md)**：
+  - 端-边-云-网-微服务全景通信架构图（Mermaid 拓扑与数据流向）
+  - OpenEMS Edge 边缘端模块端口（8080 控制台、8075 本地 WS、8094/8095 REST、502/1502 Modbus 从机、8887 OCPP 等）
+  - OpenEMS Backend 云端核心模块端口（8084 网关、8085 Manager、8082 UI WS、8076 B2B WS、8075 B2B REST、9400 Prometheus）
+  - Nginx 反向代理与前端 UI 端口矩阵（80/4200 Edge UI、8081 Backend UI）
+  - 周边支撑与仿真微服务端口（8086 InfluxDB、3000 Grafana、5432 PostgreSQL、8069 Odoo、8502 HIL Modbus、18090 气象现货）
+  - 端口防冲突实战规则（8085/8084/502/8081）与生产环境 UFW/防火墙加固策略
+
 - ☁️ **[OpenEMS 云端多租户微服务与虚拟电厂架构技术规范](OPENEMS_CLOUD_BACKEND_ARCHITECTURE.md)**：
   - 云端多租户五层全景架构（WebUI / B2B $\leftrightarrow$ Ingress $\leftrightarrow$ Core $\leftrightarrow$ Influx/DB $\leftrightarrow$ Edge）
   - RBAC 多租户权限隔离体系（Admin / Installer / Owner / Guest 四级模型）
