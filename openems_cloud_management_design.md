@@ -1,12 +1,12 @@
 # OCMS 与 OpenEMS 云端多租户协同设计
 
-> 版本：2.1 · 2026-10-17
+> 版本：2.2 · 2026-10-17
 >
 > 状态：工程设计基线，待实现和联调验证。
 >
 > 核心决策：OCMS 独立部署，通过 API 和直接读写 OpenEMS 侧数据库集成；租户、资产和设备授权共用一套主数据，运行时状态与业务流程分别管理。
 >
-> 本文替代本文件旧版“分离部署、纯 API 集成”方案。旧版内容可通过 Git 历史查阅。2.1 不改变 2.0 的架构，只把对源码 commit `01083d6`（本机 `/opt/openems/source`，分支 `develop`）已核对的 B2B 行为写入第 6.5 节。部署用的 JAR 若不是该 commit，须重跑同一组契约测试。
+> 本文替代本文件旧版“分离部署、纯 API 集成”方案。旧版内容可通过 Git 历史查阅。2.1、2.2 不改变 2.0 的架构，只把对源码 commit `01083d6`（本机 `/opt/openems/source`，分支 `develop`）已核对的行为写入第 3.3、5.5、6.4 和 6.5 节。部署用的 JAR 若不是该 commit，须重跑同一组契约测试。
 
 ## 1. 需求、范围与设计依据
 
@@ -140,7 +140,7 @@ runtime.edge_registry 是主数据的接入投影，和 tenant.edge 在同一公
 - asset_id 为 OCMS 与公共平台使用的内部 UUID。
 - 集群内的设备名保留为 remote_edge_id；数据库唯一约束为 (cluster_id, remote_edge_id)。
 - OpenEMS API 使用目标集群的 remote_edge_id；OCMS API 和业务关联统一使用 asset_id。
-- InfluxDB 的实际 edge 标签可能与 API 名称不同，必须建立明确的存储标识映射。迁移时不擅自重写已有标签。
+- InfluxDB 的实际 edge 标签与 API 名称不同。commit `01083d6` 的 `Timedata.InfluxDB` 用 `parseNumberFromName(edgeId)` 取名称末尾的数字作为标签值，例如 `edge0` 写成 `0`，`site0` 也写成 `0`；名称不以数字结尾时写入失败。因此 remote_edge_id 必须是“非数字前缀 + 数字”，且该数字在同一个 bucket + measurement 内唯一。多个集群要么各用独立 bucket，要么在平台范围分配互不重复的数字。存储标识映射保存 (bucket, measurement, 数字标签)。迁移时不擅自重写已有标签。
 - Edge 的 site_id 和 tenant_id 必须一致，使用约束或事务内校验保证。
 - 首期不开放自助跨租户资产转移。后续通过受审计迁移任务完成，默认不把旧租户期间的历史和工单权限自动授予新租户；按资产归属有效时间段过滤查询。
 - 首期不开放设备跨集群迁移。后续增加带有效时间的存储定位历史，保证旧时序仍可路由；禁止把旧 remote_edge_id 立即复用为另一资产。
@@ -242,7 +242,7 @@ OCMS 先授权 asset_id，再从公共库解析 cluster_id、remote_edge_id 和�
 
 ### 5.5 运行事件与告警补偿
 
-管理变更事件与运行事件分开存储。运行事件由 Backend 侧事件适配器生产，至少包含连接上下线、汇总状态变化及告警所需的选定原生状态通道变化；具体挂接位置在阶段 0 验证。每条事件具有 event_id、asset_id、producer_epoch、sequence、occurred_at（可得时）、observed_at、事件类型、配置版本和状态载荷。
+管理变更事件与运行事件分开存储。运行事件由 Backend 侧事件适配器生产，至少包含连接上下线、汇总状态变化及告警所需的选定原生状态通道变化。commit `01083d6` 的 `Edge.Events` 只覆盖在线、汇总状态、配置、版本、产品类型和最后消息时间，没有单个通道的变化事件；选定状态通道的变化须由 B2B 订阅流转换，或新增 Backend 挂点，选择在阶段 0 确定。每条事件具有 event_id、asset_id、producer_epoch、sequence、occurred_at（可得时）、observed_at、事件类型、配置版本和状态载荷。
 
 - 运行事件先持久化到公共库 integration.runtime_event，再向 OCMS 提示有新事件；相应已持久化运行摘要与事件在同一事务中更新。摘要可批量回写，但事件不能因合并最终状态而被丢弃。
 - OCMS 通过受授权的数据库访问模块读取未确认投递；后台消费身份仅能读取其被分配的资产范围，并更新自己的消费确认记录。
@@ -321,7 +321,7 @@ getEdgesStatus 的响应字段是 `online`（`GetEdgesStatusResponse.EdgeInfo`�
 命令必须包含 command_id、asset_id、操作者、期望配置版本、参数、有效期和业务幂等键。OCMS 存储发出前的意图与每次尝试：
 
 - 收到成功响应表示协议层完成到何种阶段，由适配器明确。
-- 配置应用通过重新读取配置版本/哈希确认；控制效果通过相应运行通道确认。
+- 配置应用通过重新读取配置版本/哈希确认；控制效果通过相应运行通道确认。`getEdgeConfig` 返回的是 Backend Metadata 中缓存的配置，Edge 回传新配置后才会更新。确认须轮询到哈希变化或等到 `ON_SET_CONFIG` 运行事件，并设置超时；写入后立即读一次得到旧配置，不能据此判定失败。
 - 发送后超时标记 UNKNOWN，先核对实际状态。对可能有副作用的操作不得盲目重发。
 - 并发配置使用期望版本检查；回滚重新生成受授权命令，不能直接覆盖数据库快照。
 - 在线控制要求新鲜状态；断线后不自动重放已过期命令。
@@ -337,13 +337,15 @@ getEdgesStatus 的响应字段是 `online`（`GetEdgesStatusResponse.EdgeInfo`�
 | 订阅替换 | 每个连接只保留一组订阅；`count` 更大的请求整体替换旧订阅 | 增减 Edge 或通道时发送完整集合并递增 `count`。重连后同样全量重订阅 |
 | 推送 | `SubscribedEdgesChannelsWorker` 每 2 秒推送一次 `edgesCurrentData`，内容是所订阅通道的全量快照，不是增量 | 站群展示和告警以秒级为下限。OCMS 自己做变化检测。单连接订阅规模设上限，超出时按 `remote_edge_id` 分片为多条连接，每条独立维护 `count` |
 | 通道值 | 值来自 Backend 的 Edge 通道缓存；未上报的通道为 JSON `null` | `null` 不能当成 0。Edge 默认 `persistencePriority = HIGH`，只上报不低于该级别的通道。开局模板必须显式设置该参数，并在验收时确认告警所用通道非 `null`；持续为 `null` 走数据质量告警 |
-| 历史查询 | `edgeRpc` 下由 Backend 处理 `queryHistoricTimeseriesData`、`queryHistoricTimeseriesEnergy`、`queryHistoricTimeseriesEnergyPerPeriod`、`queryHistoricTimeseriesExportXlxs` | Excel 导出是 JSON 里的 Base64 字段 `payload`，不是裸二进制流。查询线程池满时请求被丢弃并计数，OCMS 必须限流、分批和重试 |
+| 历史查询 | `edgeRpc` 下由 Backend 处理 `queryHistoricTimeseriesData`、`queryHistoricTimeseriesEnergy`、`queryHistoricTimeseriesEnergyPerPeriod`、`queryHistoricTimeseriesExportXlxs` | Excel 导出是 JSON 里的 Base64 字段 `payload`，不是裸二进制流。查询队列满时，拒绝处理器只计数；`DebugExecutor.submit` 返回的 future 永远不会完成，`B2b.Rest` 又无超时地 `get()`，请求会一直挂起并占住 Jetty 线程。OCMS 必须设置客户端超时，并按 `queryThreadPoolSize` / `queryThreadPoolMaxQueueSize` 限制并发；超时后不能立即重发，要退避并监控 OpenEMS 侧拒绝计数和 `B2b.Rest` 可用性 |
 | 配置方法 | Edge 把 `createComponentConfig`、`updateComponentConfig`、`deleteComponentConfig` 登记为顶层方法，并在内部转到 `_componentManager` 的 `componentJsonApi` | 经 `edgeRpc` 直接发送这三个方法。`getEdgeConfig` 由 Backend 从元数据回答，不转发到 Edge |
 | 调度 | `setGridConnSchedule` 在 Backend 包装成对 `ctrlBalancingSchedule0` 的 `componentJsonApi`，并要求 `ADMIN` | 通用调度改为对 `getEdgeConfig` 中实际存在的调度组件发送 `componentJsonApi` |
 | 系统日志 | `subscribeSystemLog` 的回推按 `Ui.Websocket` 的连接标识投递 | 经 B2B 转发时请求可以到达 Edge，日志回不到 OCMS 连接。本期不提供远程系统日志 |
 | 监听端口 | `B2b.Websocket` 默认 8076，`B2b.Rest` 默认 8075，`Edge.Manager` 默认 8083。`B2b.Rest` 是 `new Server(port)`，进程内没有 TLS | 端口号不表示已经启用 HTTPS/WSS，TLS 在反向代理终结。本机 Edge 的 `Controller.Api.Websocket` 已占用 8075，启用 `B2b.Rest` 时必须改端口；本机 `Edge.Manager` 为 8085，`Backend.Edge.App` 为 8084 |
 
 同一 OpenEMS 集群的 B2B 实时订阅只由一个 OCMS 实例持有。其他实例通过内部总线或第 5.5 节的运行事件消费，避免每个实例各订一份而产生重复告警。主实例失联后由新的持有者全量重订阅。
+
+B2B 一条连接只对应一个 OpenEMS 用户和一组订阅。第 4.3 节按集群和资产范围划分服务身份后，连接数为“每个集群 × 每个服务身份 × 分片数”，全部由该集群的订阅主实例持有。每个资产只放在一个只读服务身份的订阅里，避免同一 Edge 被订阅两次；控制用服务身份默认不建立常驻订阅，只走按需的请求–响应调用。
 
 ## 7. OCMS 业务设计
 
@@ -512,7 +514,7 @@ openems-adapters/
 4. 密钥撤销遇到断网和重启：旧密钥不因快照或回滚恢复有效。
 5. OCMS 停机期间 Edge 离线：恢复后对账能产生正确离线状态和告警。
 6. 遥测为 null、乱序、缺失或仅变化上报：不误判为零或自动恢复正常。
-7. 两集群均有 edge0：资产、告警、工单及命令互不串用。
+7. 两集群均有 edge0：资产、告警、工单、命令及历史时序互不串用；共用 bucket 时须证明数字标签不冲突。
 8. 未授权租户通过列表、详情、导出、WebSocket 和数据库查询路径均不可访问目标资产。
 9. 数据库连接池复用：前一事务租户上下文不影响下一事务。
 10. 控制请求已执行但响应丢失：标记 UNKNOWN，核对后再处理，不盲目重复。
@@ -520,6 +522,7 @@ openems-adapters/
 12. 放开写入后的迁移回滚：新授权和撤销不会遗失，回滚证据完整。
 13. OCMS 停机期间先离线再上线或原生故障发生后恢复：重放已持久化事件并补建历史周期，当前状态保持正确。
 14. 运行事件来源中断或超过保留边界：缺口被识别和展示，不伪报历史完整或正常。
+15. `B2b.Rest` 查询队列打满：OCMS 请求按超时失败并退避，不无限占用连接；恢复后可继续查询。
 
 ## 12. 实施前必须核实的外部条件
 
@@ -529,7 +532,7 @@ openems-adapters/
 - 网关缓存确认、连接撤销、多密钥过渡及过期缓存拒绝新握手的可实现性。
 - 当前 Odoo/其他 Metadata 的实际 schema、数据量与迁移窗口。
 - BMS/PCS/电表点位和可写通道，单站控制模式及现场保护边界。
-- InfluxDB 的版本、查询语言、measurement、edge 标签和保留/补传配置。
+- InfluxDB 的版本、查询语言、measurement、edge 数字标签分配和保留/补传配置。
 - 数据库网络条件、备份恢复目标、接入数量与压力测试基线。
 
 在这些条件核实前，本文件可用于模块划分和接口设计，不能作为上线验证已通过的证明。
