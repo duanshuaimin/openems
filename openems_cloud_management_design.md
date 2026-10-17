@@ -1,12 +1,12 @@
 # OCMS 与 OpenEMS 云端多租户协同设计
 
-> 版本：2.0 · 2026-10-16
+> 版本：2.1 · 2026-10-17
 >
 > 状态：工程设计基线，待实现和联调验证。
 >
 > 核心决策：OCMS 独立部署，通过 API 和直接读写 OpenEMS 侧数据库集成；租户、资产和设备授权共用一套主数据，运行时状态与业务流程分别管理。
 >
-> 本文替代本文件旧版“分离部署、纯 API 集成”方案。旧版内容可通过 Git 历史查阅。
+> 本文替代本文件旧版“分离部署、纯 API 集成”方案。旧版内容可通过 Git 历史查阅。2.1 不改变 2.0 的架构，只把对源码 commit `01083d6`（本机 `/opt/openems/source`，分支 `develop`）已核对的 B2B 行为写入第 6.5 节。部署用的 JAR 若不是该 commit，须重跑同一组契约测试。
 
 ## 1. 需求、范围与设计依据
 
@@ -182,6 +182,8 @@ RLS 使用 USING 和 WITH CHECK 限制读写；租户上下文由服务端验证
 
 OCMS 先授权 asset_id，再从公共库解析 cluster_id、remote_edge_id 和时序标识。B2B 服务身份按集群和可访问租户/资产范围授权，区分只读与控制权限；不把一个全平台管理员凭据用于所有请求。所有控制审计保留原始人类操作者和服务身份。
 
+对 commit `01083d6`，B2B WebSocket 在握手时、B2B REST 在每个请求上读取 HTTP Basic，并调用 `AuthUserPasswordAuthenticationService.authenticateWithPassword`。一条连接只有这一个 OpenEMS 用户，JSON-RPC 里不能再换成最终用户。随后每个方法执行 `metadata.assertRoleIsAtLeast(user, edgeId, role, method)`，设备角色来自 Metadata 里该用户对该 Edge 的授权。因此同一服务身份可以按资产映射不同角色，但一次连接不能代表多名最终用户。`Metadata.Tenant` 必须提供该认证服务；只读方法要求至少 `GUEST`，`setGridConnSchedule` 与 Edge 侧 `setChannelValue` 要求 `ADMIN`。OCMS 把 `OPERATOR` 映射为 `OWNER` 时，不能假定该身份可以执行这两项写操作。
+
 首期服务身份与凭据选择器由公共身份模块管理，禁止客户端指定服务账号。权限撤销后立即阻止新的 OCMS 请求，并关闭相应门户订阅；OpenEMS 侧缓存和存量会话撤销按第 5 节同步确认。
 
 直接查询 InfluxDB 的授权由 OCMS 时序适配器执行，查询条件来自已授权资产集合。共享 bucket 的 token 不能充当按 edge 标签隔离的证明。需要独立存储隔离的租户再启用独立 bucket 及适配路由，先验证目标 Timedata 写入路径。
@@ -269,7 +271,7 @@ B2B 原生认证方式按目标版本核验，不把 OCMS 登录令牌直接假�
 
 基本能力包括 subscribeEdgesChannels、edgesCurrentData、getEdgesStatus 和 getEdgesChannelsValues。订阅器负责订阅集合、请求计数、重连、重新授权及取消订阅。
 
-getEdgesStatus 的官方示例使用 online 字段；OCMS DTO 可归一为 online，但不得将文档中的 isOnline 直接当作线上载荷。订阅更新是否覆盖原订阅、是否需要递增 count、推送是否只包含变化值，均由目标版本契约测试固定。
+getEdgesStatus 的响应字段是 `online`（`GetEdgesStatusResponse.EdgeInfo`），不是 `isOnline`。订阅的替换语义、`count`、推送周期和全量快照行为，以第 6.5 节对 commit `01083d6` 的核对为准；其他版本须重跑同一组测试。
 
 实时缓存键为 (asset_id, channel_address)，记录：
 
@@ -314,7 +316,7 @@ getEdgesStatus 的官方示例使用 online 字段；OCMS DTO 可归一为 onlin
 
 ### 6.4 配置与控制
 
-配置读写、通道操作和调度通过经验证的 getEdgeConfig、componentJsonApi、setChannelValue、setGridConnSchedule 等方法组合完成。不同控制器的可写通道、控制模式、权限和生效周期由设备能力清单描述，不能仅凭通道名称推断控制语义。
+配置读写、通道操作和调度只使用第 6.5 节列出的方法。`setGridConnSchedule` 在 commit `01083d6` 中存在，但 Backend 把目标组件固定为 `ctrlBalancingSchedule0`，站点没有该组件时调用失败，不能当作通用调度接口。不同控制器的可写通道、控制模式、权限和生效周期由设备能力清单描述，不能仅凭通道名称推断控制语义。OCMS 对 `edgeRpc` 使用方法白名单：未列出的方法一律拒绝，其中包括指向 `_host` 的 `executeSystemCommand`、`executeSystemUpdate` 和 `executeSystemRestart`。
 
 命令必须包含 command_id、asset_id、操作者、期望配置版本、参数、有效期和业务幂等键。OCMS 存储发出前的意图与每次尝试：
 
@@ -324,6 +326,24 @@ getEdgesStatus 的官方示例使用 online 字段；OCMS DTO 可归一为 onlin
 - 并发配置使用期望版本检查；回滚重新生成受授权命令，不能直接覆盖数据库快照。
 - 在线控制要求新鲜状态；断线后不自动重放已过期命令。
 - 高影响控制需要额外确认、参数边界与审计；现场保护和紧急停机能力由设备及边缘控制保持，云端不承担确定性保护承诺。
+
+### 6.5 源码 commit 01083d6 已核对的行为
+
+核对范围是该 commit 的 B2B、Backend JSON-RPC 和 Edge `Controller.Api.Backend`，不是本机未提交的本地补丁。部署 JAR 的 commit 不同时，下面各项都要重测。
+
+| 项 | 已核对的行为 | 对 OCMS 的约束 |
+| :--- | :--- | :--- |
+| 订阅请求 | `subscribeEdgesChannels` 的参数是 `count`、`ids`、`channels`。源码注释里的 `edgeIds` 与实际解析字段不一致 | DTO 使用 `ids`。`getEdgesStatus` 才使用 `edgeIds`；`getEdgesChannelsValues` 使用 `ids` 和 `channels` |
+| 订阅替换 | 每个连接只保留一组订阅；`count` 更大的请求整体替换旧订阅 | 增减 Edge 或通道时发送完整集合并递增 `count`。重连后同样全量重订阅 |
+| 推送 | `SubscribedEdgesChannelsWorker` 每 2 秒推送一次 `edgesCurrentData`，内容是所订阅通道的全量快照，不是增量 | 站群展示和告警以秒级为下限。OCMS 自己做变化检测。单连接订阅规模设上限，超出时按 `remote_edge_id` 分片为多条连接，每条独立维护 `count` |
+| 通道值 | 值来自 Backend 的 Edge 通道缓存；未上报的通道为 JSON `null` | `null` 不能当成 0。Edge 默认 `persistencePriority = HIGH`，只上报不低于该级别的通道。开局模板必须显式设置该参数，并在验收时确认告警所用通道非 `null`；持续为 `null` 走数据质量告警 |
+| 历史查询 | `edgeRpc` 下由 Backend 处理 `queryHistoricTimeseriesData`、`queryHistoricTimeseriesEnergy`、`queryHistoricTimeseriesEnergyPerPeriod`、`queryHistoricTimeseriesExportXlxs` | Excel 导出是 JSON 里的 Base64 字段 `payload`，不是裸二进制流。查询线程池满时请求被丢弃并计数，OCMS 必须限流、分批和重试 |
+| 配置方法 | Edge 把 `createComponentConfig`、`updateComponentConfig`、`deleteComponentConfig` 登记为顶层方法，并在内部转到 `_componentManager` 的 `componentJsonApi` | 经 `edgeRpc` 直接发送这三个方法。`getEdgeConfig` 由 Backend 从元数据回答，不转发到 Edge |
+| 调度 | `setGridConnSchedule` 在 Backend 包装成对 `ctrlBalancingSchedule0` 的 `componentJsonApi`，并要求 `ADMIN` | 通用调度改为对 `getEdgeConfig` 中实际存在的调度组件发送 `componentJsonApi` |
+| 系统日志 | `subscribeSystemLog` 的回推按 `Ui.Websocket` 的连接标识投递 | 经 B2B 转发时请求可以到达 Edge，日志回不到 OCMS 连接。本期不提供远程系统日志 |
+| 监听端口 | `B2b.Websocket` 默认 8076，`B2b.Rest` 默认 8075，`Edge.Manager` 默认 8083。`B2b.Rest` 是 `new Server(port)`，进程内没有 TLS | 端口号不表示已经启用 HTTPS/WSS，TLS 在反向代理终结。本机 Edge 的 `Controller.Api.Websocket` 已占用 8075，启用 `B2b.Rest` 时必须改端口；本机 `Edge.Manager` 为 8085，`Backend.Edge.App` 为 8084 |
+
+同一 OpenEMS 集群的 B2B 实时订阅只由一个 OCMS 实例持有。其他实例通过内部总线或第 5.5 节的运行事件消费，避免每个实例各订一份而产生重复告警。主实例失联后由新的持有者全量重订阅。
 
 ## 7. OCMS 业务设计
 
@@ -339,7 +359,7 @@ OpenEMS 提供原始状态、通道和连接信息，OCMS 负责业务告警判�
 
 | 类型 | 输入 | 恢复条件 |
 | :--- | :--- | :--- |
-| 原生状态告警 | 状态通道值及其元数据级别 | 已知且新鲜的正常值；区分布尔状态通道和汇总等级 |
+| 原生状态告警 | `_sum/State` 或汇总状态运行事件；触发后再用 `getEdgeConfig` 与 `getEdgesChannelsValues` 下钻具体状态通道 | 已知且新鲜的正常值；区分布尔状态通道和汇总等级 |
 | 离线告警 | 连接事件、启动对账、周期状态查询 | 有效上线观测 |
 | 阈值告警 | 遥测值、单位、质量、持续窗口 | 达到恢复阈值且满足持续时间 |
 | 数据质量告警 | 连接健康度、数据缺口、通道有效性 | 采集和数据质量恢复 |
@@ -505,7 +525,7 @@ openems-adapters/
 
 以下事项是实施阶段的验证任务，本文不把它们当作已经成立的能力：
 
-- 目标 OpenEMS JAR/源码 commit、OSGi 接口签名、B2B 方法和认证方式。
+- 目标 OpenEMS JAR/源码 commit、OSGi 接口签名、B2B 方法和认证方式。第 6.5 节只覆盖 commit `01083d6`。
 - 网关缓存确认、连接撤销、多密钥过渡及过期缓存拒绝新握手的可实现性。
 - 当前 Odoo/其他 Metadata 的实际 schema、数据量与迁移窗口。
 - BMS/PCS/电表点位和可写通道，单站控制模式及现场保护边界。

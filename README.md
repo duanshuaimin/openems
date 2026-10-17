@@ -57,11 +57,12 @@
   - InfluxDB v2 双轨多租户隔离与 Grafana Organization 动态权限注入
   - 零停机平滑演进：从 Odoo 双轨过渡至原生多租户的 P0~P3 四阶段迁移方案
 
-- 🌐 **[OCMS 与 OpenEMS 云端多租户协同设计（v2.0）](openems_cloud_management_design.md)**：
+- 🌐 **[OCMS 与 OpenEMS 云端多租户协同设计（v2.1）](openems_cloud_management_design.md)**：
   - OCMS 独立部署，通过 OpenEMS API 和直接读写 OpenEMS 侧数据库双通道集成
   - 共用租户、资产和授权主数据；公共管理模块、`Metadata.Tenant` 与 OCMS 业务模块按领域划分写入权
   - PostgreSQL 持久变更事件、版本控制及 Backend/网关生效确认，覆盖密钥轮换、撤销和断线对账
   - 原生监控门户、历史查询口径、告警恢复与工单闭环，以及配置命令跟踪和后续收益分析
+  - 对照源码 commit `01083d6` 核对的 B2B 行为：订阅参数与 2 秒全量快照、`persistencePriority` 对通道可用性的影响、Basic 认证与按 Edge 角色、`setGridConnSchedule` 的固定组件、`subscribeSystemLog` 经 B2B 不可用
   - 存量 Odoo 迁移、分阶段验收及回滚边界；明确待实现能力和部署版本核验项
 
 
