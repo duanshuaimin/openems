@@ -57,11 +57,12 @@
   - InfluxDB v2 双轨多租户隔离与 Grafana Organization 动态权限注入
   - 零停机平滑演进：从 Odoo 双轨过渡至原生多租户的 P0~P3 四阶段迁移方案
 
-- 🌐 **[OpenEMS 云端管理系统（OCMS）架构与工程设计方案](openems_cloud_management_design.md)**：
-  - 基于多租户底座的 Java 21 + Spring Boot 3 多模块全栈架构（`ocms-common` / `Metadata.Tenant` / `ocms-server`）
-  - 协议与数据级原生集成：通过 `B2b.Websocket`、`B2b.Rest` 与 `influxdb-client-java` 原生替代 OpenEMS UI (8081) 与 Grafana (3000)，摒弃 iframe 嵌入
-  - 六大业务域全景设计：多租户运营、电站与 Edge 零接触开局 (ZTP)、站群 GIS 集控与数字孪生、告警闭环与工单、云边协同 TOU/VPP 调度、峰谷套利收益结算
-  - 首期核心「告警确认与运维工单闭环」完整设计：三类告警源、防抖与滞回降噪、指纹归并、超时升级、Ack 确认与工单派发消缺全流程 SQL DDL 与 REST API
+- 🌐 **[OCMS 与 OpenEMS 云端多租户协同设计（v2.0）](openems_cloud_management_design.md)**：
+  - OCMS 独立部署，通过 OpenEMS API 和直接读写 OpenEMS 侧数据库双通道集成
+  - 共用租户、资产和授权主数据；公共管理模块、`Metadata.Tenant` 与 OCMS 业务模块按领域划分写入权
+  - PostgreSQL 持久变更事件、版本控制及 Backend/网关生效确认，覆盖密钥轮换、撤销和断线对账
+  - 原生监控门户、历史查询口径、告警恢复与工单闭环，以及配置命令跟踪和后续收益分析
+  - 存量 Odoo 迁移、分阶段验收及回滚边界；明确待实现能力和部署版本核验项
 
 
 - 📊 **[OpenEMS 与 Grafana 时序监控平台集成规范](OPENEMS_GRAFANA_INTEGRATION.md)**：
