@@ -73,6 +73,10 @@
   - 对照源码 commit `01083d6` 核对的 B2B 行为：订阅参数与 2 秒全量快照、`persistencePriority` 对通道可用性的影响、Basic 认证与按 Edge 角色、`setGridConnSchedule` 的固定组件、`subscribeSystemLog` 经 B2B 不可用、历史查询队列满时请求挂起、Influx 数字 edge 标签的跨集群冲突
   - 存量 Odoo 迁移、分阶段验收及回滚边界；明确待实现能力和部署版本核验项
 
+- **[OCMS 首期开发计划](docs/superpowers/plans/2026-10-17-ocms-phase1-development-plan.md)**：
+  - 阶段 0–3 的任务依赖、接口契约与验收门禁，覆盖接入、监控、告警和工单
+  - 明确事件背压、规则版本切换、数据新鲜度、现场密钥迁移及 Odoo 迁移回滚工具
+
 
 - 📊 **[OpenEMS 与 Grafana 时序监控平台集成规范](OPENEMS_GRAFANA_INTEGRATION.md)**：
   - 服务入口矩阵（端口 `3000` 匿名免密直达、默认重定向至储能专业大屏）
