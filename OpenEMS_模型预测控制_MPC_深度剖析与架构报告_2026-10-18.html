@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenEMS 模型预测控制 (MPC) 深度剖析与架构报告</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #FAF7F2;
+      --bg-paper: #FFFFFF;
+      --bg-subtle: #F2ECE1;
+      --bg-slate: #0F172A;
+      --bg-slate-card: #1E293B;
+      --ink-primary: #141413;
+      --ink-secondary: #475569;
+      --ink-muted: #78716C;
+      --accent-terracotta: #C84B31;
+      --accent-amber: #D97706;
+      --accent-emerald: #0F766E;
+      --accent-cobalt: #1D4ED8;
+      --accent-violet: #6D28D9;
+      --border-hairline: #E2D9C8;
+      --border-strong: #141413;
+      --font-serif: 'Instrument Serif', 'Noto Serif SC', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      line-height: 1.68;
+      font-size: 15.5px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Sticky Navigation */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250, 247, 242, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 0.75rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      color: var(--ink-primary);
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-terracotta);
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      color: var(--ink-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent-terracotta);
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 2.5rem 5rem;
+    }
+
+    /* Editorial Masthead */
+    .masthead {
+      padding: 4.5rem 0 3.5rem;
+      border-bottom: 2px solid var(--border-strong);
+      position: relative;
+    }
+
+    .masthead-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-terracotta);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .masthead-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.6rem, 4.6vw, 4.2rem);
+      line-height: 1.12;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      color: var(--ink-primary);
+    }
+
+    .masthead-subtitle {
+      font-size: 1.18rem;
+      color: var(--ink-secondary);
+      max-width: 960px;
+      line-height: 1.75;
+      margin-bottom: 2.5rem;
+    }
+
+    /* KPI Strip */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border-top: 1px solid var(--border-hairline);
+      border-left: 1px solid var(--border-hairline);
+      background: var(--bg-paper);
+    }
+
+    .kpi-cell {
+      padding: 1.4rem 1.25rem;
+      border-right: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .kpi-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .kpi-value {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--ink-primary);
+      margin-bottom: 0.35rem;
+    }
+
+    .kpi-sub {
+      font-size: 0.78rem;
+      color: var(--ink-secondary);
+      font-family: var(--font-mono);
+    }
+
+    /* Section Layout */
+    .section {
+      padding: 4.5rem 0 1rem;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+      align-items: baseline;
+    }
+
+    .section-index {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--accent-terracotta);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      border-top: 2px solid var(--accent-terracotta);
+      padding-top: 0.6rem;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-lead {
+      font-size: 1.05rem;
+      color: var(--ink-secondary);
+      max-width: 880px;
+    }
+
+    /* Cards & Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.75rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .card {
+      background: var(--bg-paper);
+      border: 1px solid var(--border-hairline);
+      padding: 1.85rem;
+      position: relative;
+    }
+
+    .card-accent-top {
+      border-top: 3px solid var(--accent-terracotta);
+    }
+
+    .card-emerald-top {
+      border-top: 3px solid var(--accent-emerald);
+    }
+
+    .card-cobalt-top {
+      border-top: 3px solid var(--accent-cobalt);
+    }
+
+    .card-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.55rem;
+      background: var(--bg-subtle);
+      color: var(--ink-primary);
+      margin-bottom: 0.85rem;
+      font-weight: 600;
+    }
+
+    .card h3 {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      margin-bottom: 0.75rem;
+      color: var(--ink-primary);
+    }
+
+    .card p {
+      color: var(--ink-secondary);
+      font-size: 0.94rem;
+      margin-bottom: 0.9rem;
+    }
+
+    /* Dark Control Room Blueprint Panel */
+    .blueprint-panel {
+      background: var(--bg-slate);
+      color: #F8FAFC;
+      padding: 2.5rem;
+      border-radius: 2px;
+      margin: 2rem 0 2.75rem;
+      border: 1px solid #334155;
+      box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.35);
+    }
+
+    .blueprint-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 1rem;
+      margin-bottom: 1.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #94A3B8;
+    }
+
+    .blueprint-badge {
+      background: rgba(200, 75, 49, 0.2);
+      color: #FCA5A5;
+      border: 1px solid rgba(200, 75, 49, 0.5);
+      padding: 0.25rem 0.65rem;
+      font-size: 0.72rem;
+    }
+
+    /* Formula Block */
+    .formula-box {
+      background: var(--bg-subtle);
+      border-left: 3px solid var(--accent-terracotta);
+      padding: 1.15rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      color: var(--ink-primary);
+      margin: 1rem 0;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+
+    .formula-box-dark {
+      background: #1E293B;
+      border-left: 3px solid #38BDF8;
+      padding: 1.15rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      color: #E2E8F0;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+
+    /* Code Reference Chip */
+    .code-ref {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      background: #F1F5F9;
+      color: #0F172A;
+      padding: 0.15rem 0.45rem;
+      border: 1px solid #CBD5E1;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-paper);
+      border: 1px solid var(--border-hairline);
+      margin: 1.5rem 0 2.5rem;
+      font-size: 0.9rem;
+    }
+
+    .data-table th {
+      background: var(--bg-subtle);
+      text-align: left;
+      padding: 0.95rem 1.15rem;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-primary);
+      border-bottom: 2px solid var(--border-strong);
+    }
+
+    .data-table td {
+      padding: 0.95rem 1.15rem;
+      border-bottom: 1px solid var(--border-hairline);
+      vertical-align: top;
+      color: var(--ink-secondary);
+    }
+
+    .data-table tr:hover td {
+      background: #FCFBF9;
+    }
+
+    /* Lexicographical Tier List */
+    .tier-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin: 1.5rem 0 2.5rem;
+    }
+
+    .tier-row {
+      display: grid;
+      grid-template-columns: 72px 260px 110px 1fr 210px;
+      align-items: center;
+      background: var(--bg-paper);
+      border: 1px solid var(--border-hairline);
+      padding: 0.85rem 1.25rem;
+      gap: 1rem;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .tier-row:hover {
+      transform: translateX(4px);
+      border-color: var(--accent-terracotta);
+    }
+
+    .tier-rank {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #FFFFFF;
+      background: var(--ink-primary);
+      padding: 0.3rem 0.6rem;
+      text-align: center;
+    }
+
+    .tier-rank.l1 { background: var(--accent-terracotta); }
+    .tier-rank.l3 { background: var(--accent-emerald); }
+    .tier-rank.l5 { background: var(--accent-cobalt); }
+    .tier-rank.l9 { background: var(--accent-violet); }
+
+    .tier-name {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 0.86rem;
+      color: var(--ink-primary);
+    }
+
+    .tier-dir {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      padding: 0.2rem 0.5rem;
+      background: var(--bg-subtle);
+      text-align: center;
+      color: var(--ink-primary);
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 2px solid var(--border-strong);
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--ink-muted);
+    }
+
+    @media (max-width: 1024px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .section-header { grid-template-columns: 1fr; gap: 0.75rem; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .tier-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <span class="nav-dot"></span>
+      <span>OPENEMS CONTROL THEORY MONOGRAPH // MPC DEEP DIVE</span>
+    </div>
+    <div class="nav-links">
+      <a href="#sec-01">01. 双速率级联架构</a>
+      <a href="#sec-02">02. 多模态预测与风险鲁棒</a>
+      <a href="#sec-03">03. 变步长时域与状态空间</a>
+      <a href="#sec-04">04. 九维字典序与进化热启动</a>
+      <a href="#sec-05">05. 1Hz 闭环反馈校正</a>
+      <a href="#sec-06">06. 进化仿真 vs MILP 对比</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Masthead -->
+    <header class="masthead">
+      <div class="masthead-meta">
+        <span>ARCHITECTURAL RESEARCH REPORT · VOL. II</span>
+        <span>SOURCE BASELINE: /opt/openems/source · 18 MPC BUNDLES</span>
+        <span>OCTOBER 18, 2026</span>
+      </div>
+      <h1 class="masthead-title">OpenEMS 模型预测控制 (MPC)<br/>深度剖析与滚动优化架构报告</h1>
+      <p class="masthead-subtitle">
+        从现代控制论的三大基石——<strong>预测模型 (Prediction Model)</strong>、<strong>滚动时域优化 (Receding Horizon Optimization)</strong> 与 <strong>实时反馈校正 (Feedback Correction)</strong> 出发，深入拆解 OpenEMS 如何构建一套 <strong>15 分钟慢速外环离散进化调度 (`io.jenetics` + `EnergyFlow.Model`)</strong> 与 <strong>1000 毫秒快速内环单纯形线性规划 (`SimplexSolver`)</strong> 协同工作的工业级双速率级联经济模型预测控制 (Dual-Rate Cascade EMPC) 体系。
+      </p>
+
+      <div class="kpi-grid">
+        <div class="kpi-cell">
+          <div class="kpi-label">外环滚动周期 (Outer Loop)</div>
+          <div class="kpi-value">15 min</div>
+          <div class="kpi-sub">30s 首步锁定 + 渐进演化</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-label">内环反馈周期 (Inner Loop)</div>
+          <div class="kpi-value">1000 ms</div>
+          <div class="kpi-sub">1Hz 状态反馈 + Simplex LP</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-label">变步长预测时域 (Horizon)</div>
+          <div class="kpi-value">24–48 h</div>
+          <div class="kpi-sub">前 6h Quarter + 远期 Hour</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-label">多模态预测器 (Predictors)</div>
+          <div class="kpi-value">5 Models</div>
+          <div class="kpi-sub">Persistence/Linear/Cluster/LSTM</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-label">字典序代价维度 (Fitness)</div>
+          <div class="kpi-value">9 Tiers</div>
+          <div class="kpi-sub">硬约束优先 · 1.17 损耗折算</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-label">种群与算力隔离 (Jenetics)</div>
+          <div class="kpi-value">300 Pop</div>
+          <div class="kpi-sub">N-1 核 · MIN_PRIORITY</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Section 01 -->
+    <section id="sec-01" class="section">
+      <div class="section-header">
+        <div class="section-index">01 // CONTROL THEORY</div>
+        <div>
+          <h2 class="section-title">控制论基石：双速率级联经济模型预测控制 (Dual-Rate Cascade EMPC)</h2>
+          <p class="section-lead">
+            不同于化工过程控制中以稳态工作点跟踪（Setpoint Tracking）为目标的二次型 MPC，储能能量管理系统属于典型的 <strong>经济模型预测控制 (Economic MPC, EMPC)</strong>——其目标函数直接衡量分时购电成本、余电上网收益与电网需量越限惩罚，且同时包含离散控制模式（充电/锁电/自平衡）与连续功率变量。
+          </p>
+        </div>
+      </div>
+
+      <div class="blueprint-panel">
+        <div class="blueprint-header">
+          <span>FIG 1.1 // OPENEMS DUAL-RATE CASCADE MPC CLOSED-LOOP TOPOLOGY</span>
+          <span class="blueprint-badge">15-MIN OUTER RHC + 1000MS INNER FEEDBACK</span>
+        </div>
+
+        <svg viewBox="0 0 1160 450" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#38BDF8"/>
+            </marker>
+            <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#F59E0B"/>
+            </marker>
+            <marker id="arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#10B981"/>
+            </marker>
+          </defs>
+
+          <!-- Background Grid -->
+          <rect x="10" y="10" width="1140" height="430" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
+
+          <!-- Layer 1: Disturbance & Prediction -->
+          <rect x="30" y="30" width="290" height="390" rx="4" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+          <text x="50" y="60" fill="#38BDF8" font-family="JetBrains Mono" font-size="12" font-weight="600">1. EXOGENOUS FORECASTING LAYER</text>
+          
+          <rect x="50" y="80" width="250" height="82" rx="3" fill="#0F172A" stroke="#475569"/>
+          <text x="65" y="105" fill="#F8FAFC" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">PV 发电预测 (Production)</text>
+          <text x="65" y="126" fill="#94A3B8" font-family="JetBrains Mono" font-size="11">LinearModel + SnowStateMachine</text>
+          <text x="65" y="145" fill="#38BDF8" font-family="JetBrains Mono" font-size="11">_sum/ProductionActivePower</text>
+
+          <rect x="50" y="178" width="250" height="90" rx="3" fill="#0F172A" stroke="#475569"/>
+          <text x="65" y="203" fill="#F8FAFC" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">负荷聚类与深度学习预测</text>
+          <text x="65" y="224" fill="#94A3B8" font-family="JetBrains Mono" font-size="11">AutoKMeans + ProfileSwitcher(0.2)</text>
+          <text x="65" y="242" fill="#94A3B8" font-family="JetBrains Mono" font-size="11">LstmPredictor (Season + Trend)</text>
+          <text x="65" y="258" fill="#38BDF8" font-family="JetBrains Mono" font-size="11">_sum/UnmanagedConsumption</text>
+
+          <rect x="50" y="284" width="250" height="114" rx="3" fill="#0F172A" stroke="#475569"/>
+          <text x="65" y="309" fill="#F8FAFC" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">动态电价与风险膨胀修正</text>
+          <text x="65" y="330" fill="#94A3B8" font-family="JetBrains Mono" font-size="11">TariffManager (Day-Ahead TOU)</text>
+          <text x="65" y="350" fill="#F59E0B" font-family="JetBrains Mono" font-size="11">E_risk = E_cons*(1 + 0.2*p_norm³)</text>
+          <text x="65" y="370" fill="#10B981" font-family="JetBrains Mono" font-size="11">Multi-Res: 6h Quarter + Hour</text>
+
+          <!-- Layer 2: Outer Receding Horizon Loop -->
+          <rect x="365" y="30" width="385" height="260" rx="4" fill="#1E293B" stroke="#F59E0B" stroke-width="1.5"/>
+          <text x="385" y="60" fill="#F59E0B" font-family="JetBrains Mono" font-size="12" font-weight="600">2. OUTER LOOP: 15-MIN RECEDING HORIZON EMPC</text>
+
+          <rect x="385" y="80" width="345" height="85" rx="3" fill="#0F172A" stroke="#475569"/>
+          <text x="400" y="104" fill="#F8FAFC" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">前向状态转移仿真器 (Simulator &amp; EnergyFlow)</text>
+          <text x="400" y="125" fill="#94A3B8" font-family="JetBrains Mono" font-size="11">x(k+1) = x(k) - E_ess(k) | E_surplus = E_pv - E_cons</text>
+          <text x="400" y="145" fill="#38BDF8" font-family="JetBrains Mono" font-size="11">Composable ESH: ESS + EVSE + Heat + BraiinsOS</text>
+
+          <rect x="385" y="180" width="345" height="92" rx="3" fill="#0F172A" stroke="#475569"/>
+          <text x="400" y="204" fill="#F8FAFC" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">Jenetics 混合进化求解器 (Optimizer)</text>
+          <text x="400" y="225" fill="#94A3B8" font-family="JetBrains Mono" font-size="11">Warm-Start: PrevSchedule Shift + Valley Seeds</text>
+          <text x="400" y="244" fill="#F59E0B" font-family="JetBrains Mono" font-size="11">9-Tier Lexicographical Fitness · γ_eff = 1.17</text>
+          <text x="400" y="262" fill="#10B981" font-family="JetBrains Mono" font-size="11">t = 30s: Lock Period[0] (u₀*) &amp; Continue Evolving</text>
+
+          <!-- Layer 3: Inner 1000ms Real-Time Loop -->
+          <rect x="795" y="30" width="335" height="260" rx="4" fill="#1E293B" stroke="#10B981" stroke-width="1.5"/>
+          <text x="815" y="60" fill="#10B981" font-family="JetBrains Mono" font-size="12" font-weight="600">3. INNER LOOP: 1000MS STATE FEEDBACK</text>
+
+          <rect x="815" y="80" width="295" height="90" rx="3" fill="#0F172A" stroke="#475569"/>
+          <text x="830" y="104" fill="#F8FAFC" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">首步执行与状态纠偏 (Utils.calculateApplyMode)</text>
+          <text x="830" y="125" fill="#94A3B8" font-family="JetBrains Mono" font-size="11">P_bal(t) = P_grid(t) + P_ess(t)</text>
+          <text x="830" y="144" fill="#10B981" font-family="JetBrains Mono" font-size="11">Real-time PeakShaving / SoC Override</text>
+          <text x="830" y="160" fill="#38BDF8" font-family="JetBrains Mono" font-size="11">GridOptimizedCharge P_limit(t) Slope</text>
+
+          <rect x="815" y="185" width="295" height="87" rx="3" fill="#0F172A" stroke="#475569"/>
+          <text x="830" y="209" fill="#F8FAFC" font-family="Plus Jakarta Sans" font-size="13" font-weight="600">单纯形功率求解器 (EssPower Simplex LP)</text>
+          <text x="830" y="230" fill="#94A3B8" font-family="JetBrains Mono" font-size="11">Apache Commons Math3 SimplexSolver</text>
+          <text x="830" y="249" fill="#F59E0B" font-family="JetBrains Mono" font-size="11">6D [P_L1..Q_L3] + 4-Stage Fallback</text>
+
+          <!-- Physical Plant & Feedback Bus -->
+          <rect x="365" y="325" width="765" height="95" rx="4" fill="#0F172A" stroke="#38BDF8" stroke-width="1.5"/>
+          <text x="385" y="352" fill="#38BDF8" font-family="JetBrains Mono" font-size="12" font-weight="600">4. PHYSICAL PLANT &amp; DOUBLE-BUFFERED PROCESS IMAGE (_sum / Ess / Meter / Evcs)</text>
+          <text x="385" y="378" fill="#E2E8F0" font-family="Plus Jakarta Sans" font-size="13">• 1Hz 实时状态反馈：实测 P_grid(t), P_pv(t), P_ess(t), SoC(t) 闭合内环扰动抑制，消除日内云层遮挡与负荷突变误差</text>
+          <text x="385" y="400" fill="#E2E8F0" font-family="Plus Jakarta Sans" font-size="13">• 15min 滚动初值刷新：以最新实测 SoC(t_k) 重置 GlobalOptimizationContext.Ess.currentEnergy，触发 ProfileSwitcher 切换日内负荷簇</text>
+
+          <!-- Connectors -->
+          <line x1="320" y1="160" x2="360" y2="160" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+          <line x1="750" y1="130" x2="790" y2="130" stroke="#F59E0B" stroke-width="2.2" marker-end="url(#arrow-amber)"/>
+          <text x="753" y="118" fill="#F59E0B" font-family="JetBrains Mono" font-size="11">u₀*</text>
+          <line x1="960" y1="272" x2="960" y2="320" stroke="#10B981" stroke-width="2.2" marker-end="url(#arrow-emerald)"/>
+          <line x1="870" y1="325" x2="870" y2="292" stroke="#38BDF8" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow-cyan)"/>
+          <line x1="550" y1="325" x2="550" y2="295" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow-amber)"/>
+        </svg>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-accent-top">
+          <span class="card-tag">PILLAR 01 · PREDICTION MODEL</span>
+          <h3>可组合黑盒状态转移模型</h3>
+          <p>
+            传统线性 MPC 要求将所有被控对象简化为状态空间矩阵 $\mathbf{x}_{k+1} = A\mathbf{x}_k + B\mathbf{u}_k$。而 OpenEMS 通过 <span class="code-ref">EnergyScheduleHandler</span> 接口允许每个设备（储能、充电桩集群、热泵、算力负载）注册独立的 Java 前向仿真函数 <span class="code-ref">simulate()</span>，在 <span class="code-ref">EnergyFlow.Model</span> 中精确求解非线性功率边界与削峰限流。
+          </p>
+        </div>
+        <div class="card card-emerald-top">
+          <span class="card-tag">PILLAR 02 · RECEDING HORIZON</span>
+          <h3>变步长滚动时域与热启动</h3>
+          <p>
+            每 15 分钟重构一次 <span class="code-ref">GlobalOptimizationContext</span>，采用 <strong>前 6 小时 15 分钟高分辨率 (`Quarter`) + 远期 60 分钟聚合 (`Hour`)</strong> 的变步长时域，并通过 <span class="code-ref">InitialPopulationUtils</span> 将上一周期最优解左移一步注入初始种群，实现经典 MPC 热启动 (Warm-Start)。
+          </p>
+        </div>
+        <div class="card card-cobalt-top">
+          <span class="card-tag">PILLAR 03 · FEEDBACK CORRECTION</span>
+          <h3>仅执行首步 $u_0^*$ + 1Hz 纠偏</h3>
+          <p>
+            外环优化出的未来 24 小时模式序列中，仅有第 0 个周期 <span class="code-ref">getCurrentPeriod()</span> 被下发给 <span class="code-ref">TimeOfUseTariffControllerImpl</span>。内环在每个 1000ms 扫描周期根据实测电网功率与实时 SoC 动态修正充放电设定值，彻底吸收预测偏差。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 02 -->
+    <section id="sec-02" class="section">
+      <div class="section-header">
+        <div class="section-index">02 // FORECASTING &amp; ROBUSTNESS</div>
+        <div>
+          <h2 class="section-title">多模态预测引擎与随机鲁棒修正 (`io.openems.edge.predictor.*`)</h2>
+          <p class="section-lead">
+            OpenEMS 在 <span class="code-ref">io.openems.edge.predictor.api.mlcore</span> 中自研了一套零外部重依赖的纯 Java 机器学习内核（含 DataFrame、RandomForest、AutoKMeans、BernoulliNaiveBayes 与高斯平滑核），并在上层构建了 5 类预测器与价格弹性风险膨胀机制。
+          </p>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>预测器模块 (OSGi Bundle)</th>
+            <th>核心算法与特征工程</th>
+            <th>日内反馈/异常修正机制 (Observer Correction)</th>
+            <th>适用通道与场景</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Predictor.Production.LinearModel</strong><br/><span class="code-ref">PredictorProductionLinearModelImpl</span></td>
+            <td>融合气象预报（全局水平辐射、直散射辐照、环境温度）与日内时间正余弦编码 (<span class="code-ref">TimeOfDaySinCosFeatureTransformer</span>) 的多变量回归</td>
+            <td><strong>积雪状态机 (<span class="code-ref">SnowStateMachine.java</span>)</strong>：当检测到降雪且未来 90% 时段积雪深度 &gt; 0 时切入 <span class="code-ref">State.SNOW</span> 压制虚高预测；实测出力恢复后自动解除</td>
+            <td><span class="code-ref">_sum/ProductionActivePower</span><br/>接入外部气象源的光伏场站</td>
+          </tr>
+          <tr>
+            <td><strong>Predictor.ProfileClusteringModel</strong><br/><span class="code-ref">PredictorProfileClusteringModelImpl</span></td>
+            <td>离线使用 <span class="code-ref">AutoKMeansClusterer</span> 聚类历史日负荷曲线，在线通过 <span class="code-ref">BernoulliNaiveBayesClassifier</span>（星期/工作日特征）预测当日画像簇</td>
+            <td><strong>日内画像动态切换器 (<span class="code-ref">ProfileSwitcher.java</span>)</strong>：日内实时比对今日实测负荷序列与各簇的平方误差，当改善量超越簇间距离的 <strong>$\alpha = 20\%$</strong> 阈值时，盘中实时切换负荷预测曲线</td>
+            <td><span class="code-ref">_sum/UnmanagedConsumptionActivePower</span><br/>工商业多班次/周末差异显著负荷</td>
+          </tr>
+          <tr>
+            <td><strong>Predictor.Lstm</strong><br/><span class="code-ref">PredictorLstmImpl</span></td>
+            <td>纯 Java 手写门控 LSTM 循环神经网络 (<span class="code-ref">Cell.java</span>, <span class="code-ref">MatrixWeight.java</span>)，支持自适应学习率 (<span class="code-ref">AdaptiveLearningRate</span>) 与离群点清洗管道</td>
+            <td><strong>双模型解耦验证 (<span class="code-ref">ValidationSeasonalityModel</span> + <span class="code-ref">ValidationTrendModel</span>)</strong>：将周期性基波与日内短期趋势分别推理后合成，在线评估 RMSE 择优激活</td>
+            <td>高非线性复合负荷与园区级总功率预测</td>
+          </tr>
+          <tr>
+            <td><strong>Predictor.SimilardayModel</strong> &amp;<br/><strong>Predictor.PersistenceModel</strong></td>
+            <td>同星期多周历史均值回溯 (<span class="code-ref">Similarday</span>) 与 24 小时前滞后复制 $\hat{y}(t) = y(t - 24\text{h})$ (<span class="code-ref">Persistence</span>)</td>
+            <td>零训练冷启动兜底：当新站点历史数据不足以训练聚类或回归模型时，由 <span class="code-ref">PredictorManager</span> 自动降级调用</td>
+            <td>全通道通用兜底预测基线</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="grid-2">
+        <div class="card card-accent-top">
+          <span class="card-tag">STOCHASTIC ROBUSTNESS · ENVIRONMENT.JAVA</span>
+          <h3>价格弹性三次方风险膨胀函数 (Risk-Adjusted Consumption)</h3>
+          <p>
+            在动态电价尖峰时刻，负荷预测偏低比偏高具有强烈的不对称经济惩罚（一旦电池提前放空，系统将被迫以全天最高电价从电网买电）。OpenEMS 在 <span class="code-ref">Environment.java#L10-L15</span> 与 <span class="code-ref">PeriodsBuilder.java#L250-L260</span> 中对归一化电价 $\tilde{\pi}_{\text{buy}}(k) \in [0, 1]$ 施加三次方风险裕度：
+          </p>
+          <div class="formula-box">
+            p_norm(k) = (π_buy(k) - π_min) / (π_max - π_min) ∈ [0, 1]<br/>
+            E_cons_risk(k) = round( E_cons_actual(k) × [ 1.0 + 0.2 × p_norm(k)³ ] )
+          </div>
+          <p>
+            • <strong>谷电时段 ($\tilde{\pi}_{\text{buy}} = 0$)</strong>：膨胀因子为 $1.00$，按无偏预测值调度；<br/>
+            • <strong>平段电价 ($\tilde{\pi}_{\text{buy}} = 0.5$)</strong>：膨胀因子为 $1.025$（仅增加 $2.5\%$ 缓冲）；<br/>
+            • <strong>尖峰电价 ($\tilde{\pi}_{\text{buy}} = 1.0$)</strong>：膨胀因子跃升至 <strong>$1.20$（预留 $20\%$ 安全放电裕度）</strong>，确保电池锁住足够电量穿越价格洪峰。
+          </p>
+        </div>
+
+        <div class="card card-cobalt-top">
+          <span class="card-tag">NEGATIVE PRICE HANDLING · PERIODSBUILDER.JAVA</span>
+          <h3>负电价区间正平移变换 (Positive Price Shifting)</h3>
+          <p>
+            欧洲电力现货市场（如 Entso-E、Awattar）经常出现负电价（$\pi_{\text{buy}} < 0$）。若直接将负电价代入购电成本公式 $\text{Cost} = E_{\text{buy}} \cdot \pi_{\text{buy}}$，加上 $1.17$ 损耗系数后会导致负数乘法方向反转，甚至诱导优化器无意义地损耗买电。为此 <span class="code-ref">PeriodsBuilder.calculatePositiveShift()</span> 执行保序正平移：
+          </p>
+          <div class="formula-box">
+            Δ_shift = |π_min| + (π_max - π_min) / 2.0   (当 π_min &lt; 0)<br/>
+            π_shifted(k) = π_buy(k) + Δ_shift &gt; 0
+          </div>
+          <p>
+            该变换严格保持了全天不同时段电价的相对差价序关系，同时确保 <strong>“不从电网买电（Cost = 0）”永远优于任何非必要的损耗性电网买电行为</strong>。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 03 -->
+    <section id="sec-03" class="section">
+      <div class="section-header">
+        <div class="section-index">03 // STATE SPACE &amp; HORIZON</div>
+        <div>
+          <h2 class="section-title">变步长多分辨率时域与可组合状态空间方程</h2>
+          <p class="section-lead">
+            为了在有限的边缘 CPU 算力下兼顾 <strong>近期 15 分钟级高精度控制</strong> 与 <strong>跨昼夜 24–48 小时全局视野</strong>，OpenEMS 在 <span class="code-ref">GocUtils.java</span> 与 <span class="code-ref">PeriodsBuilder.java</span> 中实现了变步长时域离散化，并通过 <span class="code-ref">EnergyFlow.Model</span> 严格闭合每一步的能量守恒。
+          </p>
+        </div>
+      </div>
+
+      <div class="blueprint-panel">
+        <div class="blueprint-header">
+          <span>FIG 3.1 // MULTI-RESOLUTION HORIZON DISCRETIZATION &amp; 24H MPC TRAJECTORY SIMULATION</span>
+          <span class="blueprint-badge">N_QUARTER (15M) + N_HOUR (60M) COMPRESSION</span>
+        </div>
+
+        <svg viewBox="0 0 1160 410" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="1140" height="390" fill="#0F172A" stroke="#1E293B"/>
+
+          <!-- Top Timeline Bar: Multi-Resolution Discretization -->
+          <text x="40" y="42" fill="#38BDF8" font-family="JetBrains Mono" font-size="12" font-weight="600">HORIZON DISCRETIZATION: switchIndex = 6 * 4 + (60 - minute) / 15 ∈ [25, 28] Quarters</text>
+          
+          <!-- Quarter Blocks (First 6.5 Hours) -->
+          <g transform="translate(40, 55)">
+            <rect x="0" y="0" width="38" height="28" fill="#C84B31" stroke="#F8FAFC" stroke-width="1.5"/>
+            <text x="6" y="18" fill="#FFFFFF" font-family="JetBrains Mono" font-size="10" font-weight="700">k=0*</text>
+            <!-- 25 small quarter cells -->
+            <rect x="42" y="0" width="340" height="28" fill="#1E293B" stroke="#38BDF8" stroke-width="1.2"/>
+            <line x1="69" y1="0" x2="69" y2="28" stroke="#334155"/><line x1="96" y1="0" x2="96" y2="28" stroke="#334155"/>
+            <line x1="123" y1="0" x2="123" y2="28" stroke="#334155"/><line x1="150" y1="0" x2="150" y2="28" stroke="#334155"/>
+            <line x1="177" y1="0" x2="177" y2="28" stroke="#334155"/><line x1="204" y1="0" x2="204" y2="28" stroke="#334155"/>
+            <line x1="231" y1="0" x2="231" y2="28" stroke="#334155"/><line x1="258" y1="0" x2="258" y2="28" stroke="#334155"/>
+            <line x1="285" y1="0" x2="285" y2="28" stroke="#334155"/><line x1="312" y1="0" x2="312" y2="28" stroke="#334155"/>
+            <line x1="339" y1="0" x2="339" y2="28" stroke="#334155"/><line x1="366" y1="0" x2="366" y2="28" stroke="#334155"/>
+            <text x="95" y="18" fill="#38BDF8" font-family="JetBrains Mono" font-size="11">Period.Quarter (Δt = 15 min · k = 1..25)</text>
+
+            <!-- Hour Blocks (Remaining 18 Hours) -->
+            <rect x="388" y="0" width="690" height="28" fill="#1E293B" stroke="#F59E0B" stroke-width="1.2"/>
+            <line x1="445" y1="0" x2="445" y2="28" stroke="#475569"/><line x1="502" y1="0" x2="502" y2="28" stroke="#475569"/>
+            <line x1="559" y1="0" x2="559" y2="28" stroke="#475569"/><line x1="616" y1="0" x2="616" y2="28" stroke="#475569"/>
+            <line x1="673" y1="0" x2="673" y2="28" stroke="#475569"/><line x1="730" y1="0" x2="730" y2="28" stroke="#475569"/>
+            <line x1="787" y1="0" x2="787" y2="28" stroke="#475569"/><line x1="844" y1="0" x2="844" y2="28" stroke="#475569"/>
+            <line x1="901" y1="0" x2="901" y2="28" stroke="#475569"/><line x1="958" y1="0" x2="958" y2="28" stroke="#475569"/>
+            <line x1="1015" y1="0" x2="1015" y2="28" stroke="#475569"/>
+            <text x="565" y="18" fill="#F59E0B" font-family="JetBrains Mono" font-size="11">Period.Hour (Δt = 60 min Aggregated · k = 26..43) — Search Space Reduced by 55%</text>
+          </g>
+
+          <!-- Trajectory Plot Area -->
+          <rect x="40" y="105" width="1078" height="225" fill="#0B1120" stroke="#334155"/>
+          <!-- Horizontal Grid Lines -->
+          <line x1="40" y1="150" x2="1118" y2="150" stroke="#1E293B" stroke-dasharray="3 3"/>
+          <line x1="40" y1="195" x2="1118" y2="195" stroke="#1E293B" stroke-dasharray="3 3"/>
+          <line x1="40" y1="240" x2="1118" y2="240" stroke="#1E293B" stroke-dasharray="3 3"/>
+          <line x1="40" y1="285" x2="1118" y2="285" stroke="#1E293B" stroke-dasharray="3 3"/>
+
+          <!-- Dynamic Price Curve (Amber Step Curve) -->
+          <path d="M 40 250 L 160 250 L 160 295 L 310 295 L 310 165 L 520 165 L 520 275 L 780 275 L 780 135 L 980 135 L 980 245 L 1118 245" fill="none" stroke="#F59E0B" stroke-width="2" stroke-dasharray="5 3"/>
+          
+          <!-- PV Surplus Bell Curve (Yellow/Green Fill) -->
+          <path d="M 420 328 Q 640 90 840 328 Z" fill="rgba(16, 185, 129, 0.16)" stroke="#10B981" stroke-width="1.8"/>
+
+          <!-- Optimal SoC Trajectory x_ess*(k) (Cyan Bold Curve) -->
+          <path d="M 40 270 L 160 270 L 310 185 L 430 185 L 520 260 L 620 260 L 780 130 L 980 285 L 1118 285" fill="none" stroke="#38BDF8" stroke-width="3"/>
+
+          <!-- Uncontrolled Early Full SoC (Red Dashed Comparison) -->
+          <path d="M 520 260 L 630 130 L 780 130" fill="none" stroke="#EF4444" stroke-width="2" stroke-dasharray="3 3"/>
+          <text x="535" y="148" fill="#FCA5A5" font-family="JetBrains Mono" font-size="10">无预测充电: 11:30 提前满电触发弃光</text>
+          <text x="645" y="215" fill="#38BDF8" font-family="JetBrains Mono" font-size="10">LIMIT_CHARGE 预测斜率受控轨迹</text>
+
+          <!-- Mode Sequence Ribbon at Bottom -->
+          <g transform="translate(40, 342)">
+            <rect x="0" y="0" width="120" height="26" fill="#334155"/>
+            <text x="18" y="17" fill="#E2E8F0" font-family="JetBrains Mono" font-size="10">BALANCING</text>
+
+            <rect x="122" y="0" width="148" height="26" fill="#1D4ED8"/>
+            <text x="145" y="17" fill="#FFFFFF" font-family="JetBrains Mono" font-size="10" font-weight="600">CHARGE_GRID (谷电)</text>
+
+            <rect x="272" y="0" width="120" height="26" fill="#6D28D9"/>
+            <text x="280" y="17" fill="#FFFFFF" font-family="JetBrains Mono" font-size="10">DELAY_DISCHARGE</text>
+
+            <rect x="394" y="0" width="126" height="26" fill="#0F766E"/>
+            <text x="405" y="17" fill="#FFFFFF" font-family="JetBrains Mono" font-size="10">BALANCING (早峰放电)</text>
+
+            <rect x="522" y="0" width="256" height="26" fill="#047857"/>
+            <text x="565" y="17" fill="#FFFFFF" font-family="JetBrains Mono" font-size="10" font-weight="600">DELAY_CHARGE + LIMIT_CHARGE (午间消纳)</text>
+
+            <rect x="780" y="0" width="200" height="26" fill="#C84B31"/>
+            <text x="805" y="17" fill="#FFFFFF" font-family="JetBrains Mono" font-size="10" font-weight="600">BALANCING (晚尖峰放电支撑)</text>
+
+            <rect x="982" y="0" width="96" height="26" fill="#334155"/>
+            <text x="995" y="17" fill="#E2E8F0" font-family="JetBrains Mono" font-size="10">BALANCING</text>
+          </g>
+
+          <!-- Legend -->
+          <text x="55" y="128" fill="#38BDF8" font-family="JetBrains Mono" font-size="11">━━ 最优储能状态轨迹 SoC*(k)</text>
+          <text x="275" y="128" fill="#F59E0B" font-family="JetBrains Mono" font-size="11">╌╌ 动态购电电价 π_buy(k)</text>
+          <text x="485" y="128" fill="#10B981" font-family="JetBrains Mono" font-size="11">▲▲ 光伏净盈余功率预测 E_surplus(k)</text>
+        </svg>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <span class="card-tag">ENERGYFLOW.MODEL · PER-STEP SOLVER</span>
+          <h3>单步能量守恒与边界钳位状态机</h3>
+          <p>
+            在每一个预测步 $k$，<span class="code-ref">EnergyFlow.Model.from(gsc, period)</span> 先根据当前可用电量 $x_{\text{ess}}(k)$ 与逆变器最大功率计算单步充放电能量上限：
+          </p>
+          <div class="formula-box">
+            E_ess_maxCharge(k) = min( P_maxCharge × Δt_k,  E_total - x_ess(k) )<br/>
+            E_ess_maxDischarge(k) = min( P_maxDischarge × Δt_k,  x_ess(k) )<br/>
+            E_surplus(k) = E_prod(k) - [ E_unmanaged(k) + Σ E_managed_m(k) ]
+          </div>
+          <p>
+            当控制器调用 <span class="code-ref">ef.setEss(target)</span> 时，模型自动将其钳位在电网最大买电/卖电功率与储能物理边界构成的<strong>四维可行域</strong>内，并由 <span class="code-ref">ef.solve()</span> 一步闭合电网交换量 $E_{\text{grid}}(k)$ 与弃光量 $E_{\text{excess}}(k)$。
+          </p>
+        </div>
+
+        <div class="card">
+          <span class="card-tag">MULTI-ASSET COMPOSABILITY · ESH</span>
+          <h3>多类柔性资产统一协同调度接口</h3>
+          <p>
+            OpenEMS 的 MPC 并非仅针对单一电池，而是将全站所有实现 <span class="code-ref">EnergySchedulable</span> 的组件编排进同一条时间步流水线：
+          </p>
+          <p>
+            1. <strong>储能系统 (<span class="code-ref">Controller.Ess.Time-Of-Use-Tariff</span>)</strong>：决策 `BALANCING` / `DELAY_DISCHARGE` / `CHARGE_GRID` / `LIMIT_CHARGE` / `DISCHARGE_GRID`；<br/>
+            2. <strong>智能充电桩集群 (<span class="code-ref">Controller.Evse.Cluster</span>)</strong>：通过 <span class="code-ref">JointModes</span> 联合优化多枪充电模式（`MINIMUM` / `SURPLUS` / `FORCE`），并在 <span class="code-ref">SingleScheduleContext</span> 中追踪每辆车的累计充入电量 $x_{\text{evse}}(k)$；<br/>
+            3. <strong>电制热与柔性算力 (<span class="code-ref">Heat.Askoma</span> / <span class="code-ref">Heat.MyPv</span> / <span class="code-ref">BraiinsOs</span>)</strong>：通过 <span class="code-ref">ef.addManagedConsumption(id, target)</span> 在低谷电价或光伏消纳期动态开启热泵与算力负载。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 04 -->
+    <section id="sec-04" class="section">
+      <div class="section-header">
+        <div class="section-index">04 // LEXICOGRAPHICAL FITNESS &amp; GA</div>
+        <div>
+          <h2 class="section-title">九维字典序适应度函数与混合进化滚动求解器</h2>
+          <p class="section-lead">
+            在工业 MPC 实践中，传统的加权求和目标函数 $J = w_1 J_{\text{cost}} + w_2 J_{\text{soft}} + w_3 J_{\text{switch}}$ 极易因电价剧烈波动导致权重失调。OpenEMS 在 <span class="code-ref">Fitness.java</span> 中创造性地采用 <strong>九维严格字典序比较器 (<span class="code-ref">DEFAULT_COMPARATOR</span>)</strong>，从根源上消除了惩罚系数调参难题。
+          </p>
+        </div>
+      </div>
+
+      <div class="tier-stack">
+        <div class="tier-row">
+          <span class="tier-rank l1">TIER 1</span>
+          <span class="tier-name">hardConstraintViolations</span>
+          <span class="tier-dir">MINIMIZE ↓</span>
+          <span>硬约束违背计数：包含突破 <span class="code-ref">GridBuySoftLimit</span>（§14a 需量红线）、满电态选定 <span class="code-ref">CHARGE_GRID</span>、单步能量流无解。任何硬违背 &gt; 0 的个体无条件劣于零违背个体。</span>
+          <span class="code-ref">Simulator.java#L145,L202</span>
+        </div>
+        <div class="tier-row">
+          <span class="tier-rank">TIER 2</span>
+          <span class="tier-name">constraintsAfterHard...</span>
+          <span class="tier-dir">CUSTOM ↕</span>
+          <span>紧随硬约束之后的控制器级刚性安全边界扩展槽 (<span class="code-ref">Position.AFTER_HARD_CONSTRAINT_VIOLATIONS</span>)。</span>
+          <span class="code-ref">Fitness.java#L46</span>
+        </div>
+        <div class="tier-row">
+          <span class="tier-rank l3">TIER 3</span>
+          <span class="tier-name">gridBuyCostScore</span>
+          <span class="tier-dir">MINIMIZE ↓</span>
+          <span><strong>核心经济目标</strong>：全时域购电成本评分 $\sum_k \pi_{\text{buy}}^{\text{shift}}(k) \cdot [E_{\text{grid}\to\text{cons}}(k) + \mathbf{1.17} \cdot E_{\text{grid}\to\text{ess}}(k)]$，显式计入 $17\%$ 充放电往返损耗门槛。</span>
+          <span class="code-ref">Simulator.java#L206-L221</span>
+        </div>
+        <div class="tier-row">
+          <span class="tier-rank">TIER 4</span>
+          <span class="tier-name">gridBuyEnergyWh</span>
+          <span class="tier-dir">MINIMIZE ↓</span>
+          <span>当电价恒定或购电成本评分相同时，最小化含损耗折算的物理总购电量 $\sum_k [E_{\text{grid}\to\text{cons}}(k) + 1.17 \cdot E_{\text{grid}\to\text{ess}}(k)]$。</span>
+          <span class="code-ref">Simulator.java#L223-L227</span>
+        </div>
+        <div class="tier-row">
+          <span class="tier-rank l5">TIER 5</span>
+          <span class="tier-name">targetTimeEnergyMissing</span>
+          <span class="tier-dir">MINIMIZE ↓</span>
+          <span>预测削峰目标时刻（<span class="code-ref">targetTimeByDay</span>）电池距离满电的缺口能量 $E_{\text{cap}} - x_{\text{ess}}(t_{\text{target}})$，确保午间消纳结束时电池充饱。</span>
+          <span class="code-ref">EnergyScheduler.java#L228</span>
+        </div>
+        <div class="tier-row">
+          <span class="tier-rank">TIER 6</span>
+          <span class="tier-name">gridSellRevenueScore</span>
+          <span class="tier-dir">MAXIMIZE ↑</span>
+          <span>最大化全时域余电上网售电收益 $\sum_k E_{\text{sell}}(k) \cdot \pi_{\text{sell}}(k)$（采用 <span class="code-ref">reversed()</span> 比较器）。</span>
+          <span class="code-ref">Simulator.java#L231-L238</span>
+        </div>
+        <div class="tier-row">
+          <span class="tier-rank">TIER 7</span>
+          <span class="tier-name">gridSellEnergyWh</span>
+          <span class="tier-dir">MAXIMIZE ↑</span>
+          <span>售电收益相同时，最大化余电上网物理总电量 $\sum_k E_{\text{sell}}(k)$。</span>
+          <span class="code-ref">Simulator.java#L239</span>
+        </div>
+        <div class="tier-row">
+          <span class="tier-rank">TIER 8</span>
+          <span class="tier-name">modePreferencePenalty</span>
+          <span class="tier-dir">MINIMIZE ↓</span>
+          <span>时间折现模式偏好惩罚 $\sum_{k=0}^{N-1} (N - k + 1) \sum_j \tilde{r}_j(u_{k,j})$，赋予近期周期更高权重，无经济差异时优先退回 <span class="code-ref">BALANCING</span>。</span>
+          <span class="code-ref">Simulator.java#L397-L420</span>
+        </div>
+        <div class="tier-row">
+          <span class="tier-rank l9">TIER 9</span>
+          <span class="tier-name">softConstraintViolations</span>
+          <span class="tier-dir">MINIMIZE ↓</span>
+          <span><strong>游程平方反比防抖惩罚 (<span class="code-ref">calculateRunLengthCost</span>)</strong>：$\text{round}(\sum_j \sum_{r \in \text{Runs}(j)} 1 / L_r^2)$，强力抑制相邻周期模式高频跳变 (Actuator Chattering)。</span>
+          <span class="code-ref">Simulator.java#L459-L480</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-emerald-top">
+          <span class="card-tag">MPC WARM-STARTING · INITIALPOPULATIONUTILS.JAVA</span>
+          <h3>三大先验种子注入与滚动时域热启动</h3>
+          <p>
+            遗传算法在純随机初始化下收敛较慢。OpenEMS 在 <span class="code-ref">InitialPopulationUtils.generateInitialPopulation()</span> 中构造了确定性热启动种群：
+          </p>
+          <p>
+            1. <strong>全自平衡基线 (<span class="code-ref">generateAllDefault</span>)</strong>：全时域基因置为 `0` (`BALANCING`)，确保优化器保底性能不低于传统自发自用控制器；<br/>
+            2. <strong>上一周期最优解平移 (<span class="code-ref">getScheduleFromPreviousResult</span>)</strong>：按时间戳映射上一轮 15 分钟周期求出的最优模式序列 $\{u_1^*, u_2^*, \dots\}$，在滚动窗口推进时直接继承历史演化成果；<br/>
+            3. <strong>电价波谷启发式探针 (<span class="code-ref">findValleyIndexes</span>)</strong>：自动识别未来电价曲线的所有局部极小值点，生成单点 `CHARGE_GRID` 与 `DELAY_DISCHARGE` 探针基因笛卡尔积。
+          </p>
+        </div>
+
+        <div class="card card-accent-top">
+          <span class="card-tag">REAL-TIME GUARANTEE · SIMULATOR.JAVA</span>
+          <h3>30 秒首步基因锁定与后台持续求精</h3>
+          <p>
+            为了防止在 15 分钟周期内因为遗传算法不断发现微弱改进而导致当前正在执行的控制模式反复跳变，<span class="code-ref">Simulator.runOptimization()</span> 实现了精妙的两阶段提交机制：
+          </p>
+          <div class="formula-box">
+            if (!isCurrentPeriodFixed &amp;&amp; Instant.now().isAfter(start + 30s)) {<br/>
+            &nbsp;&nbsp;onBestResult.accept(bestSchedule);<br/>
+            &nbsp;&nbsp;isCurrentPeriodFixed.set(true); // 锁定 k=0 基因 u₀*<br/>
+            }
+          </div>
+          <p>
+            在周期开始后的前 30 秒（或配置变更重调度时），进化引擎全力搜索包括当前周期 $k=0$ 在内的全局最优解；一旦满 30 秒，立即发布首步决策并将 <span class="code-ref">isCurrentPeriodFixed</span> 置为 `true`——此后解码器 <span class="code-ref">EshCodec</span> 强制将第 0 步固定为已发布模式，而后台 `N-1` 个低优线程继续演化未来时段 $k \ge 1$ 直至收敛 (<span class="code-ref">Limits.bySteadyFitness(500)</span>)，为下一轮滚动热启动储备最优轨迹！
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 05 -->
+    <section id="sec-05" class="section">
+      <div class="section-header">
+        <div class="section-index">05 // 1HZ FEEDBACK LOOP</div>
+        <div>
+          <h2 class="section-title">1000ms 实时闭环反馈校正与解析式预测充电曲线</h2>
+          <p class="section-lead">
+            15 分钟粒度的能量块模型无法预知秒级的云层遮挡或大功率电机启动。OpenEMS 通过 <span class="code-ref">TimeOfUseTariffControllerImpl.run()</span> 与 <span class="code-ref">Utils.calculateApplyMode()</span> 在每个 1000ms 扫描周期将离散模式 $u_0^*$ 实时解算为精确的逆变器有功功率指令 $P_{\text{ess}}^*(t)$。
+          </p>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>外环下发模式 ($u_0^*$)</th>
+            <th>1000ms 内环实时功率控制律 ($P_{\text{set}}(t)$)</th>
+            <th>日内扰动越界时的实时闭环反馈跳变 (Feedback Override)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>BALANCING</strong><br/>(默认自发自用)</td>
+            <td>$P_{\text{set}}(t) = P_{\text{balancing}}(t) = P_{\text{grid}}(t) + P_{\text{ess}}(t)$</td>
+            <td>实时跟踪净负荷与光伏差额，将关口表功率 $P_{\text{grid}}(t)$ 闭环维持在 $0\text{ W}$。</td>
+          </tr>
+          <tr>
+            <td><strong>DELAY_DISCHARGE</strong><br/>(锁电等待高价峰)</td>
+            <td>AC 储能：$P_{\text{set}}(t) = 0\text{ W}$<br/>Hybrid 混合逆变器：$P_{\text{set}}(t) = \max(0, P_{\text{ess}}(t) - P_{\text{dc,pv}}(t))$</td>
+            <td>若当秒出现光伏净富余（$P_{\text{balancing}}(t) \le 0$），内环自动将实际执行态切换为 <span class="code-ref">BALANCING</span> 吸收免费光伏余电，绝不白白弃光。</td>
+          </tr>
+          <tr>
+            <td><strong>CHARGE_GRID</strong><br/>(谷电强制储电)</td>
+            <td>$P_{\text{set}}(t) = -P_{\text{charge,grid}}^* + \min(0, P_{\text{balancing}}(t))$<br/>其中 $P_{\text{charge,grid}}^*$ 由 0.5C 倍率与预测缺口均值决定</td>
+            <td>1. 若家庭突发大负荷导致买电突破 <span class="code-ref">gridBuySoftLimit</span>，当秒立即反转切入 <span class="code-ref">PEAK_SHAVING</span> 放电削峰；<br/>2. 若实测 $\text{SoC}(t) \ge \text{maxSocInChargeGrid}$，当秒切回 <span class="code-ref">BALANCING</span>。</td>
+          </tr>
+          <tr>
+            <td><strong>LIMIT_CHARGE</strong><br/>(预测防弃光斜率充电)</td>
+            <td>$P_{\text{set}}(t) = -P_{\text{limit}}(t)$，按剩余盈余周期数动态重算斜率：<br/>$P_{\text{limit}}(t) = \frac{(1 - \text{SoC}(t)) \cdot E_{\text{cap}}}{\Delta t_{\text{rem}}/3600 + N_{\text{surplus,future}}/4}$</td>
+            <td>1. 若多云导致当前光伏盈余低于限值（$P_{\text{set}}(t) \le P_{\text{balancing}}(t)$），自动切回 <span class="code-ref">BALANCING</span> 全额吸收；<br/>2. 若馈网功率逼近 <span class="code-ref">gridSellHardLimit</span>，立即切入 <span class="code-ref">AVOID_GRID_SELL_LIMIT</span> 强充消纳。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Section 06 -->
+    <section id="sec-06" class="section">
+      <div class="section-header">
+        <div class="section-index">06 // ARCHITECTURAL EVALUATION</div>
+        <div>
+          <h2 class="section-title">架构横向评测：仿真驱动混合进化 MPC vs 传统 MILP/QP 凸优化 MPC</h2>
+          <p class="section-lead">
+            为什么 OpenEMS 在外环 MPC 中选择基于 <span class="code-ref">io.jenetics</span> 的仿真驱动混合进化算法，而在 1000ms 内环中选择基于 <span class="code-ref">SimplexSolver</span> 的精确线性规划？这一“外环进化寻优 + 内环凸规划保底”的混合架构体现了极高的工业工程成熟度。
+          </p>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>核心评估维度</th>
+            <th>OpenEMS 外环：仿真驱动进化 MPC (Jenetics + EnergyFlow)</th>
+            <th>传统学院派：混合整数线性/二次规划 (MILP / MIQP)</th>
+            <th>OpenEMS 工程决策背后的深层逻辑</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>插件化与第三方扩展性</strong></td>
+            <td><strong>极高 (Black-Box Composable)</strong>：新设备仅需编写普通 Java 方法描述单步物理行为即可接入全局优化</td>
+            <td><strong>低 (White-Box Monolithic)</strong>：每增加一种设备（如热泵、矿机）都必须重写全局矩阵组装器</td>
+            <td>OpenEMS 拥有 200+ 硬件模块，黑盒仿真接口让硬件工程师无需具备运筹学背景即可开发预测调度能力</td>
+          </tr>
+          <tr>
+            <td><strong>非线性与离散状态机表达</strong></td>
+            <td><strong>原生零失真</strong>：直接支持死区阈值（8.1% 最小充电电流）、非线性损耗、条件分支状态后处理 (<span class="code-ref">postProcessMode</span>)</td>
+            <td><strong>需大量 Big-M 松弛与 0-1 变量</strong>：离散模式切换与最小运行功率极易引发分支定界树指数级膨胀</td>
+            <td>储能逆变器在低功率区的效率坍塌与模式切换逻辑天然是非凸、非连续的</td>
+          </tr>
+          <tr>
+            <td><strong>边缘端跨平台部署成本</strong></td>
+            <td><strong>100% 纯 Java 字节码</strong>：在 ARMv7/ARM64/x86 工业网关上开箱即用，无 JNI 崩溃风险，内存恒定</td>
+            <td><strong>依赖 C/C++ 原生求解器 (Gurobi/CBC/HiGHS)</strong>：存在商业授权昂贵或开源求解器交叉编译维护困难问题</td>
+            <td>边缘侧大规模固件分发要求绝对的零原生依赖与确定性内存上限</td>
+          </tr>
+          <tr>
+            <td><strong>Anytime 实时可行性保障</strong></td>
+            <td><strong>永不失效 (Always Feasible)</strong>：30 秒必出包含热启动与波谷启发式的可行解，九维字典序自动软化冲突</td>
+            <td><strong>存在 Infeasible / Timeout 风险</strong>：当硬约束因测量噪声短暂冲突时，求解器直接报错返回空解</td>
+            <td>工业现场绝不允许因数学规划无解而中断控制，字典序 `hardConstraintViolations` 提供了平滑降级能力</td>
+          </tr>
+          <tr>
+            <td><strong>连续功率精细分配能力</strong></td>
+            <td>外环仅决策离散模式枚举（颗粒度粗）</td>
+            <td>可直接输出连续功率数值</td>
+            <td>OpenEMS 通过 <strong>1000ms 内环 `SimplexSolver` 线性规划求解器</strong> 补齐了连续功率精确分配，实现优势互补</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="footer">
+      <div>OPENEMS SOURCE CODE ARCHITECTURE RESEARCH · MODEL PREDICTIVE CONTROL (MPC)</div>
+      <div>GENERATED BY ANTIGRAVITY · VERIFIED AGAINST /opt/openems/source</div>
+    </footer>
+  </div>
+
+</body>
+</html>
