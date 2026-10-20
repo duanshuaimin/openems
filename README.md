@@ -4,6 +4,12 @@
 
 ## 核心技术文档
 
+- 📊 **[OpenEMS 全站监控指标体系、数据上报机制与控制面/数据面深度架构指南](OPENEMS_METRICS_AND_CONTROL_DATA_PLANES_ANALYSIS.md)**：
+  - 全站 8 大监控体系：`_sum` 核心 64 个全局微电网拓扑守恒指标、ESS/BMS 交流与直流单体 mV/0.1℃ 极值、智能电表高精微变频漂（49.85~50.15Hz）与四象限电能量、光伏组串、充电桩（EVCS）、SG-Ready 热泵、电力现货市场与日前预测、宿主机基础设施指标
+  - 数据上报流水线：软 PLC 过程映像（`AFTER_PROCESS_IMAGE`）事件触发、增量变动 Diff 提取（`TimestampedDataNotification`）、300 秒全量基准对齐、5 分钟统计降采样（`AggregatedDataNotification`）与随机退避防雪崩机制、断网续传（`ResendHistoricDataWorker`）
+  - 控制面（Control Plane）vs 数据面（Data Plane）：经典概念映射、端到端交互架构图、边缘侧与云端侧双面矩阵对比
+  - 核心工程价值：边缘自治（Edge Autonomy）——“云端断网本地控制不崩，网络恢复历史数据自愈”
+
 - 🔋 **[OpenEMS Edge 与储能 BMS：CAN-Bus 网关协议深度解析技术指南](OPENEMS_CAN_BUS_GATEWAY_PROTOCOL_ANALYSIS.md)**：
   - 储能通信协议断层：电芯侧毫秒级差分总线（CAN 2.0A/B）与上层工业以太网（Modbus/TCP）的割裂与统一
   - 为什么必须采用 CAN 网关：硬实时（10ms 心跳）与软实时（JVM/OSGi）解耦、2.5kV~5kV 高压电气物理隔离、跨硬件平台中立性与多簇（Multi-Rack）拓扑聚合
