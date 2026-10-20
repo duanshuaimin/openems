@@ -4,6 +4,12 @@
 
 ## 核心技术文档
 
+- 🏢 **[OpenEMS Backend 元数据核心服务：Metadata.Odoo 深度架构与源码解析指南](OPENEMS_BACKEND_METADATA_ODOO_ANALYSIS.md)**：
+  - 双通道异构读写架构（Dual-Engine）：通道一底层 PostgreSQL 高速总线（HikariCP、`InitializeEdgesWorker` 启动预热、`EdgeCache` <1µs 内存哈希握手鉴权、`PeriodicWriteWorker` 30秒防DDOS批量回写）+ 通道二 Odoo HTTP JSON-RPC 业务总线（用户密码认证、会话保持、RBAC 四级角色、初装协议与邮件代发）
+  - 核心数据模型映射（`Field.java`）：`EdgeDevice`（`openems_device`）、`User`（`res_users`）、`EdgeDeviceUserRole`（`openems_device_user_role`）、`SetupProtocol`、`EdgeConfigUpdate`
+  - 现代高并发加持：Java 21 虚拟线程（Virtual Threads）驱动 HTTP 请求池，消除阻塞 I/O 平台线程饥饿
+  - 业务生命周期时序：边缘端 WSS 快速准入鉴权、Web UI 多电站看板加载、30秒状态批量回写与生产参数调优
+
 - 📊 **[OpenEMS 全站监控指标体系、数据上报机制与控制面/数据面深度架构指南](OPENEMS_METRICS_AND_CONTROL_DATA_PLANES_ANALYSIS.md)**：
   - 全站 8 大监控体系：`_sum` 核心 64 个全局微电网拓扑守恒指标、ESS/BMS 交流与直流单体 mV/0.1℃ 极值、智能电表高精微变频漂（49.85~50.15Hz）与四象限电能量、光伏组串、充电桩（EVCS）、SG-Ready 热泵、电力现货市场与日前预测、宿主机基础设施指标
   - 数据上报流水线：软 PLC 过程映像（`AFTER_PROCESS_IMAGE`）事件触发、增量变动 Diff 提取（`TimestampedDataNotification`）、300 秒全量基准对齐、5 分钟统计降采样（`AggregatedDataNotification`）与随机退避防雪崩机制、断网续传（`ResendHistoricDataWorker`）
