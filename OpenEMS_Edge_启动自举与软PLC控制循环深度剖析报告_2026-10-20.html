@@ -650,8 +650,8 @@ public class EdgeApp {
 
       <!-- SECTION 6 -->
       <section id="section-6" class="block">
-        <h2 class="section-title">6. 组件中枢与配置注入</h2>
-        <p>在 Level 20+ 阶段，<code>io.openems.edge.core</code> 中枢组件被激活：</p>
+        <h2 class="section-title">6. 组件中枢与通信/API 并发拉起</h2>
+        <p>在 Level 20+ 阶段，<code>io.openems.edge.core</code> 中枢组件与外部通信服务开始并发拉起：</p>
         <ul>
           <li>
             <strong><code>ComponentManagerImpl</code> (<code>_componentManager</code>)</strong>：
@@ -661,11 +661,86 @@ public class EdgeApp {
             <strong><code>SumImpl</code> (<code>_sum</code>)</strong>：
             汇聚所有电表与逆变器功率，实时计算电网购售电、光伏产出、负载消耗与储能 SoC 综合指标。
           </li>
-          <li>
-            <strong>外部通信服务并发启动</strong>：
-            端口 <code>8095</code>（REST API）、端口 <code>8075</code>（Websocket API）、端口 <code>8080</code>（Felix Web Console）以及向云端 Backend 建立的反向 WSS 长连接通道。
-          </li>
         </ul>
+
+        <h3 class="sub-title">通信与 API 组件并发拉起全景架构</h3>
+        <p>
+          在 StartLevel 20+，各类协议控制器由 OSGi SCR 依据 <code>/etc/openems.d/*.config</code> 并发实例化，彼此线程独立、端口隔离，并通过统一的 JSON-RPC 路由与安全总线（<code>RootRequestHandler</code>）接入内核：
+        </p>
+
+        <div class="arch-svg-container">
+          <svg viewBox="0 0 920 420" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+            <!-- Layers -->
+            <rect x="20" y="20" width="880" height="60" rx="8" fill="#152420" stroke="#00a88b" stroke-width="1.5"/>
+            <text x="40" y="55" fill="#6ee7b7" font-size="13" font-weight="700" font-family="'IBM Plex Mono', monospace">1. 外部交互端</text>
+            <rect x="150" y="32" width="130" height="36" rx="6" fill="#1f362f"/>
+            <text x="215" y="55" fill="#ffffff" font-size="11" text-anchor="middle">本地 Web UI (:80)</text>
+            <rect x="295" y="32" width="130" height="36" rx="6" fill="#1f362f"/>
+            <text x="360" y="55" fill="#ffffff" font-size="11" text-anchor="middle">工业 SCADA (:502)</text>
+            <rect x="440" y="32" width="140" height="36" rx="6" fill="#1f362f"/>
+            <text x="510" y="55" fill="#ffffff" font-size="11" text-anchor="middle">第三方 REST (:8095)</text>
+            <rect x="595" y="32" width="140" height="36" rx="6" fill="#1f362f"/>
+            <text x="665" y="55" fill="#ffffff" font-size="11" text-anchor="middle">云端 Backend (:8085)</text>
+            <rect x="750" y="32" width="130" height="36" rx="6" fill="#1f362f"/>
+            <text x="815" y="55" fill="#ffffff" font-size="11" text-anchor="middle">MQTT Broker</text>
+
+            <!-- API Controllers Matrix -->
+            <rect x="20" y="105" width="880" height="120" rx="8" fill="#152420" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="40" y="130" fill="#38bdf8" font-size="13" font-weight="700" font-family="'IBM Plex Mono', monospace">2. 并发拉起的 API 控制器矩阵 (StartLevel 20+)</text>
+            
+            <rect x="35" y="145" width="160" height="65" rx="6" fill="#19323c"/>
+            <text x="115" y="170" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle">Api.Websocket (:8075)</text>
+            <text x="115" y="192" fill="#9bb0a9" font-size="9" text-anchor="middle">10线程池 + 毫秒级推流</text>
+
+            <rect x="210" y="145" width="160" height="65" rx="6" fill="#19323c"/>
+            <text x="290" y="170" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle">Api.Rest (:8095)</text>
+            <text x="290" y="192" fill="#9bb0a9" font-size="9" text-anchor="middle">Embedded Jetty 12 NIO</text>
+
+            <rect x="385" y="145" width="160" height="65" rx="6" fill="#19323c"/>
+            <text x="465" y="170" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle">Api.Backend (WSS)</text>
+            <text x="465" y="192" fill="#9bb0a9" font-size="9" text-anchor="middle">NAT反向长连接+断点续传</text>
+
+            <rect x="560" y="145" width="160" height="65" rx="6" fill="#19323c"/>
+            <text x="640" y="170" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle">Api.ModbusTcp (:502)</text>
+            <text x="640" y="192" fill="#9bb0a9" font-size="9" text-anchor="middle">JLibModbus 寄存器映射</text>
+
+            <rect x="735" y="145" width="150" height="65" rx="6" fill="#19323c"/>
+            <text x="810" y="170" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle">Felix Console (:8080)</text>
+            <text x="810" y="192" fill="#9bb0a9" font-size="9" text-anchor="middle">OSGi 诊断与组件监控</text>
+
+            <!-- Routing & Security Layer -->
+            <rect x="20" y="245" width="880" height="75" rx="8" fill="#152420" stroke="#fbbf24" stroke-width="1.5"/>
+            <text x="40" y="275" fill="#fbbf24" font-size="13" font-weight="700" font-family="'IBM Plex Mono', monospace">3. 统一信令路由与写入保护</text>
+            <rect x="250" y="260" width="280" height="45" rx="6" fill="#332c1c"/>
+            <text x="390" y="282" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">RootRequestHandler / JsonApiBuilder</text>
+            <text x="390" y="296" fill="#fbbf24" font-size="9" text-anchor="middle">RBAC (Admin/Installer/Owner/Guest) 鉴权</text>
+
+            <rect x="550" y="260" width="330" height="45" rx="6" fill="#332c1c"/>
+            <text x="715" y="282" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">ApiWorker 写入保护心跳看门狗</text>
+            <text x="715" y="296" fill="#f87171" font-size="9" text-anchor="middle">10秒无心跳自动超时复位，防电池过充过放</text>
+
+            <!-- Bottom PLC Cycle & Channels -->
+            <rect x="20" y="340" width="880" height="65" rx="8" fill="#152420" stroke="#10b981" stroke-width="1.5"/>
+            <text x="40" y="375" fill="#10b981" font-size="13" font-weight="700" font-family="'IBM Plex Mono', monospace">4. PLC 核心控制循环</text>
+            <text x="260" y="365" fill="#ffffff" font-size="11" font-weight="600">Core.Cycle (1000ms 周期)</text>
+            <text x="260" y="385" fill="#9bb0a9" font-size="10">无锁读过程映像快照 (Process Image) ｜ 周期末 EXECUTE_WRITE 统一批量下发至硬件总线</text>
+          </svg>
+        </div>
+
+        <div class="card-grid">
+          <div class="card accent">
+            <h4>NAT 反向长连接隧道</h4>
+            <p><code>Controller.Api.Backend</code> 主动向云端发起 WSS 握手，无需现场公网 IP，即可安全穿透企业防火墙实现远程纳管与断点续传。</p>
+          </div>
+          <div class="card warning">
+            <h4>ApiWorker 安全看门狗</h4>
+            <p>外部下发功率指令时启动 10 秒倒计时，若通讯断开则自动将目标值复位为安全状态，彻底杜绝指令遗留导致的电池飞车风险。</p>
+          </div>
+          <div class="card info">
+            <h4>无锁快照隔离 (Snapshot Isolation)</h4>
+            <p>所有外部 API 线程读取 Channel 数据均面向当前周期的过程映像快照，高并发外部查询绝对不会导致核心 PLC 控制节拍卡顿。</p>
+          </div>
+        </div>
       </section>
 
       <!-- SECTION 7 -->

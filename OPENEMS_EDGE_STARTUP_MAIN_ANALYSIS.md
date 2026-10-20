@@ -222,11 +222,141 @@ public class EdgeApp {
 ### 2. `SumImpl` (能量聚合器，PID: `_sum`)
 - 自动汇聚所有接入的逆变器（ESS/PV）、电表（Grid/Production/Consumption）和电池状态，计算全系统的综合指标（电网总功率、光伏总发电量、电池总充放电功率、综合 SoC）。
 
-### 3. 通信与 API 组件并发拉起
-- **`Controller.Api.Rest`**（端口 8095）：处理外部 HTTP JSON-RPC 查询与配置更新。
-- **`Controller.Api.Websocket`**（端口 8075）：本地微电网 Web UI 的实时推送 WebSocket 通道。
-- **`Controller.Api.Backend`**：主动建立通向云端 OpenEMS Backend（端口 8085/8082）的反向 WSS 隧道，实现云端纳管与穿透控制。
-- **`Apache Felix Web Console`**（端口 8080）：提供底层 OSGi Bundle、服务和配置的诊断可视化控制台。
+### 3. 通信与 API 组件并发拉起（深度剖析）
+
+在 StartLevel 20+，随着基础数据中枢就绪，系统中的各项通信协议控制器（Communication & API Controllers）由 OSGi SCR 依据 `/etc/openems.d/` 中的配置**并发实例化、绑定网络端口并激活运行**。
+
+```mermaid
+flowchart TD
+    subgraph Clients ["1. 外部交互主体 (External Clients)"]
+        UI["本地 Web UI (浏览器 / App)"]
+        SCADA["工业 SCADA / EMS (PLC)"]
+        CLOUD["云端 OpenEMS Backend (多租户集群)"]
+        THIRD["第三方系统 (MES / 能源计费系统)"]
+        MQTT_BROKER["MQTT Broker (EMQX / Mosquitto)"]
+    end
+
+    subgraph Ingress ["2. 网络接入与反向代理 (Nginx Ingress)"]
+        NGINX_80["Nginx :80 / :4200 (UI 静态资源 & 反向代理)"]
+        NGINX_80 -->|"proxy_pass /openems-edge"| WS_PORT["127.0.0.1:8075"]
+        NGINX_80 -->|"proxy_pass /system/console"| FELIX_PORT["127.0.0.1:8080"]
+    end
+
+    subgraph API_Layer ["3. 并发拉起的 API 控制器矩阵 (StartLevel 20+)"]
+        direction TB
+        
+        subgraph C_WS ["Controller.Api.Websocket (端口 8075)"]
+            WS_SRV["WebsocketServer (Java-WebSocket)"]
+            WS_POOL["ScheduledExecutorService (10 线程池)"]
+            WS_TOPICS["EventHandler 监听通道与周期更新"]
+        end
+
+        subgraph C_REST ["Controller.Api.Rest (端口 8095)"]
+            JETTY["Embedded Jetty 12 Server"]
+            JETTY_POOL["QueuedThreadPool & NIO Connector"]
+            REST_HDLR["RestHandler (/rest/channel, /jsonrpc)"]
+        end
+
+        subgraph C_BACKEND ["Controller.Api.Backend (反向 WSS 客户端)"]
+            WSS_CLIENT["WebsocketClient (长连接隧道)"]
+            SEND_WORKER["SendChannelValuesWorker (遥测上报)"]
+            RESEND_WORKER["ResendHistoricDataWorker (断网断点续传)"]
+        end
+
+        subgraph C_MODBUS ["Controller.Api.ModbusTcp (端口 502/1502)"]
+            MODBUS_SRV["JLibModbus TCP Slave Server"]
+            MODBUS_IMG["MyProcessImage (Channel 与寄存器映射)"]
+        end
+
+        subgraph C_MQTT ["Controller.Api.Mqtt (MQTT 客户端)"]
+            MQTT_CLIENT["MqttConnector (异步发布/订阅)"]
+            MQTT_WORKER["SendChannelValuesWorker"]
+        end
+
+        subgraph C_CONSOLE ["Felix Web Console (端口 8080)"]
+            CONSOLE_SRV["OSGi WebConsole (Jetty HTTP Service)"]
+        end
+    end
+
+    subgraph Routing_Security ["4. 统一信令路由与写入安全保护层"]
+        ROOT_ROUTER["RootRequestHandler / JsonApiBuilder (统一 JSON-RPC 路由总线)"]
+        AUTH["Authentication & RBAC (Role: ADMIN / INSTALLER / OWNER / GUEST)"]
+        API_WORKER["ApiWorker (写入保护心跳看门狗: 默认 10s 超时回退)"]
+    end
+
+    subgraph Core_PLC ["5. 核心 PLC 控制循环与数据底座"]
+        CYCLE["Core.Cycle (1000ms 确定性软实时控制循环)"]
+        PROC_IMG["Process Image (瞬时通道快照，读写隔离，无锁只读)"]
+        CHANNELS["OpenemsComponent & WriteChannels (硬件驱动通道)"]
+    end
+
+    UI --> NGINX_80
+    SCADA -->|"Modbus/TCP :502"| MODBUS_SRV
+    THIRD -->|"HTTP REST / JSON-RPC :8095"| JETTY
+    C_BACKEND -->|"主动外联 WSS 隧道 :8085"| CLOUD
+    MQTT_CLIENT -->|"Mqtt Publish/Subscribe"| MQTT_BROKER
+
+    WS_PORT --> WS_SRV
+    FELIX_PORT --> CONSOLE_SRV
+
+    WS_SRV --> ROOT_ROUTER
+    REST_HDLR --> ROOT_ROUTER
+    WSS_CLIENT --> ROOT_ROUTER
+
+    ROOT_ROUTER --> AUTH
+    AUTH --> API_WORKER
+    
+    API_WORKER -->|"下发受保护的目标设定值"| CHANNELS
+    CYCLE -->|"每个周期末 EXECUTE_WRITE 集中刷盘"| CHANNELS
+    CHANNELS -->|"nextProcessImage() 生成快照"| PROC_IMG
+    PROC_IMG -.->|"无锁、高并发只读"| WS_SRV
+    PROC_IMG -.->|"无锁、高并发只读"| REST_HDLR
+    PROC_IMG -.->|"无锁、高并发只读"| MODBUS_IMG
+```
+
+#### A. 各 API 控制器矩阵运行特征
+
+1. **`Controller.Api.Websocket` (默认端口 8075)**：
+   - **源码实现**：[`ControllerApiWebsocketImpl.java`](file:///opt/openems/source/io.openems.edge.controller.api.websocket/src/io/openems/edge/controller/api/websocket/ControllerApiWebsocketImpl.java)
+   - **网络引擎与线程池**：基于 Java-WebSocket 封装的 `WebsocketServer`，在 `@Activate` 时初始化独立的 `ScheduledExecutorService`（10 个线程，线程名前缀 `Controller.Api.Websocket:ctrlApiWebsocket0-%d`）。
+   - **事件驱动推送**：实现 OSGi `EventHandler`，订阅 `TOPIC_CONFIG_UPDATE` 与 `TOPIC_CYCLE_AFTER_PROCESS_IMAGE`。每个控制周期结束时，自动将订阅了 Channel 的 UI 客户端以 WebSocket 帧形式推送 `ChannelUpdateNotification`，毫秒级响应。
+
+2. **`Controller.Api.Rest` (默认端口 8095)**：
+   - **源码实现**：[`AbstractRestApi.java`](file:///opt/openems/source/io.openems.edge.controller.api.rest/src/io/openems/edge/controller/api/rest/AbstractRestApi.java) 与 [`RestHandler.java`](file:///opt/openems/source/io.openems.edge.controller.api.rest/src/io/openems/edge/controller/api/rest/RestHandler.java)
+   - **网络引擎**：内嵌 Eclipse Jetty 12 HTTP Server，使用 NIO 异步连接器 `ServerConnector`。
+   - **安全策略**：支持 `AcceptRateLimit` 与 `NetworkConnectionLimit` 限制最大并发连接；分为只读模式（`ReadOnly`）与可写模式（`ReadWrite`，支持 HTTP POST `/jsonrpc`）。
+
+3. **`Controller.Api.Backend` (外联端口 8085 / 8082)**：
+   - **源码实现**：[`ControllerApiBackendImpl.java`](file:///opt/openems/source/io.openems.edge.controller.api.backend/src/io/openems/edge/controller/api/backend/ControllerApiBackendImpl.java)
+   - **反向长连接隧道（NAT 穿透）**：边缘网关绝大多数部署在局域网内，无独立公网 IP。该控制器作为客户端，**主动向云端 OpenEMS Backend 发起反向 WSS 长连接握手**，复用该隧道接收云端下发的 JSON-RPC 远程调度。
+   - **双后台 Worker**：
+     - `SendChannelValuesWorker`：定期将边缘电表与储能遥测数据批量上传云端 InfluxDB。
+     - `ResendHistoricDataWorker`：外网断网时本地缓存数据，网络自愈后自动触发断点续传。
+
+4. **`Controller.Api.ModbusTcp` (默认端口 502 / 1502)**：
+   - **源码实现**：[`AbstractModbusApi.java`](file:///opt/openems/source/io.openems.edge.controller.api.modbus/src/io/openems/edge/controller/api/modbus/AbstractModbusApi.java)
+   - **工业级集成**：基于 JLibModbus 将 OpenEMS 通道映射为标准 Modbus 保持寄存器（Holding Registers）与输入寄存器（Input Registers），供电厂 DCS/PLC 或第三方 SCADA 系统轮询与控制。
+
+5. **`Controller.Api.Mqtt`**：
+   - **源码实现**：[`ControllerApiMqttImpl.java`](file:///opt/openems/source/io.openems.edge.controller.api.mqtt/src/io/openems/edge/controller/api/mqtt/ControllerApiMqttImpl.java)
+   - **物联网物联总线**：连接外部 MQTT Broker（如 EMQX / Mosquitto），按主题分发遥测 JSON 数据并监听控制指令。
+
+6. **`Apache Felix Web Console` (默认端口 8080)**：
+   - 底层由 `org.apache.felix.http.jetty12` 提供，提供全站 OSGi Bundle、Declarative Services 组件状态与 Configuration Admin 的可视化监控运维。
+
+#### B. 统一信令路由与 RBAC 安全鉴权
+无论是 WebSocket、REST HTTP 还是云端反向 WSS 隧道进来的请求，全部接入统一的路由总线 [`RootRequestHandler`](file:///opt/openems/source/io.openems.edge.controller.api.websocket/src/io/openems/edge/controller/api/websocket/handler/RootRequestHandler.java)：
+- **统一鉴权**：依据用户角色（Admin / Installer / Owner / Guest）执行 `assertRoleIsAtLeast` 拦截。
+- **协议解耦**：抹平网络协议差异，统一分发至 `ComponentConfigRequestHandler`（配置增删改查）、`ChannelRequestHandler`（数据读写）、`SubscribeSystemLogRequestHandler`（日志流）等处理器。
+
+#### C. 通信中断保护看门狗：`ApiWorker`
+在工商业储能与光伏控制中，外部通讯中断具有重大安全隐患（若网络中断导致中控无法下发停止指令，电池可能持续大功率充放电）。源码 [`ApiWorker.java`](file:///opt/openems/source/io.openems.edge.controller.api.common/src/io/openems/edge/controller/api/common/ApiWorker.java) 实现了严格的心跳保护：
+- 当第三方通过 REST / Modbus 下发有功功率目标（如 `SetActivePower = 50000W`）时，`ApiWorker` 记录该值并启动超时定时器（默认 **10 秒**）。
+- 若 10 秒内心跳未刷新（说明外部网络断开或第三方程序挂死），`ApiWorker` **立即超时失效并复位设定值**，系统平滑退出功率干预，恢复本地自平衡运行。
+
+#### D. 与 PLC 核心控制循环的“无锁读”与“隔离写”
+- **并发只读（无锁）**：外部高频 API 查询读取的是 Channel 的当前过程映像快照（Process Image Snapshot），**绝对不会与 PLC 毫秒级控制计算产生线程锁争用**。
+- **隔离写**：外部写入仅调用 `setNextWriteValue()` 注入暂存区，最终由控制循环在每个周期的 `TOPIC_CYCLE_EXECUTE_WRITE` 步骤批量统一刷入底层硬件驱动寄存器，避免异步写引发总线冲突。
 
 ---
 
