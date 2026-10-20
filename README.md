@@ -4,7 +4,7 @@
 
 ## 核心技术文档
 
-- 🚀 **[OpenEMS Edge 启动入口与自举机制深度剖析报告](OPENEMS_EDGE_STARTUP_MAIN_ANALYSIS.md)**：
+- 🚀 **[OpenEMS Edge 启动入口与自举机制深度剖析报告 (Markdown)](OPENEMS_EDGE_STARTUP_MAIN_ANALYSIS.md)** ｜ 🖥️ **[高质感交互式 HTML 可视化报告](OpenEMS_Edge_启动自举与软PLC控制循环深度剖析报告_2026-10-20.html)**：
   - 启动入口分析：JVM 命令行、`META-INF/MANIFEST.MF` 与 `aQute.launcher.pre.EmbeddedLauncher`
   - OSGi 容器自举：bnd 运行时执行引擎与 `org.apache.felix.framework` 动态加载
   - StartLevel 严密分层：SCR (10)、ConfigAdmin (11)、EventAdmin (12)、Pax Logging (15/16)、EdgeApp (19)、业务层 (20+)

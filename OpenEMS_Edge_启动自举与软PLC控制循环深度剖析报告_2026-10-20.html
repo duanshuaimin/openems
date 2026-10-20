@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>OpenEMS Edge 启动入口、OSGi自举与软PLC控制循环深度剖析报告</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f6f5;
+      --paper: #ffffff;
+      --ink: #101c18;
+      --muted: #4e625c;
+      --line: #cbd7d2;
+      --soft: #e5eee9;
+      --soft2: #d8e5df;
+      --accent: #007a65;
+      --accent2: #00a88b;
+      --signal: #10b981;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --info: #0284c7;
+      --nav: #0d1a16;
+      --navInk: #e6f5f0;
+      --codeBg: #0c1613;
+      --codeInk: #d5ebe4;
+      --shadow: 0 16px 40px rgba(12, 26, 22, 0.08);
+      --radius: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1310;
+        --paper: #121e1a;
+        --ink: #ecf6f2;
+        --muted: #9bb0a9;
+        --line: #263833;
+        --soft: #172622;
+        --soft2: #1e322c;
+        --accent: #34d399;
+        --accent2: #6ee7b7;
+        --signal: #10b981;
+        --warning: #fbbf24;
+        --danger: #f87171;
+        --info: #38bdf8;
+        --nav: #060d0b;
+        --navInk: #f0fdf9;
+        --codeBg: #060e0c;
+        --codeInk: #d1fae5;
+        --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'IBM Plex Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.68;
+      padding: 0;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+    header.hero {
+      background: linear-gradient(135deg, #06241d 0%, #0c3e34 50%, #007a65 100%);
+      color: #ffffff;
+      padding: 60px 32px 50px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 4px solid var(--accent2);
+    }
+    header.hero::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0,217,178,0.18) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+    }
+    .hero-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+    .badge-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #e6fbf5;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      letter-spacing: 0.03em;
+    }
+    .badge.highlight {
+      background: var(--signal);
+      color: #06241d;
+      border-color: var(--signal);
+    }
+    h1.hero-title {
+      font-size: 2.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+      line-height: 1.25;
+    }
+    p.hero-desc {
+      font-size: 1.1rem;
+      color: #c9e8de;
+      max-width: 860px;
+      line-height: 1.6;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .meta-item {
+      font-size: 0.88rem;
+    }
+    .meta-label {
+      color: #92cdbd;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .meta-val {
+      font-weight: 600;
+      font-family: 'IBM Plex Mono', monospace;
+      margin-top: 2px;
+      color: #ffffff;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 40px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 36px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .container { grid-template-columns: 1fr; }
+      nav.toc { display: none; }
+    }
+
+    nav.toc {
+      position: sticky;
+      top: 24px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      box-shadow: var(--shadow);
+    }
+    nav.toc h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    nav.toc ul { list-style: none; }
+    nav.toc li { margin-bottom: 8px; }
+    nav.toc a {
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 0.88rem;
+      display: block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    nav.toc a:hover {
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    main.content { min-width: 0; }
+    section.block {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow);
+    }
+    h2.section-title {
+      font-size: 1.48rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid var(--soft2);
+      padding-bottom: 10px;
+    }
+    h3.sub-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      color: var(--accent);
+    }
+    p { margin-bottom: 14px; }
+    strong { font-weight: 600; }
+    ul, ol { margin-left: 24px; margin-bottom: 16px; }
+    li { margin-bottom: 6px; }
+
+    /* SVG Architecture Visualizer */
+    .arch-svg-container {
+      background: var(--nav);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+    .arch-svg-container svg {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Cards & Grids */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      margin: 20px 0;
+    }
+    .card {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .card.accent {
+      border-left: 4px solid var(--accent);
+    }
+    .card.warning {
+      border-left: 4px solid var(--warning);
+    }
+    .card.info {
+      border-left: 4px solid var(--info);
+    }
+    .card h4 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: var(--ink);
+    }
+    .card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    /* Tables */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.9rem;
+    }
+    table.data-table th, table.data-table td {
+      border: 1px solid var(--line);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    table.data-table th {
+      background: var(--soft2);
+      font-weight: 600;
+      color: var(--ink);
+    }
+    table.data-table tr:nth-child(even) {
+      background: var(--soft);
+    }
+
+    /* Code Snippets */
+    pre {
+      background: var(--codeBg);
+      color: var(--codeInk);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.86rem;
+      padding: 18px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      line-height: 1.55;
+    }
+    code.inline {
+      background: var(--soft2);
+      color: var(--accent);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.86em;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .callout {
+      background: var(--soft);
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+    }
+    .callout.tip { border-left-color: var(--signal); }
+    .callout.warn { border-left-color: var(--warning); }
+    .callout-title {
+      font-weight: 700;
+      font-size: 0.92rem;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-content">
+      <div class="badge-bar">
+        <span class="badge highlight">OpenEMS Edge Architecture</span>
+        <span class="badge">Java 21</span>
+        <span class="badge">OSGi 7 (Apache Felix)</span>
+        <span class="badge">bndtools Fat-JAR</span>
+        <span class="badge">Soft-PLC Cycle</span>
+      </div>
+      <h1 class="hero-title">OpenEMS Edge 启动入口、OSGi 自举与软 PLC 控制循环深度剖析</h1>
+      <p class="hero-desc">
+        揭示 OpenEMS Edge 从操作系统 systemd 命令行入口、aQute EmbeddedLauncher 引导装载、OSGi StartLevel 分级服务装配，到 1000ms 软实时过程映像（Process Image）控制流水线的全链路源码实现。
+      </p>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <div class="meta-label">入口主类 Main-Class</div>
+          <div class="meta-val">aQute.launcher.pre.EmbeddedLauncher</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">OSGi 容器运行时</div>
+          <div class="meta-val">org.apache.felix.framework 7.0.5</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">配置注入目录</div>
+          <div class="meta-val">/etc/openems.d/ (-Dfelix.cm.dir)</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">PLC 控制节拍</div>
+          <div class="meta-val">Core.Cycle (1000ms 确定性周期)</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <nav class="toc">
+      <h3>文档目录</h3>
+      <ul>
+        <li><a href="#section-1">1. 架构总览与启动流水线</a></li>
+        <li><a href="#section-2">2. JVM 命令行与 Fat-JAR 结构</a></li>
+        <li><a href="#section-3">3. 引导器与 OSGi 容器自举</a></li>
+        <li><a href="#section-4">4. StartLevel 分级加载时序</a></li>
+        <li><a href="#section-5">5. 业务启动宣告 (EdgeApp)</a></li>
+        <li><a href="#section-6">6. 组件中枢与配置注入</a></li>
+        <li><a href="#section-7">7. 软 PLC 控制循环 (CycleWorker)</a></li>
+        <li><a href="#section-8">8. 架构优势与生产排障指南</a></li>
+      </ul>
+    </nav>
+
+    <main class="content">
+
+      <!-- SECTION 1 -->
+      <section id="section-1" class="block">
+        <h2 class="section-title">1. 架构总览与启动流水线</h2>
+        <p>
+          在通用微服务开发（如 Spring Boot）中，应用通常拥有一个显式的入口主类与方法 <code>public static void main(String[] args)</code>。但在 <strong>OpenEMS Edge 工业微电网控制系统</strong> 中，为了支持储能变流器（PCS）、电表、BMS、充电桩等 200 余类硬件驱动的<strong>动态热插拔、故障隔离与零停机重载</strong>，OpenEMS 采用了 <strong>OSGi (Open Services Gateway initiative) 微内核规范</strong> 与 <strong>bnd 构建体系</strong>。
+        </p>
+
+        <div class="arch-svg-container">
+          <!-- Standalone High-Res SVG Flowchart -->
+          <svg viewBox="0 0 900 480" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#007a65" />
+                <stop offset="100%" stop-color="#00a88b" />
+              </linearGradient>
+              <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0284c7" />
+                <stop offset="100%" stop-color="#38bdf8" />
+              </linearGradient>
+              <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#d97706" />
+                <stop offset="100%" stop-color="#fbbf24" />
+              </linearGradient>
+            </defs>
+
+            <!-- Stage 1 -->
+            <rect x="30" y="30" width="240" height="90" rx="8" fill="#152420" stroke="#00a88b" stroke-width="2"/>
+            <text x="150" y="60" fill="#6ee7b7" font-size="14" font-weight="700" text-anchor="middle" font-family="'IBM Plex Mono', monospace">1. JVM 命令行入口</text>
+            <text x="150" y="85" fill="#e6f5f0" font-size="11" text-anchor="middle">java -jar openems-edge.jar</text>
+            <text x="150" y="103" fill="#9bb0a9" font-size="10" text-anchor="middle">-Dfelix.cm.dir=/etc/openems.d/</text>
+
+            <!-- Line 1 to 2 -->
+            <path d="M 270 75 L 330 75" stroke="#00d9b2" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Stage 2 -->
+            <rect x="330" y="30" width="250" height="90" rx="8" fill="#152420" stroke="#00a88b" stroke-width="2"/>
+            <text x="455" y="60" fill="#6ee7b7" font-size="14" font-weight="700" text-anchor="middle" font-family="'IBM Plex Mono', monospace">2. bnd 引导器自举</text>
+            <text x="455" y="85" fill="#e6f5f0" font-size="11" text-anchor="middle">EmbeddedLauncher.main()</text>
+            <text x="455" y="103" fill="#9bb0a9" font-size="10" text-anchor="middle">拉起 Apache Felix 7.0.5 容器</text>
+
+            <!-- Line 2 to 3 -->
+            <path d="M 580 75 L 640 75" stroke="#00d9b2" stroke-width="2"/>
+
+            <!-- Stage 3 -->
+            <rect x="640" y="30" width="230" height="90" rx="8" fill="#152420" stroke="#00a88b" stroke-width="2"/>
+            <text x="755" y="60" fill="#6ee7b7" font-size="14" font-weight="700" text-anchor="middle" font-family="'IBM Plex Mono', monospace">3. OSGi StartLevel 分级</text>
+            <text x="755" y="85" fill="#e6f5f0" font-size="11" text-anchor="middle">SCR (10) -> ConfigAdmin (11)</text>
+            <text x="755" y="103" fill="#9bb0a9" font-size="10" text-anchor="middle">EventAdmin (12) -> PaxLog (15)</text>
+
+            <!-- Line 3 down to 4 -->
+            <path d="M 755 120 L 755 180" stroke="#00d9b2" stroke-width="2"/>
+
+            <!-- Stage 4 -->
+            <rect x="490" y="180" width="380" height="110" rx="8" fill="#152420" stroke="#38bdf8" stroke-width="2"/>
+            <text x="680" y="210" fill="#38bdf8" font-size="14" font-weight="700" text-anchor="middle" font-family="'IBM Plex Mono', monospace">4. 业务组件宣告与中枢装配 (Level 19-20)</text>
+            <text x="680" y="235" fill="#e6f5f0" font-size="11" text-anchor="middle">EdgeApp: 版本 Banner & SDNotify::sendNotify (Systemd 就绪)</text>
+            <text x="680" y="255" fill="#e6f5f0" font-size="11" text-anchor="middle">ComponentManagerImpl (_componentManager) 校验全站依赖</text>
+            <text x="680" y="275" fill="#9bb0a9" font-size="10" text-anchor="middle">SumImpl (_sum) 激活全站四象限电能量测汇总</text>
+
+            <!-- Line 4 to 5 -->
+            <path d="M 490 235 L 380 235 L 380 320" stroke="#38bdf8" stroke-width="2"/>
+
+            <!-- Stage 5 -->
+            <rect x="50" y="320" width="800" height="130" rx="8" fill="#152420" stroke="#fbbf24" stroke-width="2"/>
+            <text x="450" y="350" fill="#fbbf24" font-size="15" font-weight="700" text-anchor="middle" font-family="'IBM Plex Mono', monospace">5. 稳态运行：PLC 软实时过程映像控制节拍 (Core.Cycle - 1000ms)</text>
+            
+            <rect x="70" y="370" width="130" height="60" rx="6" fill="#20332c"/>
+            <text x="135" y="395" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">1. 喂系统看门狗</text>
+            <text x="135" y="415" fill="#9bb0a9" font-size="9" text-anchor="middle">SDNotify::sendWatchdog</text>
+
+            <rect x="220" y="370" width="140" height="60" rx="6" fill="#20332c"/>
+            <text x="290" y="395" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">2. 过程映像拍照</text>
+            <text x="290" y="415" fill="#9bb0a9" font-size="9" text-anchor="middle">Channel.nextProcessImage()</text>
+
+            <rect x="380" y="370" width="140" height="60" rx="6" fill="#20332c"/>
+            <text x="450" y="395" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">3. 全站能量聚合</text>
+            <text x="450" y="415" fill="#9bb0a9" font-size="9" text-anchor="middle">Sum.updateChannels()</text>
+
+            <rect x="540" y="370" width="140" height="60" rx="6" fill="#20332c"/>
+            <text x="610" y="395" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">4. 算法调度求解</text>
+            <text x="610" y="415" fill="#9bb0a9" font-size="9" text-anchor="middle">Scheduler & Controllers</text>
+
+            <rect x="700" y="370" width="130" height="60" rx="6" fill="#20332c"/>
+            <text x="765" y="395" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">5. 硬件批量写出</text>
+            <text x="765" y="415" fill="#9bb0a9" font-size="9" text-anchor="middle">EXECUTE_WRITE (Modbus)</text>
+          </svg>
+        </div>
+      </section>
+
+      <!-- SECTION 2 -->
+      <section id="section-2" class="block">
+        <h2 class="section-title">2. JVM 命令行与 Fat-JAR 结构</h2>
+        <p>
+          在 Linux 部署环境下，Edge 以 systemd 守护进程运行。通过查验 <code>/etc/systemd/system/openems-edge.service</code>：
+        </p>
+        <pre><code>[Unit]
+Description=OpenEMS Edge (Open Energy Management System)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/openems
+ExecStart=/usr/bin/java -Dfelix.cm.dir=/etc/openems.d/ -jar /opt/openems/openems-edge.jar
+Restart=always
+RestartSec=5
+LimitNOFILE=65536</code></pre>
+
+        <p>解包分析 <code>/opt/openems/openems-edge.jar</code> 的 <code>META-INF/MANIFEST.MF</code>：</p>
+        <pre><code>Manifest-Version: 1.0
+Embedded-Runpath: jar/org.apache.felix.framework-7.0.5.jar,jar/biz.aQute.launcher-7.4.0.jar
+Main-Class: aQute.launcher.pre.EmbeddedLauncher</code></pre>
+
+        <div class="card-grid">
+          <div class="card accent">
+            <h4>Main-Class 引导装载器</h4>
+            <p>真正的入口是 <code>aQute.launcher.pre.EmbeddedLauncher</code>，负责构建包含 OSGi 容器核心与 bnd 运行时的类加载器环境。</p>
+          </div>
+          <div class="card info">
+            <h4>-Dfelix.cm.dir 配置注入路径</h4>
+            <p>指向持久化配置落盘目录 <code>/etc/openems.d/</code>，包含系统出厂预设和用户在运行时动态添加的所有组件 <code>.config</code> 文件。</p>
+          </div>
+          <div class="card warning">
+            <h4>内嵌 Bundle 库 (jar/)</h4>
+            <p>包含 Guava、Netty、Pax Logging 以及 OpenEMS 的 200+ 个业务模块 JAR，作为一个完整的独立微内核分发。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3 -->
+      <section id="section-3" class="block">
+        <h2 class="section-title">3. 引导器与 OSGi 容器自举</h2>
+        <p>自举阶段包含三个紧密耦合的步骤：</p>
+        <ol>
+          <li>
+            <strong><code>EmbeddedLauncher.main(args)</code></strong>：
+            创建自定义类加载器，动态加载 <code>Embedded-Runpath</code> 中的 <code>org.apache.felix.framework-7.0.5.jar</code> 与 <code>biz.aQute.launcher-7.4.0.jar</code>，随后反射调用执行 <code>aQute.launcher.Launcher.main(args)</code>。
+          </li>
+          <li>
+            <strong><code>Launcher.main(args)</code> 与 <code>launcher.properties</code></strong>：
+            读取内置在 JAR 根目录下的 <code>launcher.properties</code>，将系统属性（如 <code>java.awt.headless=true</code>、<code>felix.cm.dir</code>）注入 JVM。
+          </li>
+          <li>
+            <strong>实例化与启动 Apache Felix 框架</strong>：
+            调用 <code>new Felix(configMap)</code> 创建 OSGi Framework 实例，执行 <code>framework.init()</code> 初始化 Bundle 缓存空间，最后执行 <code>framework.start()</code>。
+          </li>
+        </ol>
+      </section>
+
+      <!-- SECTION 4 -->
+      <section id="section-4" class="block">
+        <h2 class="section-title">4. StartLevel 分级加载时序</h2>
+        <p>
+          在拥有数百个组件的系统中，若并发启动将不可避免地造成死锁或配置缺失错误。OpenEMS 在 <code>EdgeApp.bndrun</code> 中规划了严密的分级启动级别（StartLevel）：
+        </p>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>StartLevel</th>
+              <th>Bundle 核心模块</th>
+              <th>系统职责与架构关键作用</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Level 10</strong></td>
+              <td><code>org.apache.felix.scr</code></td>
+              <td><strong>Service Component Runtime (SCR)</strong>：声明式服务引擎，扫描各 Bundle 的 OSGi-INF 元数据，管理 <code>@Component</code>、<code>@Reference</code> 生命周期。</td>
+            </tr>
+            <tr>
+              <td><strong>Level 11</strong></td>
+              <td><code>org.apache.felix.configadmin</code></td>
+              <td><strong>Configuration Admin</strong>：自动读取 <code>/etc/openems.d/*.config</code> 并与对应组件 PID 绑定，触发组件属性注入。</td>
+            </tr>
+            <tr>
+              <td><strong>Level 12</strong></td>
+              <td><code>org.apache.felix.eventadmin</code></td>
+              <td><strong>Event Admin</strong>：OSGi 事件总线，支撑微电网 <code>TOPIC_CYCLE_*</code> 周期节拍广播。</td>
+            </tr>
+            <tr>
+              <td><strong>Level 13-14</strong></td>
+              <td><code>fileinstall / metatype</code></td>
+              <td>配置文件动态热监控与组件配置元数据描述服务。</td>
+            </tr>
+            <tr>
+              <td><strong>Level 15-16</strong></td>
+              <td><code>pax-logging-api / log4j2</code></td>
+              <td>统一日志切面，保证后续业务类能够正常输出 SLF4J / Log4j2 日志。</td>
+            </tr>
+            <tr>
+              <td><strong>Level 17</strong></td>
+              <td><code>io.openems.core.referencetarget</code></td>
+              <td>动态重写组件的 <code>@Reference(target="...")</code> 过滤条件，支持复杂的硬件端口与服务动态路由。</td>
+            </tr>
+            <tr>
+              <td><strong>Level 18</strong></td>
+              <td><code>io.openems.core.logger</code></td>
+              <td>动态日志级别调节器，依据 ConfigAdmin 配置动态更新运行中包名的 Debug/Info/Warn 级别。</td>
+            </tr>
+            <tr>
+              <td><strong>Level 19</strong></td>
+              <td><code>io.openems.edge.application</code></td>
+              <td>应用入口宣告组件（<code>EdgeApp</code>）。</td>
+            </tr>
+            <tr>
+              <td><strong>Level 20+</strong></td>
+              <td><code>io.openems.edge.core</code> 及所有业务组件</td>
+              <td>加载 <code>ComponentManager</code>、<code>Sum</code>、<code>Cycle</code>、通信协议桥（Modbus/HTTP/CAN）与算法调度控制器。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- SECTION 5 -->
+      <section id="section-5" class="block">
+        <h2 class="section-title">5. 业务启动宣告 (EdgeApp)</h2>
+        <p>在 StartLevel 19，SCR 自动实例化带有 <code>@Component(immediate = true)</code> 注解的 <code>EdgeApp</code>：</p>
+        <pre><code>package io.openems.edge.application;
+
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import info.faljse.SDNotify.SDNotify;
+import io.openems.common.OpenemsConstants;
+
+@Component(immediate = true)
+public class EdgeApp {
+
+    private final Logger log = LoggerFactory.getLogger(EdgeApp.class);
+
+    @Activate
+    private void activate() {
+        var message = "OpenEMS version [" + OpenemsConstants.VERSION + "] started";
+        var line = Strings.repeat("=", message.length());
+        this.log.info(line);
+        this.log.info(message);
+        this.log.info(line);
+
+        // 向 Linux 操作系统宣布 OpenEMS Edge 启动就绪
+        var socketName = System.getenv().get("NOTIFY_SOCKET");
+        if (socketName != null && !socketName.isEmpty()) {
+            if (SDNotify.isAvailable()) {
+                SDNotify.sendNotify(); // 向 systemd 发送 READY=1 通知
+            }
+        }
+        this.log.debug("Activate EdgeApp");
+    }
+}</code></pre>
+        <div class="callout tip">
+          <div class="callout-title">Systemd Socket 联动</div>
+          <p>
+            通过 <code>SDNotify.sendNotify()</code>，OpenEMS 与 Linux 底层服务管理器无缝握手。若服务配置为 <code>Type=notify</code>，systemd 将在收到此信号后正式确认服务启动完成，避免了因初始化耗时导致的服务超时杀死问题。
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 6 -->
+      <section id="section-6" class="block">
+        <h2 class="section-title">6. 组件中枢与配置注入</h2>
+        <p>在 Level 20+ 阶段，<code>io.openems.edge.core</code> 中枢组件被激活：</p>
+        <ul>
+          <li>
+            <strong><code>ComponentManagerImpl</code> (<code>_componentManager</code>)</strong>：
+            使用 <code>TrackedComponentsView</code> 实时监听 OSGi 容器内所有 <code>OpenemsComponent</code>。内部启动 <code>OsgiValidateWorker</code> 持续监控是否所有配置组件都已处于健康 Active 状态；启动 <code>EdgeConfigWorker</code> 维护全站实时 Channel 目录。
+          </li>
+          <li>
+            <strong><code>SumImpl</code> (<code>_sum</code>)</strong>：
+            汇聚所有电表与逆变器功率，实时计算电网购售电、光伏产出、负载消耗与储能 SoC 综合指标。
+          </li>
+          <li>
+            <strong>外部通信服务并发启动</strong>：
+            端口 <code>8095</code>（REST API）、端口 <code>8075</code>（Websocket API）、端口 <code>8080</code>（Felix Web Console）以及向云端 Backend 建立的反向 WSS 长连接通道。
+          </li>
+        </ul>
+      </section>
+
+      <!-- SECTION 7 -->
+      <section id="section-7" class="block">
+        <h2 class="section-title">7. 软 PLC 控制循环 (CycleWorker)</h2>
+        <p>
+          OpenEMS Edge 的控制逻辑运行在单例组件 <strong><code>CycleImpl</code> (PID: <code>Core.Cycle</code>)</strong> 驱动的 <strong><code>CycleWorker</code> 专有高优先级后台线程</strong> 中。每个周期（默认 1000ms）严格执行 9 步标准控制流水线：
+        </p>
+
+        <pre><code>@Override
+protected void forever() {
+    var stopwatch = Stopwatch.createStarted();
+
+    // 1. 喂系统看门狗（防止硬件死锁挂机）
+    this.executeCycleStep(verbosity, CycleLogVerbosity.PHASES, "Notify Watchdog", SDNotify::sendWatchdog);
+
+    try {
+        // 2. 触发过程映像更新前事件
+        this.triggerEvent(verbosity, EdgeEventConstants.TOPIC_CYCLE_BEFORE_PROCESS_IMAGE);
+
+        // 3. 通道切换到下一个过程映像（Channel.nextProcessImage()）
+        // 拍照锁定所有底层传感器采样值，保证本周期内算法读取数据的严格时间一致性
+        this.executeCycleStep(verbosity, CycleLogVerbosity.PHASES, "Switch to Channels for each Component",
+                () -> Stream.concat(this.parent.componentManager.getEnabledComponents().stream(), Stream.of(this.parent))
+                        .filter(c -> c.isEnabled() && !(c instanceof Sum))
+                        .forEach(component -> this.triggerComponentEvent(verbosity, component)));
+
+        // 4. 更新 _sum 聚合通道的过程映像
+        this.executeCycleStep(verbosity, CycleLogVerbosity.PHASES, "Update the Channels in the Sum-Component",
+                () -> {
+                    this.parent.sumComponent.updateChannelsBeforeProcessImage();
+                    this.parent.sumComponent.channels().forEach(channel -> channel.nextProcessImage());
+                });
+
+        this.triggerEvent(verbosity, EdgeEventConstants.TOPIC_CYCLE_AFTER_PROCESS_IMAGE);
+        this.triggerEvent(verbosity, EdgeEventConstants.TOPIC_CYCLE_BEFORE_CONTROLLERS);
+
+        // 5. 调度器（Scheduler）按优先级调度所有控制器算法执行
+        // 例如：削峰填谷、动态电价平衡、光伏防逆流、充电桩功率限制
+        this.executeCycleStep(verbosity, CycleLogVerbosity.PHASES, "Execute Schedulers", () -> {
+            var hasDisabledController = this.executeSchedulersWithOptionalMeasure(verbosity);
+            this.parent._setIgnoreDisabledController(hasDisabledController);
+        });
+
+        this.triggerEvent(verbosity, EdgeEventConstants.TOPIC_CYCLE_AFTER_CONTROLLERS);
+        this.triggerEvent(verbosity, EdgeEventConstants.TOPIC_CYCLE_BEFORE_WRITE);
+
+        // 6. 批量硬件写出（EXECUTE_WRITE）
+        // 各协议桥（Bridge.Modbus / I/O）将控制器的计算目标值统一批量刷入硬件寄存器
+        this.triggerEvent(verbosity, EdgeEventConstants.TOPIC_CYCLE_EXECUTE_WRITE);
+
+        this.triggerEvent(verbosity, EdgeEventConstants.TOPIC_CYCLE_AFTER_WRITE);
+
+    } catch (Throwable t) {
+        this.parent.logWarn(this.log, "Error in Scheduler: " + t.getMessage());
+    }
+
+    // 7. 耗时统计与防超时监测
+    var totalMs = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+    this.parent._setMeasuredCycleTime(totalMs);
+}</code></pre>
+
+        <div class="callout warn">
+          <div class="callout-title">过程映像（Process Image）核心原理</div>
+          <p>
+            在电力控制系统中，若多个控制器异步读写硬件通道，将引发严重的“脏读”与“控制指令冲突”。OpenEMS 采用 PLC 经典的<strong>三段式控制法</strong>：
+            <strong>读快照（Snapshot） $\rightarrow$ 纯数学计算（Compute） $\rightarrow$ 集中写出（Write）</strong>，从而彻底保证了电网调控的原子性与数值稳定性。
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 8 -->
+      <section id="section-8" class="block">
+        <h2 class="section-title">8. 架构优势与生产排障指南</h2>
+        
+        <div class="card-grid">
+          <div class="card accent">
+            <h4>为什么不用传统 Spring Boot？</h4>
+            <p>现场工商业储能需要零停机热拔插电表、逆变器等驱动。OSGi 具备严格的模块版本隔离与动态类重载能力，是电力电子边缘侧的首选。</p>
+          </div>
+          <div class="card info">
+            <h4>Felix Web Console 可视化诊断</h4>
+            <p>访问 <code>http://&lt;IP&gt;:8080/system/console/components</code>（admin:admin），即可直观查验全站 286 个 OSGi 组件的激活与依赖满足状态。</p>
+          </div>
+          <div class="card warning">
+            <h4>周期耗时防超时监控</h4>
+            <p>实时监控 Channel <code>_cycle/MeasuredCycleTime</code>。若耗时持续逼近 1000ms，需警惕慢 Modbus 阻塞调用，应将耗时 IO 转入异步线程。</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+</body>
+</html>

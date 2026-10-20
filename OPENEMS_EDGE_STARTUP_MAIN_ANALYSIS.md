@@ -16,12 +16,12 @@ OpenEMS Edge 并不将业务逻辑硬编码在 `main` 方法中，而是通过 *
 flowchart TD
     subgraph S1 ["1. 系统服务与命令行入口"]
         OS["Linux Systemd (openems-edge.service)"] --> CMD["java -Dfelix.cm.dir=/etc/openems.d/ -jar openems-edge.jar"]
-        CMD --> MF["META-INF/MANIFEST.MF<br/>Main-Class: aQute.launcher.pre.EmbeddedLauncher"]
+        CMD --> MF["MANIFEST.MF: aQute.launcher.pre.EmbeddedLauncher"]
     end
 
     subgraph S2 ["2. 引导装载与 OSGi 容器自举"]
-        MF --> PRE["aQute.launcher.pre.EmbeddedLauncher.main()"]
-        PRE --> URL_CL["URLClassLoader 挂载 runpath:<br/>org.apache.felix.framework-7.0.5.jar<br/>biz.aQute.launcher-7.4.0.jar"]
+        MF --> PRE["EmbeddedLauncher.main()"]
+        PRE --> URL_CL["URLClassLoader 挂载 felix.framework & biz.aQute.launcher"]
         URL_CL --> LAUNCHER["aQute.launcher.Launcher.main()"]
         LAUNCHER --> PROP["解析 launcher.properties & 系统属性"]
         PROP --> FELIX["实例化 org.apache.felix.framework.Felix 并启动 Framework"]
@@ -39,13 +39,13 @@ flowchart TD
     end
 
     subgraph S4 ["4. 业务组件实例化与系统就绪"]
-        L19 --> EDGE_APP["EdgeApp.@Activate<br/>打印版本 Banner & 发送 SDNotify::sendNotify"]
-        L20 --> CM["ComponentManagerImpl (_componentManager)<br/>OsgiValidate / EdgeConfig / DefaultConfig"]
-        L20 --> SUM["SumImpl (_sum)<br/>全站能量汇总聚合"]
+        L19 --> EDGE_APP["EdgeApp: 版本 Banner & SDNotify::sendNotify"]
+        L20 --> CM["ComponentManagerImpl (_componentManager)"]
+        L20 --> SUM["SumImpl (_sum: 全站能量汇总聚合)"]
     end
 
     subgraph S5 ["5. 稳态运行：PLC 软实时控制循环 (Core.Cycle)"]
-        CM --> CYCLE["CycleImpl.@Activate -> CycleWorker.forever() (默认 1000ms 周期)"]
+        CM --> CYCLE["CycleImpl -> CycleWorker.forever() (默认 1000ms 周期)"]
         CYCLE --> STEP1["1. SDNotify::sendWatchdog (喂系统看门狗)"]
         STEP1 --> STEP2["2. Switch to Next Process Image (通道快照隔离)"]
         STEP2 --> STEP3["3. Update Sum Channels (更新 _sum)"]

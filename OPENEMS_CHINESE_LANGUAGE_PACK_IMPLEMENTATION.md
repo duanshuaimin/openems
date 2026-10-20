@@ -30,9 +30,9 @@ flowchart TD
         ODOO_PO["openems/i18n/zh_CN.po"]
     end
 
-    UI_BUILD_EDGE <-->|WebSocket:8075 updateUserLanguage| OSGi
-    UI_BUILD_BACKEND <-->|WebSocket:8082 updateUserLanguage| OSGi
-    OSGi <-->|XML-RPC / Odoo Handler| ODOO_LANG
+    UI_BUILD_EDGE --- |"WebSocket:8075 updateUserLanguage"| OSGi
+    UI_BUILD_BACKEND --- |"WebSocket:8082 updateUserLanguage"| OSGi
+    OSGi --- |"XML-RPC / Odoo Handler"| ODOO_LANG
 ```
 
 ---
