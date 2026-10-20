@@ -4,6 +4,20 @@
 
 ## 核心技术文档
 
+- 🚀 **[OpenEMS Edge 启动入口与自举机制深度剖析报告](OPENEMS_EDGE_STARTUP_MAIN_ANALYSIS.md)**：
+  - 启动入口分析：JVM 命令行、`META-INF/MANIFEST.MF` 与 `aQute.launcher.pre.EmbeddedLauncher`
+  - OSGi 容器自举：bnd 运行时执行引擎与 `org.apache.felix.framework` 动态加载
+  - StartLevel 严密分层：SCR (10)、ConfigAdmin (11)、EventAdmin (12)、Pax Logging (15/16)、EdgeApp (19)、业务层 (20+)
+  - 业务宣告与 Linux 联动：`EdgeApp.java` 启动 Banner 与 systemd Socket 握手（`SDNotify.sendNotify`）
+  - 核心装配与软 PLC 控制循环：`ComponentManagerImpl` 组件中枢与 `CycleWorker.forever()` 9 步过程映像流水线
+  - 工业级可靠性：硬件/Systemd 看门狗防死锁机制与生产排障指南
+
+- 🇨🇳 **[OpenEMS 中文语言包实现与部署报告](OPENEMS_CHINESE_LANGUAGE_PACK_IMPLEMENTATION.md)**：
+  - Java 核心运行时：`Language.ZH` 枚举、模式匹配穷举支持与 `translation_zh.properties`（1,063 行应用中心中文字典）
+  - Angular Web UI：891 个翻译键 100% 对齐全量中文化（`zh.json`，通过官方 `lint:i18n` 检查）与 `language.ts` 注册
+  - 云端多租户与双端联动：Edge WebSocket（8075）、Backend WebSocket（8082）与 Odoo ERP `openems_language='ZH'` 双向同步
+  - 生产打包与 Nginx 部署：Edge UI（80/4200）与 Backend UI（8081）全量上线验证
+
 - 📘 **[OpenEMS 边缘微内核与整站架构深度分析报告](OPENEMS_ARCHITECTURE_ANALYSIS.md)**：
   - 宏观三层体系（Edge 边缘内核、Backend 云端聚合、UI 呈现）
   - OSGi 微内核、Declarative Services 与 ConfigAdmin 热重载
