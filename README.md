@@ -10,7 +10,9 @@
   - StartLevel 严密分层：SCR (10)、ConfigAdmin (11)、EventAdmin (12)、Pax Logging (15/16)、EdgeApp (19)、业务层 (20+)
   - 业务宣告与 Linux 联动：`EdgeApp.java` 启动 Banner 与 systemd Socket 握手（`SDNotify.sendNotify`）
   - 核心装配与软 PLC 控制循环：`ComponentManagerImpl` 组件中枢与 `CycleWorker.forever()` 9 步过程映像流水线
-  - 工业级可靠性：硬件/Systemd 看门狗防死锁机制与生产排障指南
+  - 通信与 API 并发矩阵：Websocket (8075)、REST (8095)、Modbus (502)、MQTT 与 Felix Console (8080)
+  - 核心通信专题：WSS 反向客户端（Reverse Tunnel）架构原理、NAT 穿透、控制权限反转与端到端穿透时序
+  - 工业级可靠性：`ApiWorker` 10秒心跳看门狗防飞车、硬件/Systemd 看门狗防死锁与生产排障指南
 
 - 🇨🇳 **[OpenEMS 中文语言包实现与部署报告](OPENEMS_CHINESE_LANGUAGE_PACK_IMPLEMENTATION.md)**：
   - Java 核心运行时：`Language.ZH` 枚举、模式匹配穷举支持与 `translation_zh.properties`（1,063 行应用中心中文字典）

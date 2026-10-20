@@ -358,6 +358,86 @@ flowchart TD
 - **并发只读（无锁）**：外部高频 API 查询读取的是 Channel 的当前过程映像快照（Process Image Snapshot），**绝对不会与 PLC 毫秒级控制计算产生线程锁争用**。
 - **隔离写**：外部写入仅调用 `setNextWriteValue()` 注入暂存区，最终由控制循环在每个周期的 `TOPIC_CYCLE_EXECUTE_WRITE` 步骤批量统一刷入底层硬件驱动寄存器，避免异步写引发总线冲突。
 
+#### E. 核心通信机制专题剖析：WSS 反向客户端（Reverse Tunnel）架构深度解析
+
+在微电网与工业物联网（IoT）领域，`Controller.Api.Backend` 所采用的 **WSS 反向客户端（WebSocket Secure Reverse Client）** 是一项解决复杂网络现场交互的基石架构。
+
+##### 1. 概念本质与通俗比喻
+- **传统的正向通信（Forward）**：类似于由云端主动呼叫边缘设备。前提是**必须预先知晓边缘的静态公网 IP 且局域网防火墙开放外网呼入**。但在实际现场，储能工控机部署在园区配电房或用户地下室，连接的是内网私有 IP 或 4G/5G 物联网流量卡，**无公网 IP，入向端口被运营商和防火墙完全封死**。
+- **反向长连接隧道（Reverse Tunnel）**：
+  - **网络建链方向反转**：由处于内网的边缘端工控机（Edge）**主动向云端 WSS 端口（如 443 或 8085）发起出站 TLS 加密握手（Outbound Connection）**。
+  - **控制权限方向倒置（Inversion of Control）**：一旦长连接建立，双方保持 TCP 链路永不挂断。此时在网络层边缘是 Client，但在**应用业务层**，云端获得了对边缘随时发起 RPC 请求和下发指令的完整主动权，**把内网边缘设备反转为可被云端实时调用的微服务节点**。
+  - **通俗比喻**：如同内网特工（Edge）主动拨打总部（Cloud）专属加密专线，通话建立后保持线路长通。不仅特工可以向总部持续汇报遥测敌情，总部更可随时对着话筒下发作战控制指令。
+
+##### 2. 解决工业现场的 5 大物理痛点
+1. **零网络配置穿透 NAT 与防火墙**：企业与家庭路由器普遍“严禁入站、允许出站”。反向 WSS 仅需允许标准外联，无需申请公网 IP、无需配置路由器端口映射（Port Forwarding）或 DDNS。
+2. **边缘侧物理隐身与零攻击暴露面（Zero Attack Surface）**：边缘设备**对外开放端口为 0**，网络“只出不进”。公网黑客无法通过 Shodan、Censys 等资产搜索引擎扫描到工控机端口，阻断外部暴力破解。
+3. **毫秒级全双工长连接**：相比传统 HTTP 轮询（Polling）的高昂报文头开销与秒级延迟，WebSocket 数据帧开销仅 2~10 字节，底层 TCP 连接复用，云端调度指令毫秒级直达。
+4. **弱网自动重连与断网自愈**：面对 4G/5G 信号偶发抖动，边缘客户端内置重试状态机与指数退避机制，断线自动静默重连，网络恢复后无感自愈。
+5. **极简云端多租户车队管理**：免除为上千台电站单独搭建并维护 VPN（OpenVPN / WireGuard）证书链的高昂运维成本，云端只需维护 WebSocket 会话池即可对海量电站执行并发管理。
+
+##### 3. 端到端控制穿透时序（Sequence Diagram）
+当用户在云端 Web UI 上点击下发“修改储能放电功率为 50kW”时，指令通过反向 WSS 隧道穿透直达底层控制器的全流程如下：
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant UI as "远程用户 (Web UI)"
+    participant Cloud as "云端 (OpenEMS Backend)"
+    participant EdgeWS as "边缘客户端 (WebsocketClient)"
+    participant Router as "边缘路由 (RootRequestHandler)"
+    participant Worker as "保护看门狗 (ApiWorker)"
+    participant PLC as "控制循环 (Core.Cycle)"
+
+    Note over Cloud, EdgeWS: 阶段 A: 物理反向建链 (边缘主动外联)
+    EdgeWS->>Cloud: 主动建立 TLS/WSS 握手 (携带 API-Key & Instance-Id)
+    Cloud->>Cloud: 验证 API Key 合法性，将 WebSocket 句柄存入连接池
+    Cloud-->>EdgeWS: 握手成功，双向加密长连接就绪 (永不挂断)
+
+    Note over UI, PLC: 阶段 B: 业务控制逆向穿透 (云端下发指令)
+    UI->>Cloud: 发送控制请求: setChannelValue (SetActivePower = 50000W)
+    Cloud->>Cloud: 查询 EdgeId 对应的活跃反向 WSS 连接
+    Cloud->>EdgeWS: 逆向推流: 发送 EdgeRpcRequest (JSON-RPC)
+    EdgeWS->>Router: 解析 JSON-RPC 请求，通过 RBAC 鉴权
+    Router->>Worker: 下发至 ApiWorker (启动 10s 心跳倒计时)
+    Worker->>PLC: 注入通道缓冲区 (WriteChannel.setNextWriteValue)
+    PLC->>PLC: 在 EXECUTE_WRITE 周期下发 Modbus 指令至逆变器
+    EdgeWS-->>Cloud: 响应 GenericJsonrpcResponseSuccess (OK)
+    Cloud-->>UI: 返回操作成功，界面实时刷新
+```
+
+##### 4. OpenEMS 源码核心实现
+- **边缘端主动建连与自愈**（[`ControllerApiBackendImpl.java`](file:///opt/openems/source/io.openems.edge.controller.api.backend/src/io/openems/edge/controller/api/backend/ControllerApiBackendImpl.java) & [`WebsocketClient.java`](file:///opt/openems/source/io.openems.edge.controller.api.backend/src/io/openems/edge/controller/api/backend/WebsocketClient.java)）：
+  ```java
+  // 边缘向云端握手时携带 API Key 凭证头
+  Map<String, String> httpHeaders = new HashMap<>();
+  httpHeaders.put(CommonHttpHeader.APIKEY.asString(), config.apikey());
+  httpHeaders.put(CommonHttpHeader.INSTANCE_ID.asString(), this.instanceId);
+
+  // 初始化带有自动重连状态机 (ClientReconnectorWorker) 的客户端
+  this.websocket = new WebsocketClient(this, name, uri, httpHeaders, proxy);
+  this.websocket.start();
+  ```
+- **云端句柄池逆向发送**（[`EdgeManagerImpl.java`](file:///opt/openems/source/io.openems.backend.edge.manager/src/io/openems/backend/edge/manager/EdgeManagerImpl.java)）：
+  ```java
+  public CompletableFuture<JsonrpcResponseSuccess> send(String edgeId, User user, Role role, JsonrpcRequest request) {
+      // 1. 根据 edgeId 检索由边缘客户端主动建立并维持的活跃 WebSocket 句柄
+      var wsData = this.getWsData(edgeId);
+      
+      // 2. 封装为携带多租户 RBAC 权限的 EdgeRpcRequest
+      var edgeRpc = new EdgeRpcRequest(edgeId, new AuthenticatedRpcRequest<>(user, role, request));
+      
+      // 3. 逆向将指令“推入”该长连接隧道，并返回 CompletableFuture 等待结果
+      return wsData.send(edgeRpc);
+  }
+  ```
+
+##### 5. 单条隧道复用的三类异构流量
+在单一 WSS 长连接上，OpenEMS 通过 JSON-RPC 消息协议实现了三类流量的高效复用：
+1. **边缘 $\rightarrow$ 云端（遥测上报）**：`SendChannelValuesWorker` 每秒将全站通道增量批量打包上传，供云端 InfluxDB 归档。
+2. **云端 $\rightarrow$ 边缘（反向 RPC 穿透）**：管理员远程下发控制参数、启停组件、安装 AppCenter 应用。
+3. **断网断点续传（数据保真）**：`ResendHistoricDataWorker` 将外网中断期间本地缓存的时序数据，在网络恢复后以受控流量重放上云，确保数据**零丢失**。
+
 ---
 
 ## 七、第六阶段：稳态运行 —— 软 PLC 控制循环（Cycle Engine）
