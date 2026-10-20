@@ -4,6 +4,14 @@
 
 ## 核心技术文档
 
+- 🔋 **[OpenEMS Edge 与储能 BMS：CAN-Bus 网关协议深度解析技术指南](OPENEMS_CAN_BUS_GATEWAY_PROTOCOL_ANALYSIS.md)**：
+  - 储能通信协议断层：电芯侧毫秒级差分总线（CAN 2.0A/B）与上层工业以太网（Modbus/TCP）的割裂与统一
+  - 为什么必须采用 CAN 网关：硬实时（10ms 心跳）与软实时（JVM/OSGi）解耦、2.5kV~5kV 高压电气物理隔离、跨硬件平台中立性与多簇（Multi-Rack）拓扑聚合
+  - 通用 CAN BMS 报文标准：Pylontech / Victron 500kbps 规范逐字节剖析（`0x351` 动态充放电安全包络、`0x355` SOC/SOH、`0x356` 电压/电流/温度物理测量、`0x359/0x35A` 保护位掩码）
+  - 两种典型工程形态：透明转换型工业网关（CAN-to-Modbus TCP）与智能高压域控制器网关（以官方 BMW i3 车规级动力电池集成 `io.openems.edge.battery.bmw` 为标杆）
+  - OpenEMS 调度闭环：Modbus 寄存器 $\rightarrow$ `Battery` 抽象 Channel $\rightarrow$ `BatteryProtection` 动态降额斜率控制 $\rightarrow$ PCS 功率执行
+  - 工业级避坑指南：Intel/Motorola 字节序陷阱、双向断联超时看门狗、120Ω 终端阻抗匹配与多簇 CAN-ID 冲突消除
+
 - 🚀 **[OpenEMS Edge 启动入口与自举机制深度剖析报告 (Markdown)](OPENEMS_EDGE_STARTUP_MAIN_ANALYSIS.md)** ｜ 🖥️ **[高质感交互式 HTML 可视化报告](OpenEMS_Edge_启动自举与软PLC控制循环深度剖析报告_2026-10-20.html)**：
   - 启动入口分析：JVM 命令行、`META-INF/MANIFEST.MF` 与 `aQute.launcher.pre.EmbeddedLauncher`
   - OSGi 容器自举：bnd 运行时执行引擎与 `org.apache.felix.framework` 动态加载
