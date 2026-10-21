@@ -4,6 +4,12 @@
 
 ## 核心技术文档
 
+- 🔋 **[OpenEMS 储能柜五级物理拓扑与电芯数字孪生可视化架构与实现全景报告](OPENEMS_BMS_GRAFANA_TOPOLOGY_DASHBOARD.md)**：
+  - **五级递进式物理拓扑**：**储能柜 (Cabinet) $\rightarrow$ 电池阵列 (Array) $\rightarrow$ 电池簇 (Pack/Rack) $\rightarrow$ 电池模组 (Module) $\rightarrow$ 单体电芯 (Cell)**
+  - **Grafana 数字孪生看板**：39 个组件面板覆盖 6 大业务行（UID: `openems-bess-topology`），包含全景拓扑交互引导、柜内热工与气溶胶消防联动、阵列直流母线与断路器工况、Pack 动态安全包络降额曲线、10 个串联模组电压与温场分布、160 颗串联 LiFePO4 电芯 LCD 矩阵与极值单体（#14 Max / #3 Min）精准定位
+  - **双向协同与多站漫游**：与微电网指挥中心大屏（`openems-ess-analytics`）无缝双向跳转，集成 InfluxDB Flux 实时管道与 BMS 虚拟设备（`edge=bms`）及多站（`edge=0..4`）秒级切换
+  - **自动化资产交付**：包含声明式看板配置（`openems_bess_5tier_topology_dashboard.json`）与 Python 自动化生成装配流水线（`generate_bess_topology_dashboard.py`）
+
 - ⚡ **[OpenEMS Edge 储能 BMS 虚拟设备构建、高保真物理仿真与实机接入指南](OPENEMS_VIRTUAL_BMS_DEVICE_AND_EDGE_INTEGRATION.md)**：
   - 工业级 BMS 虚拟设备（HIL）：基于 Python 异步架构自主构建的 512V / 100kWh（160 串 LiFePO4）高压储能虚拟仿真器（`/opt/openems/scripts/bms_pylontech_virtual_device.py`），监听 `8503` 端口并注册 Systemd 守护进程
   - 高保真物理模型：库仑积分动态 SOC 估算、双曲正切 OCV-SOC 开路电压特性、电芯级（mV）离散度与 Delta-V 均衡追踪（#14 Max, #3 Min）、焦耳发热电热耦合、SOC 边界动态充放电安全降额包络（BMS Envelope）

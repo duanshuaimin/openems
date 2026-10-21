@@ -8,6 +8,8 @@ Simulates a Pylontech Powercube M2 High-Voltage LiFePO4 Energy Storage Battery R
   • Dynamic Safety Envelope (BP_CHARGE_BMS / BP_DISCHARGE_BMS Derating Curves)
   • Full Modbus TCP Server responding to FC03 (Read Holding), FC04 (Read Input),
     FC06 (Write Single: 0x1090 Wake/Sleep), and FC16 (Write Multiple).
+  • High-Frequency InfluxDB Telemetry Publisher (edge=bms, edge=0) for 5-Tier
+    Topology Visualization in Grafana (Cell, Module, Pack, Array, Cabinet).
 """
 
 import asyncio
@@ -17,9 +19,14 @@ import math
 import random
 import os
 import sys
+import urllib.request
+import urllib.error
 
 PORT = 8503
 UNIT_ID = 1
+
+INFLUX_WRITE_URL = "http://127.0.0.1:8086/api/v2/write?bucket=openems&org=openems&precision=s"
+AUTH_TOKEN = "OpenEmsInfluxSecretToken2026!"
 
 class VirtualPylontechBMS:
     def __init__(self):
@@ -61,6 +68,30 @@ class VirtualPylontechBMS:
         self.max_v_cell_no = 14
         self.min_v_cell_no = 3
 
+        # 160 Cells static characterization offsets
+        random.seed(42)
+        self.cell_offsets = [int(random.gauss(0, 5)) for _ in range(160)]
+        self.cell_offsets[13] = 16   # Cell #14 is max (+16mV offset)
+        self.cell_offsets[2] = -14   # Cell #3 is min (-14mV offset)
+
+        self.temp_offsets = [round(random.gauss(0, 0.35), 1) for _ in range(160)]
+        self.temp_offsets[7] = 1.3   # Cell #8 is hottest (+1.3°C)
+        self.temp_offsets[0] = -1.1  # Cell #1 is coolest (-1.1°C)
+
+        self.cell_voltages_mv = [3300] * 160
+        self.cell_temps_c = [24.5] * 160
+        self.module_voltages_v = [51.2] * 10
+        self.module_temps_c = [24.5] * 10
+
+        self.max_module_v = 52.8
+        self.min_module_v = 51.6
+        self.max_v_module_no = 2
+        self.min_v_module_no = 1
+        self.max_module_temp_c = 25.8
+        self.min_module_temp_c = 23.9
+        self.max_temp_module_no = 4
+        self.min_temp_module_no = 8
+
         # Safety Limits
         self.charge_max_voltage_v = 547.5   # 3.42V / cell
         self.discharge_min_voltage_v = 435.0 # 2.72V / cell
@@ -79,8 +110,7 @@ class VirtualPylontechBMS:
         elapsed = now - self.start_time
 
         if self.is_awake:
-            # Simulate a realistic industrial microgrid storage power profile:
-            # Gentle sinusoidal fluctuation with occasional steady states (+18A discharge, -25A charge, or idle)
+            # Simulate an industrial microgrid storage power profile:
             cycle_phase = (elapsed % 300.0) / 300.0  # 5-minute cycle
             if cycle_phase < 0.4:
                 # Discharging to support microgrid load (positive current)
@@ -98,7 +128,6 @@ class VirtualPylontechBMS:
             self.current_a += (target_i - self.current_a) * 0.25
 
             # Dynamic Coulomb Counting (SOC integration)
-            # 1 Ah = 3600 A*s -> delta_soc = -(I * dt) / (Capacity_Ah * 3600) * 100
             delta_soc = -(self.current_a * dt) / (self.capacity_ah * 3600.0) * 100.0
             self.soc = max(5.0, min(98.0, self.soc + delta_soc))
             self.remaining_capacity_wh = (self.soc / 100.0) * self.capacity_wh
@@ -115,27 +144,60 @@ class VirtualPylontechBMS:
                 self.history_discharge_wh += energy_delta
 
             # LiFePO4 Open Circuit Voltage (OCV) Curve (160 cells)
-            # Nominal ~3.22V, range 2.8V ~ 3.45V per cell
             cell_ocv = 3.20 + 0.0035 * (self.soc - 50.0) + (0.05 * math.tanh((self.soc - 50.0) / 15.0))
-            # Battery Terminal Voltage = OCV - I * R_internal
             pack_terminal_v = (cell_ocv * 160.0) - (self.current_a * self.internal_resistance_ohm)
             self.pack_voltage_v = max(420.0, min(560.0, pack_terminal_v))
 
-            # Cell Voltages in mV
+            # Mean Cell Voltage in mV
             avg_cell_mv = int((self.pack_voltage_v / 160.0) * 1000.0)
-            # Micro-dispersion between cells
-            self.max_cell_v_mv = avg_cell_mv + 14 + int(random.uniform(-1, 2))
-            self.min_cell_v_mv = avg_cell_mv - 12 - int(random.uniform(-1, 2))
 
             # Thermal dynamics (Joule heating + ambient dissipation)
             heat_gen = (self.current_a ** 2) * self.internal_resistance_ohm * 0.0005
             self.pack_temp_c += (self.ambient_temp_c + heat_gen - self.pack_temp_c) * 0.02
-            self.max_cell_temp_c = self.pack_temp_c + 1.2 + random.uniform(-0.1, 0.1)
-            self.min_cell_temp_c = self.pack_temp_c - 1.1 + random.uniform(-0.1, 0.1)
+
+            # Compute all 160 Cells voltages & temperatures
+            for i in range(160):
+                mod_idx = i // 16
+                # Middle modules run slightly warmer due to interior thermal retention
+                mod_thermal_bias = 0.9 * math.sin((mod_idx / 9.0) * math.pi)
+                
+                # Active balancing reduces cell #14 if delta is elevated
+                cell_v = avg_cell_mv + self.cell_offsets[i] + random.uniform(-0.6, 0.6)
+                self.cell_voltages_mv[i] = int(round(cell_v))
+                
+                cell_t = self.pack_temp_c + mod_thermal_bias + self.temp_offsets[i] + random.uniform(-0.05, 0.05)
+                self.cell_temps_c[i] = round(cell_t, 1)
+
+            # Cell Extremes
+            self.max_cell_v_mv = max(self.cell_voltages_mv)
+            self.min_cell_v_mv = min(self.cell_voltages_mv)
+            self.max_v_cell_no = self.cell_voltages_mv.index(self.max_cell_v_mv) + 1
+            self.min_v_cell_no = self.cell_voltages_mv.index(self.min_cell_v_mv) + 1
+            self.max_cell_temp_c = max(self.cell_temps_c)
+            self.min_cell_temp_c = min(self.cell_temps_c)
+            self.max_temp_cell_no = self.cell_temps_c.index(self.max_cell_temp_c) + 1
+            self.min_temp_cell_no = self.cell_temps_c.index(self.min_cell_temp_c) + 1
+
+            # Compute all 10 Modules voltages & temperatures
+            self.module_voltages_v = []
+            self.module_temps_c = []
+            for m in range(10):
+                m_cells = self.cell_voltages_mv[m * 16 : (m + 1) * 16]
+                self.module_voltages_v.append(round(sum(m_cells) / 1000.0, 2))
+                m_temps = self.cell_temps_c[m * 16 : (m + 1) * 16]
+                self.module_temps_c.append(round(sum(m_temps) / 16.0, 1))
+
+            self.max_module_v = max(self.module_voltages_v)
+            self.min_module_v = min(self.module_voltages_v)
+            self.max_v_module_no = self.module_voltages_v.index(self.max_module_v) + 1
+            self.min_v_module_no = self.module_voltages_v.index(self.min_module_v) + 1
+            self.max_module_temp_c = max(self.module_temps_c)
+            self.min_module_temp_c = min(self.module_temps_c)
+            self.max_temp_module_no = self.module_temps_c.index(self.max_module_temp_c) + 1
+            self.min_temp_module_no = self.module_temps_c.index(self.min_module_temp_c) + 1
 
             # Dynamic BMS Envelope (Derating curves near SOC boundary)
             if self.soc > 90.0:
-                # Taper charge current limit smoothly
                 taper = (98.0 - self.soc) / 8.0
                 self.charge_max_current_a = max(10.0, 120.0 * taper)
             else:
@@ -176,23 +238,19 @@ class VirtualPylontechBMS:
 
         # 3. Electrical Metrics (0x1103..0x110E)
         self.set_u16(0x1103, int(round(self.pack_voltage_v * 10.0))) # Scale 0.1 V
-        # Current in 0.01 A, signed 32-bit:
-        self.set_s32(0x1104, int(round(self.current_a * 100.0)))
+        self.set_s32(0x1104, int(round(self.current_a * 100.0)))      # Scale 0.01 A
         self.set_s16(0x1106, int(round(self.pack_temp_c * 10.0)))     # Scale 0.1 °C
         self.set_u16(0x1107, int(round(self.soc)))                    # SOC %
         self.set_u16(0x1108, self.cycle_count)                        # Full Cycles
         self.set_u16(0x1109, int(round(self.charge_max_voltage_v * 10.0)))
-        # BP_CHARGE_BMS: positive 32-bit int, Scale 0.01 A
         self.set_s32(0x110A, int(round(self.charge_max_current_a * 100.0)))
         self.set_u16(0x110C, int(round(self.discharge_min_voltage_v * 10.0)))
-        # BP_DISCHARGE_BMS: Pylontech spec uses negative 32-bit int, Scale 0.01 A
         self.set_s32(0x110D, -int(round(self.discharge_max_current_a * 100.0)))
 
         # 4. Circuit Status (0x110F)
-        # bit 0: discharge active, bit 1: charge active, bit 6: fan active
         self.set_u16(0x110F, 0x0043 if self.is_awake else 0x0000)
 
-        # 5. Cell Extremes (0x1110..0x111F)
+        # 5. Cell Extremes (0x1110..0x1117)
         self.set_u16(0x1110, self.max_cell_v_mv)
         self.set_u16(0x1111, self.min_cell_v_mv)
         self.set_u16(0x1112, self.max_v_cell_no)
@@ -202,18 +260,17 @@ class VirtualPylontechBMS:
         self.set_u16(0x1116, self.max_temp_cell_no)
         self.set_u16(0x1117, self.min_temp_cell_no)
 
-        # Module Extremes (10 modules, ~51.2V each)
-        mod_avg_v = self.pack_voltage_v / 10.0
-        self.set_u16(0x1118, int(round((mod_avg_v + 0.35) * 100.0))) # Max Module V
-        self.set_u16(0x1119, int(round((mod_avg_v - 0.28) * 100.0))) # Min Module V
-        self.set_u16(0x111A, 2)
-        self.set_u16(0x111B, 1)
-        self.set_s16(0x111C, int(round((self.pack_temp_c + 0.8) * 10.0)))
-        self.set_s16(0x111D, int(round((self.pack_temp_c - 0.7) * 10.0)))
-        self.set_u16(0x111E, 2)
-        self.set_u16(0x111F, 1)
+        # 6. Module Extremes (0x1118..0x111F)
+        self.set_u16(0x1118, int(round(self.max_module_v * 100.0)))
+        self.set_u16(0x1119, int(round(self.min_module_v * 100.0)))
+        self.set_u16(0x111A, self.max_v_module_no)
+        self.set_u16(0x111B, self.min_v_module_no)
+        self.set_s16(0x111C, int(round(self.max_module_temp_c * 10.0)))
+        self.set_s16(0x111D, int(round(self.min_module_temp_c * 10.0)))
+        self.set_u16(0x111E, self.max_temp_module_no)
+        self.set_u16(0x111F, self.min_temp_module_no)
 
-        # 6. SOH & Capacities (0x1120..0x1131)
+        # 7. SOH & Capacities (0x1120..0x1131)
         self.set_u16(0x1120, self.soh)
         self.set_u32(0x1121, int(self.remaining_capacity_wh))
         self.set_u32(0x1123, int(self.charge_capacity_wh))
@@ -224,10 +281,10 @@ class VirtualPylontechBMS:
         self.set_u32(0x112D, int(self.history_discharge_wh))
         self.set_u16(0x112F, 0) # Force charge = 0
         self.set_u16(0x1130, 0) # Balance charge = 0
-        self.set_u16(0x1131, 0) # Piles in parallel = 0 (prevents duplicate pile channel warnings)
+        self.set_u16(0x1131, 0) # Piles in parallel = 0
         self.set_u16(0x1132, 0) # Error bits = 0
 
-        # 7. Architecture & Insulation (0x1136..0x1149)
+        # 8. Architecture & Insulation (0x1136..0x1149)
         self.set_u16(0x1136, 10)  # 10 modules in series
         self.set_u16(0x1137, 160) # 160 cells in series
         self.set_u16(0x1138, 0)   # Charge forbidden = 0
@@ -277,9 +334,136 @@ class VirtualPylontechBMS:
 
 bms = VirtualPylontechBMS()
 
+def generate_influx_lines(edge_tag, ts_sec):
+    """Generates complete 5-tier telemetry line protocol for the given edge tag."""
+    bms.update_physics()
+    
+    # 1. Tier 3: Battery Pack / Rack Metrics
+    v_pack = int(round(bms.pack_voltage_v))
+    i_pack = int(round(bms.current_a))
+    p_dc = int(round(bms.pack_voltage_v * bms.current_a))
+    soc_int = int(round(bms.soc))
+    
+    delta_v = bms.max_cell_v_mv - bms.min_cell_v_mv
+    delta_t = int(round((bms.max_cell_temp_c - bms.min_cell_temp_c) * 10.0))
+    mod_delta_v = int(round((bms.max_module_v - bms.min_module_v) * 10.0))
+    mod_delta_t = int(round((bms.max_module_temp_c - bms.min_module_temp_c) * 10.0))
+    
+    fields = {
+        # Pack Level (Tier 3)
+        "battery0/Voltage": v_pack,
+        "battery0/Current": i_pack,
+        "battery0/Soc": soc_int,
+        "battery0/Soh": bms.soh,
+        "battery0/CycleCount": bms.cycle_count,
+        "battery0/RemainingCapacity": int(bms.remaining_capacity_wh),
+        "battery0/DailyChargeEnergy": int(bms.daily_charge_wh),
+        "battery0/DailyDischargeEnergy": int(bms.daily_discharge_wh),
+        "battery0/TotalChargeEnergy": int(bms.history_charge_wh),
+        "battery0/TotalDischargeEnergy": int(bms.history_discharge_wh),
+        "battery0/ChargeMaxVoltage": int(round(bms.charge_max_voltage_v * 10)),
+        "battery0/DischargeMinVoltage": int(round(bms.discharge_min_voltage_v * 10)),
+        "battery0/ChargeMaxCurrent": int(round(bms.charge_max_current_a)),
+        "battery0/DischargeMaxCurrent": int(round(bms.discharge_max_current_a)),
+        "battery0/InsulationResistance": bms.insulation_kohm,
+        "battery0/State": 0,
+        "battery0/BalancingActiveCells": 3 if delta_v > 20 else 0,
+        "battery0/BalancingState": 1 if delta_v > 20 else 0,
+
+        # Cell Level Extremes (Tier 5)
+        "battery0/MaxCellVoltage": bms.max_cell_v_mv,
+        "battery0/MinCellVoltage": bms.min_cell_v_mv,
+        "battery0/MaxVoltageCellNumber": bms.max_v_cell_no,
+        "battery0/MinVoltageCellNumber": bms.min_v_cell_no,
+        "battery0/CellVoltageDelta": delta_v,
+        "battery0/MaxCellTemperature": int(round(bms.max_cell_temp_c * 10.0)),
+        "battery0/MinCellTemperature": int(round(bms.min_cell_temp_c * 10.0)),
+        "battery0/MaxTemperatureCellNumber": bms.max_temp_cell_no,
+        "battery0/MinTemperatureCellNumber": bms.min_temp_cell_no,
+        "battery0/CellTemperatureSpread": delta_t,
+
+        # Module Level Extremes (Tier 4)
+        "battery0/MaxModuleVoltage": int(round(bms.max_module_v * 10.0)),
+        "battery0/MinModuleVoltage": int(round(bms.min_module_v * 10.0)),
+        "battery0/MaxVoltageModuleNumber": bms.max_v_module_no,
+        "battery0/MinVoltageModuleNumber": bms.min_v_module_no,
+        "battery0/MaxModuleTemperature": int(round(bms.max_module_temp_c * 10.0)),
+        "battery0/MinModuleTemperature": int(round(bms.min_module_temp_c * 10.0)),
+        "battery0/MaxTemperatureModuleNumber": bms.max_temp_module_no,
+        "battery0/MinTemperatureModuleNumber": bms.min_temp_module_no,
+        "battery0/ModuleVoltageDelta": mod_delta_v,
+        "battery0/ModuleTemperatureSpread": mod_delta_t,
+
+        # Array Level (Tier 2)
+        "array0/DcVoltage": v_pack,
+        "array0/DcCurrent": i_pack,
+        "array0/DcPower": p_dc,
+        "array0/ParallelPiles": 1,
+        "array0/SocBalanceVariance": 8,  # 0.8%
+        "array0/CirculatingCurrent": 2,   # 0.2A
+        "array0/DcBreakerStatus": 1,      # Closed
+        "array0/MainContactorPos": 1,     # Closed
+        "array0/MainContactorNeg": 1,     # Closed
+        "array0/PrechargeContactor": 0,   # Precharge Finished
+
+        # Cabinet Level (Tier 1)
+        "cabinet0/State": 1 if i_pack < -1 else (2 if i_pack > 1 else 3),
+        "cabinet0/ActivePower": int(round(p_dc * 0.96)),
+        "cabinet0/DcPower": p_dc,
+        "cabinet0/DailyChargeEnergy": int(bms.daily_charge_wh),
+        "cabinet0/DailyDischargeEnergy": int(bms.daily_discharge_wh),
+        "cabinet0/TotalChargeEnergy": int(bms.history_charge_wh),
+        "cabinet0/TotalDischargeEnergy": int(bms.history_discharge_wh),
+        "cabinet0/RteEfficiency": 925,    # 92.5%
+        "cabinet0/AmbientTemp": int(round(bms.ambient_temp_c * 10.0)),
+        "cabinet0/Humidity": 45,
+        "cabinet0/HvacStatus": 1 if bms.pack_temp_c > 24.5 else 0,
+        "cabinet0/HvacTempSetpoint": 220, # 22.0°C
+        "cabinet0/FireSystemStatus": 0,   # Normal
+        "cabinet0/DoorLimitStatus": 0,    # Closed
+        "cabinet0/EmergencyStopStatus": 0 # Normal
+    }
+
+    # Individual 10 Modules (Tier 4)
+    for m in range(10):
+        m_id = m + 1
+        fields[f"battery0/Module_{m_id:02d}_Voltage"] = int(round(bms.module_voltages_v[m] * 10.0))
+        fields[f"battery0/Module_{m_id:02d}_Temp"] = int(round(bms.module_temps_c[m] * 10.0))
+
+    # Individual 160 Cells (Tier 5)
+    for c in range(160):
+        c_id = c + 1
+        fields[f"battery0/Cell_{c_id:03d}_V"] = bms.cell_voltages_mv[c]
+
+    field_strs = [f"{k}={v}i" for k, v in fields.items()]
+    return f"data,edge={edge_tag} " + ",".join(field_strs) + f" {int(ts_sec)}"
+
+async def influx_telemetry_loop():
+    """Continuously writes 5-tier topology points to InfluxDB for edge=bms and edge=0."""
+    await asyncio.sleep(2.0)
+    print("[BMS InfluxDB Telemetry] Starting periodic 5-tier telemetry publisher (interval=2s)...", flush=True)
+    while True:
+        try:
+            now_ts = time.time()
+            line_bms = generate_influx_lines("bms", now_ts)
+            line_edge0 = generate_influx_lines("0", now_ts)
+            body = (line_bms + "\n" + line_edge0).encode("utf-8")
+            
+            req = urllib.request.Request(
+                INFLUX_WRITE_URL,
+                data=body,
+                headers={"Authorization": f"Token {AUTH_TOKEN}", "Content-Type": "text/plain; charset=utf-8"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                pass
+        except Exception as e:
+            # print(f"[BMS InfluxDB Telemetry] Error writing to Influx: {e}", flush=True)
+            pass
+        await asyncio.sleep(2.0)
+
 async def handle_client(reader, writer):
     peer = writer.get_extra_info('peername')
-    # print(f"[BMS ModbusTCP] Connection established from {peer}", flush=True)
     try:
         while True:
             header = await reader.readexactly(7)
@@ -332,7 +516,6 @@ async def handle_client(reader, writer):
     except (asyncio.IncompleteReadError, ConnectionResetError, BrokenPipeError):
         pass
     except Exception as e:
-        # print(f"[BMS ModbusTCP] Client error: {e}", flush=True)
         pass
     finally:
         writer.close()
@@ -343,8 +526,13 @@ async def main():
     print(f"==================================================================", flush=True)
     print(f"  OpenEMS Virtual BMS Device (Pylontech Powercube M2) Started    ", flush=True)
     print(f"  Listening on Modbus TCP 0.0.0.0:{PORT} (Unit-ID: {UNIT_ID})     ", flush=True)
-    print(f"  Nominal: 512.0V, 100kWh, 160 LiFePO4 Cells in Series            ", flush=True)
+    print(f"  Nominal: 512.0V, 100kWh, 160 LiFePO4 Cells, 10 Series Modules   ", flush=True)
+    print(f"  Telemetry: Live InfluxDB 5-Tier Data Feed (edge=bms & edge=0)   ", flush=True)
     print(f"==================================================================", flush=True)
+    
+    # Launch concurrent tasks
+    asyncio.create_task(influx_telemetry_loop())
+    
     async with server:
         await server.serve_forever()
 
