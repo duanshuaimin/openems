@@ -4,6 +4,13 @@
 
 ## 核心技术文档
 
+- 🌐 **[OpenEMS 仿 Dynatrace Smartscape 储能全景立体拓扑可视化系统架构与实现报告](OPENEMS_DYNATRACE_SMARTSCAPE_TOPOLOGY.md)**：
+  - **Dynatrace Smartscape 六级纵向体系**：**应用与调度层 (Applications) $\rightarrow$ 控制中枢与平台层 (Control Plane) $\rightarrow$ 系统柜与变流器并网层 (Systems & Cabinets) $\rightarrow$ 直流母线阵列与高压簇层 (DC Arrays & Racks) $\rightarrow$ 电池模组层 (Modules) $\rightarrow$ 单体电芯层 (Cells)**
+  - **四大多模态拓扑视角**：全景分层拓扑（Smartscape）、能流脉冲拓扑（Power Flow，粒子流向/速度反映实际 kW）、软 PLC 与数采通信网（Control & Comm，展示 Modbus/WSS 隧道）、储能五级数字孪生（BESS 物理层级穿透与 160 电芯色温矩阵）
+  - **标志性高保真交互体验**：左侧竖立式 Smartscape 垂直导轨（一键层级聚焦）、视口仿射变换（平移/缩放/自适应）、悬停全栈因果血缘高亮（Lineage Hover）、右侧抽屉式实体全景探针（带 30s 动态时序 Sparkline、实时健康指标与上下游依赖树）
+  - **双端融合部署**：独立微前端应用（`http://127.0.0.1/smartscape/`）+ Grafana 专用看板嵌入（`openems-smartscape-topology`），与调度中心（`openems-ess-analytics`）及物理拓扑（`openems-bess-topology`）构建三屏无缝漫游
+  - **高保真数据闭环**：通过 Nginx 逆向代理直通 OpenEMS Edge REST API（`/openems-rest/`）与 InfluxDB 时序引擎（`/openems-influx`），1.5s 毫秒级遥测自愈
+
 - 🔋 **[OpenEMS 储能柜五级物理拓扑与电芯数字孪生可视化架构与实现全景报告](OPENEMS_BMS_GRAFANA_TOPOLOGY_DASHBOARD.md)**：
   - **五级递进式物理拓扑**：**储能柜 (Cabinet) $\rightarrow$ 电池阵列 (Array) $\rightarrow$ 电池簇 (Pack/Rack) $\rightarrow$ 电池模组 (Module) $\rightarrow$ 单体电芯 (Cell)**
   - **Grafana 数字孪生看板**：39 个组件面板覆盖 6 大业务行（UID: `openems-bess-topology`），包含全景拓扑交互引导、柜内热工与气溶胶消防联动、阵列直流母线与断路器工况、Pack 动态安全包络降额曲线、10 个串联模组电压与温场分布、160 颗串联 LiFePO4 电芯 LCD 矩阵与极值单体（#14 Max / #3 Min）精准定位
