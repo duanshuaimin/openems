@@ -12,6 +12,7 @@ Verifies:
   7. Cumulative Energy Monotonicity
 """
 
+import os
 import sys
 import json
 import time
@@ -22,9 +23,20 @@ import urllib.request
 from datetime import datetime, timezone, timedelta
 import websockets
 
+def _load_influx_token():
+    if os.environ.get("INFLUX_TOKEN"):
+        return os.environ["INFLUX_TOKEN"]
+    env_file = "/etc/openems/influx.env"
+    if os.path.exists(env_file):
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("INFLUX_TOKEN="):
+                    return line.strip().split("=", 1)[1].strip('"\'')
+    return ""
+
 BACKEND_WS_URL = "ws://127.0.0.1:8082"
 INFLUX_QUERY_URL = "http://127.0.0.1:8086/api/v2/query?org=openems"
-AUTH_TOKEN = "OpenEmsInfluxSecretToken2026!"
+AUTH_TOKEN = _load_influx_token()
 
 def run_flux(query):
     req = urllib.request.Request(

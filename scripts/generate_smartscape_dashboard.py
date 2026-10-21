@@ -488,13 +488,14 @@ def main():
     print(f"Copied to provisioning directory: {dest_path}")
 
     # POST to Grafana API
+    grafana_auth = os.environ.get("GRAFANA_BASIC_AUTH", "")
     api_payload = json.dumps({"dashboard": db, "overwrite": True}).encode("utf-8")
     req = urllib.request.Request(
         "http://127.0.0.1:3000/api/dashboards/db",
         data=api_payload,
         headers={
             "Content-Type": "application/json",
-            "Authorization": "Basic " + "YWRtaW46YWRtaW4="  # admin:admin
+            "Authorization": f"Basic {grafana_auth}"
         },
         method="POST"
     )

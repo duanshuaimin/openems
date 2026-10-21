@@ -181,7 +181,7 @@ enabled=B"true"
 url="http://172.16.100.234:8086"
 org="openems"
 bucket="openems"
-apiKey="OpenEmsInfluxSecretToken2026!"
+apiKey="<INFLUX_WRITE_TOKEN>"
 measurement="data"
 queryLanguage="FLUX"
 noOfCycles=I"1"
@@ -260,8 +260,8 @@ INFO  [Edge.Manager] Edge [edge2] connected via WebSocket tunnel
 ### 2. 验证 InfluxDB v2 时序数据链路
 在终端中执行 Flux 查询，验证新电站 `edge=2` 的数据是否按物理标签正确写入：
 ```bash
-curl -s -X POST "http://127.0.0.1:8086/api/v2/query?org=openems" \
-  -H "Authorization: Token OpenEmsInfluxSecretToken2026!" \
+curl -s -X POST "http://127.0.0.1:8086/api/v2/query?orgID=6cbd3b34c2aada40" \
+  -H "Authorization: Token <INFLUX_READONLY_TOKEN>" \
   -H "Accept: application/csv" \
   -H "Content-type: application/vnd.flux" \
   -d 'from(bucket: "openems")

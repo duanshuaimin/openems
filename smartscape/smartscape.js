@@ -143,20 +143,35 @@
   };
 
   // Initialize deterministic realistic fallback distribution prior to first InfluxDB poll
-  for (let i = 0; i < 160; i++) {
-    const cNo = i + 1;
-    let offset = Math.round(Math.sin(cNo * 0.7) * 6 + Math.cos(cNo * 1.3) * 4);
-    if (cNo === 14) offset = 17;
-    if (cNo === 3) offset = -13;
-    state.telemetry.cellsV[i] = 3300 + offset;
+  function seedStationFallbackTelemetry(stationKey) {
+    const stationIdx = stationKey === 'bms' ? 0 : (parseInt(stationKey, 10) || 0);
+    const maxVCell = ((13 + stationIdx * 29) % 160) + 1;
+    const minVCell = ((2 + stationIdx * 19) % 160) + 1;
+    const maxTCell = ((94 + stationIdx * 23) % 160) + 1;
+    const minTCell = ((0 + stationIdx * 31) % 160) + 1;
 
-    const mIdx = Math.floor(i / 16);
-    const modHeat = 0.8 * Math.sin((mIdx / 9.0) * Math.PI);
-    let tOffset = modHeat + Math.sin(cNo * 0.5) * 0.4;
-    if (cNo === 95) tOffset = 1.6;
-    if (cNo === 1) tOffset = -1.6;
-    state.telemetry.cellsT[i] = +(24.0 + tOffset).toFixed(1);
+    const live = state.telemetry.fleetLive[stationKey] || { powerKw: 7.9, soc: 69.0 };
+    state.telemetry.powerKw = live.powerKw;
+    state.telemetry.soc = live.soc;
+    state.telemetry.current = +(live.powerKw * 1000.0 / 528.0).toFixed(1);
+
+    for (let i = 0; i < 160; i++) {
+      const cNo = i + 1;
+      let offset = Math.round(Math.sin((cNo + stationIdx * 7) * 0.7) * 6 + Math.cos((cNo + stationIdx * 5) * 1.3) * 4);
+      if (cNo === maxVCell) offset = 17 + stationIdx;
+      if (cNo === minVCell) offset = -13 - stationIdx;
+      state.telemetry.cellsV[i] = 3300 + offset;
+
+      const mIdx = Math.floor(i / 16);
+      const modHeat = 0.8 * Math.sin((mIdx / 9.0) * Math.PI);
+      let tOffset = modHeat + Math.sin((cNo + stationIdx * 3) * 0.5) * 0.4;
+      if (cNo === maxTCell) tOffset = 1.6 + stationIdx * 0.2;
+      if (cNo === minTCell) tOffset = -1.6;
+      state.telemetry.cellsT[i] = +(24.0 + tOffset).toFixed(1);
+    }
   }
+
+  seedStationFallbackTelemetry('bms');
 
   // ----------------------------------------------------
   // O(1) Indexed Graph & Tree Structures
@@ -1127,18 +1142,47 @@
 
   function switchStation(stationKey) {
     if (!STATION_PROFILES[stationKey]) return;
+    const prevSelectedId = state.selectedNode ? state.selectedNode.id : null;
+    const wasFleetSelected = state.selectedNode && state.selectedNode.tier === 'fleet';
+
     state.station = stationKey;
     const sel = typeof document !== 'undefined' ? document.getElementById('station-select') : null;
     if (sel && sel.value !== stationKey) sel.value = stationKey;
 
+    if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('station', stationKey);
+        window.history.replaceState(null, '', url.toString());
+      } catch (_) {}
+    }
+
+    seedStationFallbackTelemetry(stationKey);
     buildGraphData();
+
     if (state.rollupDepth < 5) {
       syncExpandedContainersForDepth(state.rollupDepth);
+    } else {
+      const targetCell = nodeById.get(state.focusedMicroCellId) || nodeById.get('cell-014');
+      buildCellMicroTwin(targetCell);
     }
+
     recomputeVisibilityCache();
     updateLeftRail();
     updateBreadcrumb();
     updateDepthUI();
+    updateTopBanner();
+
+    if (prevSelectedId) {
+      const rebound = wasFleetSelected
+        ? nodeById.get(activeStationNodeId())
+        : (nodeById.get(prevSelectedId) || microNodes.find(n => n.id === prevSelectedId));
+      if (rebound) {
+        state.selectedNode = rebound;
+        populateDrawer(rebound);
+      }
+    }
+
     pollLiveTelemetry();
   }
 
@@ -1448,7 +1492,7 @@
 
   function resizeCanvas() {
     if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
     canvas.width = canvas.parentElement.clientWidth * dpr;
     canvas.height = canvas.parentElement.clientHeight * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2030,7 +2074,8 @@
 
     microNodes.forEach(mn => {
       const isHovered = state.hoveredNode && state.hoveredNode.id === mn.id;
-      drawMacroNode(mn, mn.x, mn.y, false, isHovered);
+      const isSelected = state.selectedNode && state.selectedNode.id === mn.id;
+      drawMacroNode(mn, mn.x, mn.y, isSelected, isHovered);
     });
   }
 
@@ -2086,12 +2131,14 @@
       btnRoll.disabled = false;
       lblRoll.textContent = node.parentId ? `上卷至 ${node.parentId}` : '上卷至集群 (L0)';
       btnRoll.onclick = () => {
+        if (state.rollupDepth === 5) {
+          rollUpOneLevel();
+          return;
+        }
         if (node.parentId) {
           const pNode = nodeById.get(node.parentId);
           if (pNode) {
-            if (node.tier === 'cell' && state.rollupDepth === 5) {
-              setRollupDepth(3, pNode);
-            } else if (node.tier === 'cell') {
+            if (node.tier === 'cell') {
               // Works cleanly in both L3 and L4!
               state.expandedContainers.delete(pNode.id);
               state.savedL3Modules = getExpandedModuleIds();
@@ -2278,11 +2325,17 @@
       }
     }
 
-    const inEdges = inEdgesById.get(node.id) || [];
-    const outEdges = outEdgesById.get(node.id) || [];
+    const isMicroRc = node.type === 'micro-rc';
+    const inEdges = isMicroRc
+      ? microEdges.filter(e => e.target === node.id)
+      : (inEdgesById.get(node.id) || []);
+    const outEdges = isMicroRc
+      ? microEdges.filter(e => e.source === node.id)
+      : (outEdgesById.get(node.id) || []);
+    const lookupNode = (id) => isMicroRc ? (microNodes.find(n => n.id === id) || nodeById.get(id)) : nodeById.get(id);
 
     inEdges.forEach(e => {
-      const srcNode = nodeById.get(e.source);
+      const srcNode = lookupNode(e.source);
       if (srcNode) {
         const item = document.createElement('div');
         item.className = 'dep-node-item';
@@ -2296,7 +2349,7 @@
       outContainer.innerHTML = '<div style="font-size:11px;color:#64748b;">(无横向输出边，双击节点可下钻或上卷)</div>';
     } else {
       outEdges.forEach(e => {
-        const tgtNode = nodeById.get(e.target);
+        const tgtNode = lookupNode(e.target);
         if (tgtNode) {
           const item = document.createElement('div');
           item.className = 'dep-node-item';
@@ -2314,7 +2367,7 @@
     const sctx = cvs.getContext('2d');
     const w = cvs.clientWidth || 340;
     const h = cvs.clientHeight || 64;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
     cvs.width = w * dpr;
     cvs.height = h * dpr;
     sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2439,9 +2492,13 @@
   |> last()
   |> keep(columns: ["edge", "_field", "_value"])`;
 
+      const influxUrl = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+        ? '/openems-influx'
+        : ((typeof process !== 'undefined' && process.env && process.env.SMARTSCAPE_INFLUX_URL) || 'http://127.0.0.1/openems-influx');
+
       const [resStation, resFleet] = await Promise.all([
-        fetch('/openems-influx', { method: 'POST', body: stationQuery, signal: ctrl.signal }),
-        fetch('/openems-influx', { method: 'POST', body: fleetQuery, signal: ctrl.signal })
+        fetch(influxUrl, { method: 'POST', body: stationQuery, signal: ctrl.signal }),
+        fetch(influxUrl, { method: 'POST', body: fleetQuery, signal: ctrl.signal })
       ]);
 
       if (!resStation.ok) throw new Error(`Influx HTTP ${resStation.status}`);
@@ -2601,6 +2658,10 @@
       const urlStation = params.get('station') || params.get('edge');
       if (urlStation && STATION_PROFILES[urlStation]) {
         state.station = urlStation;
+        seedStationFallbackTelemetry(urlStation);
+        buildGraphData();
+        syncExpandedContainersForDepth(state.rollupDepth);
+        recomputeVisibilityCache();
         const sel = document.getElementById('station-select');
         if (sel) sel.value = urlStation;
       }
@@ -2685,14 +2746,21 @@
     state,
     nodes,
     edges,
+    microNodes,
+    microEdges,
     nodeById,
     childrenById,
     visibleNodeIds,
-     getEffectiveEdges: () => effectiveEdges,
+    getEffectiveEdges: () => effectiveEdges,
     buildGraphData,
     computeRollUpAggregations,
     buildCellMicroTwin,
     setRollupDepth,
+    switchStation,
+    selectNode,
+    populateDrawer,
+    refreshDrawerLiveValues,
+    pollLiveTelemetry,
     drillDownNode,
     rollUpOneLevel,
     recomputeVisibilityCache,

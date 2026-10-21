@@ -206,8 +206,8 @@ $ curl -s -u admin:admin -X POST http://127.0.0.1:3000/api/ds/query \
 | **Grafana 拓扑看板** | [http://127.0.0.1:3000/d/openems-bess-topology](http://127.0.0.1:3000/d/openems-bess-topology) | `admin / admin` | 运行中 (UID: `openems-bess-topology`) |
 | **Grafana 调度中心** | [http://127.0.0.1:3000/d/openems-ess-analytics](http://127.0.0.1:3000/d/openems-ess-analytics) | `admin / admin` | 运行中 (UID: `openems-ess-analytics`) |
 | **BMS 虚拟设备** | `0.0.0.0:8503` (Modbus TCP) | Unit-ID: 1 | `openems-bms-mock.service` (Active) |
-| **OpenEMS Edge REST** | `http://127.0.0.1:8095/rest/channel/battery0` | `admin / admin` | `openems-edge.service` (Active) |
-| **InfluxDB 时序库** | `http://127.0.0.1:8086` | Token: `OpenEmsInfluxSecretToken2026!` | Active (Bucket: `openems`) |
+| **OpenEMS Edge REST** | `http://127.0.0.1:8095/rest/channel/battery0` | `guest / guest` (只读) | `openems-edge.service` (Active) |
+| **InfluxDB 时序库** | `http://127.0.0.1:8086` | Token: `<SCOPED_READONLY_TOKEN>` | Active (Bucket: `openems`) |
 | **多站网关 Feeder** | 内部守护进程 | Tag: `0`, `1`, `2`, `3`, `4`, `bms` | `openems-demo-feeder.service` (Active) |
 
 ---

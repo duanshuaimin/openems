@@ -4,6 +4,7 @@ Generate and Inject 30 Days of High-Fidelity Historical Timeseries into InfluxDB
 for OpenEMS C&I Energy Storage Power Station Demo.
 """
 
+import os
 import time
 import math
 import random
@@ -11,8 +12,19 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
+def _load_influx_token():
+    if os.environ.get("INFLUX_TOKEN"):
+        return os.environ["INFLUX_TOKEN"]
+    env_file = "/etc/openems/influx.env"
+    if os.path.exists(env_file):
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("INFLUX_TOKEN="):
+                    return line.strip().split("=", 1)[1].strip('"\'')
+    return ""
+
 INFLUX_URL = "http://127.0.0.1:8086/api/v2/write?bucket=openems&org=openems&precision=s"
-AUTH_TOKEN = "OpenEmsInfluxSecretToken2026!"
+AUTH_TOKEN = _load_influx_token()
 DAYS = 30
 STEP_SECONDS = 300  # 5-minute resolution
 

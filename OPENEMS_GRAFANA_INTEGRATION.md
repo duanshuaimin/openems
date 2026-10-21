@@ -119,7 +119,7 @@ datasources:
       defaultBucket: openems
       tlsSkipVerify: true
     secureJsonData:
-      token: OpenEmsInfluxSecretToken2026!
+      token: <INFLUX_READONLY_TOKEN>
 ```
 
 ### 2. 看板自动发现与装配
