@@ -4,6 +4,12 @@
 
 ## 核心技术文档
 
+- ⚡ **[OpenEMS Edge 储能 BMS 虚拟设备构建、高保真物理仿真与实机接入指南](OPENEMS_VIRTUAL_BMS_DEVICE_AND_EDGE_INTEGRATION.md)**：
+  - 工业级 BMS 虚拟设备（HIL）：基于 Python 异步架构自主构建的 512V / 100kWh（160 串 LiFePO4）高压储能虚拟仿真器（`/opt/openems/scripts/bms_pylontech_virtual_device.py`），监听 `8503` 端口并注册 Systemd 守护进程
+  - 高保真物理模型：库仑积分动态 SOC 估算、双曲正切 OCV-SOC 开路电压特性、电芯级（mV）离散度与 Delta-V 均衡追踪（#14 Max, #3 Min）、焦耳发热电热耦合、SOC 边界动态充放电安全降额包络（BMS Envelope）
+  - 完整协议支持：严格对齐 Pylontech Powercube M2 规范，支持 FC03、FC04、FC06（`0x1090` WAKE/SLEEP 唤醒与休眠指令双向闭环）及 FC16
+  - OpenEMS Edge 生产实机接入：配置 `modbus1` 网桥（`8503`）与 `battery0`（`Battery.Pylontech`）驱动，状态机自愈流转至 `RUNNING`（Code 11），REST API 与云端 WSS 全量通道（SOC=68%、V=528V、I=14A、MaxCell=3314mV、MinCell=3287mV、Insulation=10MΩ）实时同步
+
 - 🏢 **[OpenEMS Backend 元数据核心服务：Metadata.Odoo 深度架构与源码解析指南](OPENEMS_BACKEND_METADATA_ODOO_ANALYSIS.md)**：
   - 双通道异构读写架构（Dual-Engine）：通道一底层 PostgreSQL 高速总线（HikariCP、`InitializeEdgesWorker` 启动预热、`EdgeCache` <1µs 内存哈希握手鉴权、`PeriodicWriteWorker` 30秒防DDOS批量回写）+ 通道二 Odoo HTTP JSON-RPC 业务总线（用户密码认证、会话保持、RBAC 四级角色、初装协议与邮件代发）
   - 核心数据模型映射（`Field.java`）：`EdgeDevice`（`openems_device`）、`User`（`res_users`）、`EdgeDeviceUserRole`（`openems_device_user_role`）、`SetupProtocol`、`EdgeConfigUpdate`
