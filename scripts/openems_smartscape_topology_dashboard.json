@@ -254,7 +254,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Voltage"
+              "options": "battery0/Voltage"
             },
             "properties": [
               {
@@ -270,7 +270,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Current"
+              "options": "battery0/Current"
             },
             "properties": [
               {
@@ -475,7 +475,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "MaxVoltageCellNumber"
+              "options": "battery0/MaxVoltageCellNumber"
             },
             "properties": [
               {
@@ -494,7 +494,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "MinVoltageCellNumber"
+              "options": "battery0/MinVoltageCellNumber"
             },
             "properties": [
               {
@@ -576,7 +576,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "InsulationResistance"
+              "options": "battery0/InsulationResistance"
             },
             "properties": [
               {
@@ -592,7 +592,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "HvacStatus"
+              "options": "cabinet0/HvacStatus"
             },
             "properties": [
               {
@@ -655,7 +655,7 @@
       },
       "id": 10,
       "options": {
-        "content": "\n<div style=\"width: 100%; height: 100%; min-height: 760px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 8px 32px rgba(0,0,0,0.5);\">\n  <iframe \n    src=\"/smartscape/index.html?station=${edge}&v=3.2\" \n    style=\"width: 100%; height: 100%; min-height: 760px; border: none; display: block; background: #0a0e17;\"\n    title=\"OpenEMS Dynatrace-Style Smartscape Drill-Down & Roll-Up Topology\">\n  </iframe>\n  <div style=\"position: absolute; bottom: 12px; right: 16px; pointer-events: auto;\">\n    <a href=\"/smartscape/index.html?station=${edge}&v=3.2\" target=\"_blank\" style=\"background: rgba(37,99,235,0.85); backdrop-filter: blur(8px); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);\">\n      <span>↗️</span> 全屏新窗口独立运行 (Drill-Down / Roll-Up)\n    </a>\n  </div>\n</div>\n",
+        "content": "\n<div style=\"width: 100%; height: 100%; min-height: 760px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 8px 32px rgba(0,0,0,0.5);\">\n  <iframe \n    src=\"/smartscape/index.html?station=${edge}&v=3.3\" \n    style=\"width: 100%; height: 100%; min-height: 760px; border: none; display: block; background: #0a0e17;\"\n    title=\"OpenEMS Dynatrace-Style Smartscape Drill-Down & Roll-Up Topology\">\n  </iframe>\n  <div style=\"position: absolute; bottom: 12px; right: 16px; pointer-events: auto;\">\n    <a href=\"/smartscape/index.html?station=${edge}&v=3.3\" target=\"_blank\" style=\"background: rgba(37,99,235,0.85); backdrop-filter: blur(8px); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);\">\n      <span>↗️</span> 全屏新窗口独立运行 (Drill-Down / Roll-Up)\n    </a>\n  </div>\n</div>\n",
         "mode": "html"
       },
       "title": "Dynatrace Smartscape 实时拓扑数字孪生中心 (双击节点下钻 / 面包屑上卷 / ∑V·μT·ΔV·状态传染聚合)",
@@ -670,18 +670,724 @@
         "y": 25
       },
       "id": 11,
-      "title": "📊 物理时序遥测校验与动态演进 (Deep Physical Telemetry & Analytical Trends)",
+      "title": "⚡ 盛弘 100kW PCS 变流器运行与电网交互 (Sinexcel PW-100K PCS Inverter & Grid Operations)",
       "type": "row"
     },
     {
       "id": 12,
+      "title": "PCS 变流器运行模式与状态",
+      "type": "stat",
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 0,
+        "y": 26
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/InverterState\")\n  |> last()",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/GridMode\")\n  |> last()",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/InverterState"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "逆变工作状态"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "💤 停机待机 (Standby)",
+                        "color": "gray"
+                      },
+                      "1": {
+                        "text": "🟢 逆变运行中 (Running)",
+                        "color": "#10b981"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/GridMode"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电网模式"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "🏝️ 离网孤岛 (Off-Grid)",
+                        "color": "#f59e0b"
+                      },
+                      "1": {
+                        "text": "⚡ 并网运行 (On-Grid)",
+                        "color": "#3b82f6"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "三相电网相线电压 (AC 380V)",
+      "type": "stat",
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 4,
+        "y": 26
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/GridVoltageL1\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))\n  |> last()",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/GridVoltageL2\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))\n  |> last()",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/GridVoltageL3\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))\n  |> last()",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 360
+              },
+              {
+                "color": "green",
+                "value": 375
+              },
+              {
+                "color": "yellow",
+                "value": 395
+              },
+              {
+                "color": "red",
+                "value": 410
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/GridVoltageL1"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Uab (L1)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/GridVoltageL2"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ubc (L2)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/GridVoltageL3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Uca (L3)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "电网实时频率与功率因数",
+      "type": "stat",
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 9,
+        "y": 26
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/Frequency\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))\n  |> last()",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/CosPhi\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))\n  |> last()",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/Frequency"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电网频率"
+              },
+              {
+                "id": "unit",
+                "value": "hertz"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/CosPhi"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "功率因数 (cosφ)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "IGBT 功率模块结温 (Heat Sink)",
+      "type": "stat",
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 14,
+        "y": 26
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/TemperatureAcHeatSink\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 10.0 }))\n  |> last()",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/TemperatureDcHeatSink\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 10.0 }))\n  |> last()",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#f59e0b",
+                "value": 55
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/TemperatureAcHeatSink"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "AC 逆变侧 IGBT"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/TemperatureDcHeatSink"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "DC 斩波侧散热器"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "PCS 直流母线电压与功率",
+      "type": "stat",
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 19,
+        "y": 26
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/DcVoltage\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))\n  |> last()",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/DcPower\")\n  |> last()",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/DcVoltage"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "直流母排端压"
+              },
+              {
+                "id": "unit",
+                "value": "volt"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/DcPower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "直流总功率"
+              },
+              {
+                "id": "unit",
+                "value": "watt"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "PCS 三相交流电流 (Ia/Ib/Ic) 与无功功率 (Q) 动态时序曲线",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/GridCurrentL1\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/GridCurrentL2\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/GridCurrentL3\")\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P0DBC1A8D6496B50C"
+          },
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"batteryInverter0/ReactivePower\")",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/GridCurrentL1"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "A相电流 (Ia)"
+              },
+              {
+                "id": "unit",
+                "value": "amp"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#f59e0b",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/GridCurrentL2"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "B相电流 (Ib)"
+              },
+              {
+                "id": "unit",
+                "value": "amp"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#10b981",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/GridCurrentL3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C相电流 (Ic)"
+              },
+              {
+                "id": "unit",
+                "value": "amp"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#ef4444",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "batteryInverter0/ReactivePower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "无功功率 (Q)"
+              },
+              {
+                "id": "unit",
+                "value": "voltampreactive"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#8b5cf6",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 18,
+      "title": "📊 物理时序遥测校验与动态演进 (Deep Physical Telemetry & Analytical Trends)",
+      "type": "row"
+    },
+    {
+      "id": 19,
       "title": "交直流有功功率连续响应曲线 (AC/DC Active Power kW)",
       "type": "timeseries",
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 36
       },
       "datasource": {
         "type": "influxdb",
@@ -718,7 +1424,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "ActivePower"
+              "options": "cabinet0/ActivePower"
             },
             "properties": [
               {
@@ -737,7 +1443,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DcPower"
+              "options": "cabinet0/DcPower"
             },
             "properties": [
               {
@@ -766,14 +1472,14 @@
       }
     },
     {
-      "id": 13,
+      "id": 20,
       "title": "BMS 充放电安全降额包络与实际电流 (Dynamic Current Limits)",
       "type": "timeseries",
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 36
       },
       "datasource": {
         "type": "influxdb",
@@ -818,7 +1524,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "ChargeMaxCurrent"
+              "options": "battery0/ChargeMaxCurrent"
             },
             "properties": [
               {
@@ -837,7 +1543,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "DischargeMaxCurrent"
+              "options": "battery0/DischargeMaxCurrent"
             },
             "properties": [
               {
@@ -856,7 +1562,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Current"
+              "options": "battery0/Current"
             },
             "properties": [
               {
@@ -889,14 +1595,14 @@
       }
     },
     {
-      "id": 14,
+      "id": 21,
       "title": "10个串联模组实时电压分布 (Module 01 ~ Module 10 Voltage, 51.2V Nominal)",
       "type": "bargauge",
       "gridPos": {
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 43
       },
       "datasource": {
         "type": "influxdb",
@@ -1022,7 +1728,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_01_Voltage"
+              "options": "battery0/Module_01_Voltage"
             },
             "properties": [
               {
@@ -1034,7 +1740,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_02_Voltage"
+              "options": "battery0/Module_02_Voltage"
             },
             "properties": [
               {
@@ -1046,7 +1752,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_03_Voltage"
+              "options": "battery0/Module_03_Voltage"
             },
             "properties": [
               {
@@ -1058,7 +1764,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_04_Voltage"
+              "options": "battery0/Module_04_Voltage"
             },
             "properties": [
               {
@@ -1070,7 +1776,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_05_Voltage"
+              "options": "battery0/Module_05_Voltage"
             },
             "properties": [
               {
@@ -1082,7 +1788,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_06_Voltage"
+              "options": "battery0/Module_06_Voltage"
             },
             "properties": [
               {
@@ -1094,7 +1800,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_07_Voltage"
+              "options": "battery0/Module_07_Voltage"
             },
             "properties": [
               {
@@ -1106,7 +1812,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_08_Voltage"
+              "options": "battery0/Module_08_Voltage"
             },
             "properties": [
               {
@@ -1118,7 +1824,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_09_Voltage"
+              "options": "battery0/Module_09_Voltage"
             },
             "properties": [
               {
@@ -1130,7 +1836,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Module_10_Voltage"
+              "options": "battery0/Module_10_Voltage"
             },
             "properties": [
               {
@@ -1154,14 +1860,14 @@
       }
     },
     {
-      "id": 15,
+      "id": 22,
       "title": "160颗 LiFePO4 电芯单体电压全景分布 (160-Cell Matrix across 10 Modules, mV)",
       "type": "bargauge",
       "gridPos": {
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 43
       },
       "datasource": {
         "type": "influxdb",
@@ -1239,15 +1945,17 @@
     "dynatrace",
     "bess",
     "digital-twin",
-    "microgrid"
+    "microgrid",
+    "sinexcel",
+    "pcs"
   ],
   "templating": {
     "list": [
       {
         "current": {
           "selected": true,
-          "text": "bms",
-          "value": "bms"
+          "text": "pcs",
+          "value": "pcs"
         },
         "datasource": {
           "type": "influxdb",
@@ -1256,7 +1964,7 @@
         "definition": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"openems\", tag: \"edge\")",
         "hide": 0,
         "includeAll": false,
-        "label": "选择监控储能柜 / BMS设备",
+        "label": "选择监控储能电站 / 设备",
         "multi": false,
         "name": "edge",
         "options": [],
@@ -1285,5 +1993,5 @@
   "timezone": "browser",
   "title": "OpenEMS 储能全景 Smartscape 交互式立体拓扑看板 (Cyber-Physical Digital Twin)",
   "uid": "openems-smartscape-topology",
-  "version": 1
+  "version": 2
 }

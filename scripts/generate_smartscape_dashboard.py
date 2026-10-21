@@ -47,7 +47,7 @@ def build_dashboard():
     pid = 1
 
     # ----------------------------------------------------
-    # SECTION 1: Top KPI Summary Bar
+    # SECTION 1: Top KPI Summary Bar (y: 0 ~ 4)
     # ----------------------------------------------------
     panels.append({
         "collapsed": False,
@@ -127,8 +127,8 @@ def build_dashboard():
                 "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": None}]}
             },
             "overrides": [
-                {"matcher": {"id": "byName", "options": "Voltage"}, "properties": [{"id": "displayName", "value": "总电压"}, {"id": "unit", "value": "volt"}]},
-                {"matcher": {"id": "byName", "options": "Current"}, "properties": [{"id": "displayName", "value": "总电流"}, {"id": "unit", "value": "amp"}]}
+                {"matcher": {"id": "byName", "options": "battery0/Voltage"}, "properties": [{"id": "displayName", "value": "总电压"}, {"id": "unit", "value": "volt"}]},
+                {"matcher": {"id": "byName", "options": "battery0/Current"}, "properties": [{"id": "displayName", "value": "总电流"}, {"id": "unit", "value": "amp"}]}
             ]
         },
         "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "values": False}}
@@ -199,8 +199,8 @@ def build_dashboard():
                 "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": None}]}
             },
             "overrides": [
-                {"matcher": {"id": "byName", "options": "MaxVoltageCellNumber"}, "properties": [{"id": "displayName", "value": "最高电压电芯号 (#)"}, {"id": "color", "value": {"fixedColor": "#f59e0b", "mode": "fixed"}}]},
-                {"matcher": {"id": "byName", "options": "MinVoltageCellNumber"}, "properties": [{"id": "displayName", "value": "最低电压电芯号 (#)"}, {"id": "color", "value": {"fixedColor": "#3b82f6", "mode": "fixed"}}]}
+                {"matcher": {"id": "byName", "options": "battery0/MaxVoltageCellNumber"}, "properties": [{"id": "displayName", "value": "最高电压电芯号 (#)"}, {"id": "color", "value": {"fixedColor": "#f59e0b", "mode": "fixed"}}]},
+                {"matcher": {"id": "byName", "options": "battery0/MinVoltageCellNumber"}, "properties": [{"id": "displayName", "value": "最低电压电芯号 (#)"}, {"id": "color", "value": {"fixedColor": "#3b82f6", "mode": "fixed"}}]}
             ]
         },
         "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "values": False}}
@@ -224,8 +224,8 @@ def build_dashboard():
                 "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": None}]}
             },
             "overrides": [
-                {"matcher": {"id": "byName", "options": "InsulationResistance"}, "properties": [{"id": "displayName", "value": "母线绝缘"}, {"id": "unit", "value": "kohm"}]},
-                {"matcher": {"id": "byName", "options": "HvacStatus"}, "properties": [
+                {"matcher": {"id": "byName", "options": "battery0/InsulationResistance"}, "properties": [{"id": "displayName", "value": "母线绝缘"}, {"id": "unit", "value": "kohm"}]},
+                {"matcher": {"id": "byName", "options": "cabinet0/HvacStatus"}, "properties": [
                     {"id": "displayName", "value": "温控空调"},
                     {"id": "mappings", "value": [{"type": "value", "options": {"0": {"text": "待机", "color": "gray"}, "1": {"text": "制冷中 ❄️", "color": "#38bdf8"}}}]}
                 ]}
@@ -236,7 +236,7 @@ def build_dashboard():
     pid += 1
 
     # ----------------------------------------------------
-    # SECTION 2: Centerpiece Smartscape Full-Stack Interactive App
+    # SECTION 2: Centerpiece Smartscape Full-Stack Interactive App (y: 4 ~ 25)
     # ----------------------------------------------------
     panels.append({
         "collapsed": False,
@@ -250,12 +250,12 @@ def build_dashboard():
     smartscape_iframe_html = """
 <div style="width: 100%; height: 100%; min-height: 760px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
   <iframe 
-    src="/smartscape/index.html?station=${edge}&v=3.2" 
+    src="/smartscape/index.html?station=${edge}&v=3.3" 
     style="width: 100%; height: 100%; min-height: 760px; border: none; display: block; background: #0a0e17;"
     title="OpenEMS Dynatrace-Style Smartscape Drill-Down & Roll-Up Topology">
   </iframe>
   <div style="position: absolute; bottom: 12px; right: 16px; pointer-events: auto;">
-    <a href="/smartscape/index.html?station=${edge}&v=3.2" target="_blank" style="background: rgba(37,99,235,0.85); backdrop-filter: blur(8px); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);">
+    <a href="/smartscape/index.html?station=${edge}&v=3.3" target="_blank" style="background: rgba(37,99,235,0.85); backdrop-filter: blur(8px); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);">
       <span>↗️</span> 全屏新窗口独立运行 (Drill-Down / Roll-Up)
     </a>
   </div>
@@ -274,23 +274,208 @@ def build_dashboard():
     pid += 1
 
     # ----------------------------------------------------
-    # SECTION 3: Deep Supporting Telemetry Rows
+    # SECTION 3: Sinexcel PW-100K PCS Telemetry & Grid Operations (y: 25 ~ 35)
     # ----------------------------------------------------
     panels.append({
         "collapsed": False,
         "gridPos": {"h": 1, "w": 24, "x": 0, "y": 25},
+        "id": pid,
+        "title": "⚡ 盛弘 100kW PCS 变流器运行与电网交互 (Sinexcel PW-100K PCS Inverter & Grid Operations)",
+        "type": "row"
+    })
+    pid += 1
+
+    # 3.1 PCS 逆变运行状态与电网模式
+    panels.append({
+        "id": pid,
+        "title": "PCS 变流器运行模式与状态",
+        "type": "stat",
+        "gridPos": {"h": 3, "w": 4, "x": 0, "y": 26},
+        "datasource": {"type": "influxdb", "uid": DS_UID},
+        "targets": [
+            flux_target("batteryInverter0/InverterState", "A"),
+            flux_target("batteryInverter0/GridMode", "B")
+        ],
+        "fieldConfig": {
+            "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": None}]}
+            },
+            "overrides": [
+                {"matcher": {"id": "byName", "options": "batteryInverter0/InverterState"}, "properties": [
+                    {"id": "displayName", "value": "逆变工作状态"},
+                    {"id": "mappings", "value": [{"type": "value", "options": {"0": {"text": "💤 停机待机 (Standby)", "color": "gray"}, "1": {"text": "🟢 逆变运行中 (Running)", "color": "#10b981"}}}]}
+                ]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/GridMode"}, "properties": [
+                    {"id": "displayName", "value": "电网模式"},
+                    {"id": "mappings", "value": [{"type": "value", "options": {"0": {"text": "🏝️ 离网孤岛 (Off-Grid)", "color": "#f59e0b"}, "1": {"text": "⚡ 并网运行 (On-Grid)", "color": "#3b82f6"}}}]}
+                ]}
+            ]
+        },
+        "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "values": False}}
+    })
+    pid += 1
+
+    # 3.2 三相电网线电压
+    panels.append({
+        "id": pid,
+        "title": "三相电网相线电压 (AC 380V)",
+        "type": "stat",
+        "gridPos": {"h": 3, "w": 5, "x": 4, "y": 26},
+        "datasource": {"type": "influxdb", "uid": DS_UID},
+        "targets": [
+            flux_target("batteryInverter0/GridVoltageL1", "A", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))'),
+            flux_target("batteryInverter0/GridVoltageL2", "B", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))'),
+            flux_target("batteryInverter0/GridVoltageL3", "C", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))')
+        ],
+        "fieldConfig": {
+            "defaults": {
+                "unit": "volt",
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                    {"color": "red", "value": None},
+                    {"color": "yellow", "value": 360},
+                    {"color": "green", "value": 375},
+                    {"color": "yellow", "value": 395},
+                    {"color": "red", "value": 410}
+                ]}
+            },
+            "overrides": [
+                {"matcher": {"id": "byName", "options": "batteryInverter0/GridVoltageL1"}, "properties": [{"id": "displayName", "value": "Uab (L1)"}]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/GridVoltageL2"}, "properties": [{"id": "displayName", "value": "Ubc (L2)"}]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/GridVoltageL3"}, "properties": [{"id": "displayName", "value": "Uca (L3)"}]}
+            ]
+        },
+        "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "values": False}}
+    })
+    pid += 1
+
+    # 3.3 电网频率与功率因数
+    panels.append({
+        "id": pid,
+        "title": "电网实时频率与功率因数",
+        "type": "stat",
+        "gridPos": {"h": 3, "w": 5, "x": 9, "y": 26},
+        "datasource": {"type": "influxdb", "uid": DS_UID},
+        "targets": [
+            flux_target("batteryInverter0/Frequency", "A", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))'),
+            flux_target("batteryInverter0/CosPhi", "B", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))')
+        ],
+        "fieldConfig": {
+            "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": None}]}
+            },
+            "overrides": [
+                {"matcher": {"id": "byName", "options": "batteryInverter0/Frequency"}, "properties": [{"id": "displayName", "value": "电网频率"}, {"id": "unit", "value": "hertz"}]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/CosPhi"}, "properties": [{"id": "displayName", "value": "功率因数 (cosφ)"}]}
+            ]
+        },
+        "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "values": False}}
+    })
+    pid += 1
+
+    # 3.4 IGBT 功率模块散热温度
+    panels.append({
+        "id": pid,
+        "title": "IGBT 功率模块结温 (Heat Sink)",
+        "type": "stat",
+        "gridPos": {"h": 3, "w": 5, "x": 14, "y": 26},
+        "datasource": {"type": "influxdb", "uid": DS_UID},
+        "targets": [
+            flux_target("batteryInverter0/TemperatureAcHeatSink", "A", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 10.0 }))'),
+            flux_target("batteryInverter0/TemperatureDcHeatSink", "B", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 10.0 }))')
+        ],
+        "fieldConfig": {
+            "defaults": {
+                "unit": "celsius",
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [
+                    {"color": "green", "value": None},
+                    {"color": "#f59e0b", "value": 55},
+                    {"color": "red", "value": 75}
+                ]}
+            },
+            "overrides": [
+                {"matcher": {"id": "byName", "options": "batteryInverter0/TemperatureAcHeatSink"}, "properties": [{"id": "displayName", "value": "AC 逆变侧 IGBT"}]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/TemperatureDcHeatSink"}, "properties": [{"id": "displayName", "value": "DC 斩波侧散热器"}]}
+            ]
+        },
+        "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "values": False}}
+    })
+    pid += 1
+
+    # 3.5 PCS 直流侧母线与总功率
+    panels.append({
+        "id": pid,
+        "title": "PCS 直流母线电压与功率",
+        "type": "stat",
+        "gridPos": {"h": 3, "w": 5, "x": 19, "y": 26},
+        "datasource": {"type": "influxdb", "uid": DS_UID},
+        "targets": [
+            flux_target("batteryInverter0/DcVoltage", "A", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))'),
+            flux_target("batteryInverter0/DcPower", "B")
+        ],
+        "fieldConfig": {
+            "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": None}]}
+            },
+            "overrides": [
+                {"matcher": {"id": "byName", "options": "batteryInverter0/DcVoltage"}, "properties": [{"id": "displayName", "value": "直流母排端压"}, {"id": "unit", "value": "volt"}]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/DcPower"}, "properties": [{"id": "displayName", "value": "直流总功率"}, {"id": "unit", "value": "watt"}]}
+            ]
+        },
+        "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "values": False}}
+    })
+    pid += 1
+
+    # 3.6 PCS 三相交流电流与无功功率动态曲线
+    panels.append({
+        "id": pid,
+        "title": "PCS 三相交流电流 (Ia/Ib/Ic) 与无功功率 (Q) 动态时序曲线",
+        "type": "timeseries",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 29},
+        "datasource": {"type": "influxdb", "uid": DS_UID},
+        "targets": [
+            flux_timeseries_target("batteryInverter0/GridCurrentL1", "A", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))'),
+            flux_timeseries_target("batteryInverter0/GridCurrentL2", "B", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))'),
+            flux_timeseries_target("batteryInverter0/GridCurrentL3", "C", '\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 1000.0 }))'),
+            flux_timeseries_target("batteryInverter0/ReactivePower", "D")
+        ],
+        "fieldConfig": {
+            "defaults": {
+                "custom": {"drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2}
+            },
+            "overrides": [
+                {"matcher": {"id": "byName", "options": "batteryInverter0/GridCurrentL1"}, "properties": [{"id": "displayName", "value": "A相电流 (Ia)"}, {"id": "unit", "value": "amp"}, {"id": "color", "value": {"fixedColor": "#f59e0b", "mode": "fixed"}}]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/GridCurrentL2"}, "properties": [{"id": "displayName", "value": "B相电流 (Ib)"}, {"id": "unit", "value": "amp"}, {"id": "color", "value": {"fixedColor": "#10b981", "mode": "fixed"}}]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/GridCurrentL3"}, "properties": [{"id": "displayName", "value": "C相电流 (Ic)"}, {"id": "unit", "value": "amp"}, {"id": "color", "value": {"fixedColor": "#ef4444", "mode": "fixed"}}]},
+                {"matcher": {"id": "byName", "options": "batteryInverter0/ReactivePower"}, "properties": [{"id": "displayName", "value": "无功功率 (Q)"}, {"id": "unit", "value": "voltampreactive"}, {"id": "color", "value": {"fixedColor": "#8b5cf6", "mode": "fixed"}}, {"id": "custom.axisPlacement", "value": "right"}]}
+            ]
+        },
+        "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    })
+    pid += 1
+
+    # ----------------------------------------------------
+    # SECTION 4: Deep Supporting Telemetry Rows (y: 35 ~ 49)
+    # ----------------------------------------------------
+    panels.append({
+        "collapsed": False,
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 35},
         "id": pid,
         "title": "📊 物理时序遥测校验与动态演进 (Deep Physical Telemetry & Analytical Trends)",
         "type": "row"
     })
     pid += 1
 
-    # 3.1 AC/DC Power Curves
+    # 4.1 AC/DC Power Curves
     panels.append({
         "id": pid,
         "title": "交直流有功功率连续响应曲线 (AC/DC Active Power kW)",
         "type": "timeseries",
-        "gridPos": {"h": 7, "w": 12, "x": 0, "y": 24},
+        "gridPos": {"h": 7, "w": 12, "x": 0, "y": 36},
         "datasource": {"type": "influxdb", "uid": DS_UID},
         "targets": [
             flux_timeseries_target("cabinet0/ActivePower", "A"),
@@ -302,20 +487,20 @@ def build_dashboard():
                 "custom": {"drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2}
             },
             "overrides": [
-                {"matcher": {"id": "byName", "options": "ActivePower"}, "properties": [{"id": "displayName", "value": "PCS 交流有功 (AC)"}, {"id": "color", "value": {"fixedColor": "#5794F2", "mode": "fixed"}}]},
-                {"matcher": {"id": "byName", "options": "DcPower"}, "properties": [{"id": "displayName", "value": "电池直流总功率 (DC)"}, {"id": "color", "value": {"fixedColor": "#FF9900", "mode": "fixed"}}]}
+                {"matcher": {"id": "byName", "options": "cabinet0/ActivePower"}, "properties": [{"id": "displayName", "value": "PCS 交流有功 (AC)"}, {"id": "color", "value": {"fixedColor": "#5794F2", "mode": "fixed"}}]},
+                {"matcher": {"id": "byName", "options": "cabinet0/DcPower"}, "properties": [{"id": "displayName", "value": "电池直流总功率 (DC)"}, {"id": "color", "value": {"fixedColor": "#FF9900", "mode": "fixed"}}]}
             ]
         },
         "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
     })
     pid += 1
 
-    # 3.2 Dynamic BMS Safety Limits vs Current
+    # 4.2 Dynamic BMS Safety Limits vs Current
     panels.append({
         "id": pid,
         "title": "BMS 充放电安全降额包络与实际电流 (Dynamic Current Limits)",
         "type": "timeseries",
-        "gridPos": {"h": 7, "w": 12, "x": 12, "y": 24},
+        "gridPos": {"h": 7, "w": 12, "x": 12, "y": 36},
         "datasource": {"type": "influxdb", "uid": DS_UID},
         "targets": [
             flux_timeseries_target("battery0/ChargeMaxCurrent", "A"),
@@ -328,23 +513,23 @@ def build_dashboard():
                 "custom": {"drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2}
             },
             "overrides": [
-                {"matcher": {"id": "byName", "options": "ChargeMaxCurrent"}, "properties": [{"id": "displayName", "value": "充电电流保护上限"}, {"id": "color", "value": {"fixedColor": "#10b981", "mode": "fixed"}}]},
-                {"matcher": {"id": "byName", "options": "DischargeMaxCurrent"}, "properties": [{"id": "displayName", "value": "放电电流保护上限"}, {"id": "color", "value": {"fixedColor": "#ef4444", "mode": "fixed"}}]},
-                {"matcher": {"id": "byName", "options": "Current"}, "properties": [{"id": "displayName", "value": "电池簇实际电流"}, {"id": "color", "value": {"fixedColor": "#3b82f6", "mode": "fixed"}}, {"id": "custom.lineWidth", "value": 3}]}
+                {"matcher": {"id": "byName", "options": "battery0/ChargeMaxCurrent"}, "properties": [{"id": "displayName", "value": "充电电流保护上限"}, {"id": "color", "value": {"fixedColor": "#10b981", "mode": "fixed"}}]},
+                {"matcher": {"id": "byName", "options": "battery0/DischargeMaxCurrent"}, "properties": [{"id": "displayName", "value": "放电电流保护上限"}, {"id": "color", "value": {"fixedColor": "#ef4444", "mode": "fixed"}}]},
+                {"matcher": {"id": "byName", "options": "battery0/Current"}, "properties": [{"id": "displayName", "value": "电池簇实际电流"}, {"id": "color", "value": {"fixedColor": "#3b82f6", "mode": "fixed"}}, {"id": "custom.lineWidth", "value": 3}]}
             ]
         },
         "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
     })
     pid += 1
 
-    # 3.3 10-Module Voltages Bar Gauge
+    # 4.3 10-Module Voltages Bar Gauge
     mod_v_targets = [flux_target(f"battery0/Module_{m:02d}_Voltage", chr(65 + m), extra_pipe='\n  |> map(fn: (r) => ({ r with _value: float(v: r._value) / 10.0 }))') for m in range(1, 11)]
-    mod_v_overrides = [{"matcher": {"id": "byName", "options": f"Module_{m:02d}_Voltage"}, "properties": [{"id": "displayName", "value": f"模组 #{m:02d}"}]} for m in range(1, 11)]
+    mod_v_overrides = [{"matcher": {"id": "byName", "options": f"battery0/Module_{m:02d}_Voltage"}, "properties": [{"id": "displayName", "value": f"模组 #{m:02d}"}]} for m in range(1, 11)]
     panels.append({
         "id": pid,
         "title": "10个串联模组实时电压分布 (Module 01 ~ Module 10 Voltage, 51.2V Nominal)",
         "type": "bargauge",
-        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 31},
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 43},
         "datasource": {"type": "influxdb", "uid": DS_UID},
         "targets": mod_v_targets,
         "fieldConfig": {
@@ -367,8 +552,8 @@ def build_dashboard():
     })
     pid += 1
 
-    # 3.4 160-Cell Voltage Matrix
-    cell_query = f'''from(bucket: "openems")
+    # 4.4 160-Cell Voltage Matrix
+    cell_query = fr'''from(bucket: "openems")
   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r.edge == "${{edge}}")
   |> filter(fn: (r) => r._measurement == "data" and r._field =~ /^battery0\/Cell_[0-9]{{3}}_V$/)
@@ -377,7 +562,7 @@ def build_dashboard():
         "id": pid,
         "title": "160颗 LiFePO4 电芯单体电压全景分布 (160-Cell Matrix across 10 Modules, mV)",
         "type": "bargauge",
-        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 31},
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 43},
         "datasource": {"type": "influxdb", "uid": DS_UID},
         "targets": [{
             "datasource": {"type": "influxdb", "uid": DS_UID},
@@ -408,12 +593,12 @@ def build_dashboard():
     templating = {
         "list": [
             {
-                "current": {"selected": True, "text": "bms", "value": "bms"},
+                "current": {"selected": True, "text": "pcs", "value": "pcs"},
                 "datasource": {"type": "influxdb", "uid": DS_UID},
                 "definition": 'import "influxdata/influxdb/schema"\nschema.tagValues(bucket: "openems", tag: "edge")',
                 "hide": 0,
                 "includeAll": False,
-                "label": "选择监控储能柜 / BMS设备",
+                "label": "选择监控储能电站 / 设备",
                 "multi": False,
                 "name": "edge",
                 "options": [],
@@ -462,14 +647,14 @@ def build_dashboard():
         "refresh": "5s",
         "schemaVersion": 38,
         "style": "dark",
-        "tags": ["openems", "smartscape", "topology", "dynatrace", "bess", "digital-twin", "microgrid"],
+        "tags": ["openems", "smartscape", "topology", "dynatrace", "bess", "digital-twin", "microgrid", "sinexcel", "pcs"],
         "templating": templating,
         "time": {"from": "now-15m", "to": "now"},
         "timepicker": {"refresh_intervals": ["2s", "5s", "10s", "30s", "1m"]},
         "timezone": "browser",
         "title": DASHBOARD_TITLE,
         "uid": DASHBOARD_UID,
-        "version": 1
+        "version": 2
     }
 
     return dashboard
@@ -488,7 +673,7 @@ def main():
     print(f"Copied to provisioning directory: {dest_path}")
 
     # POST to Grafana API
-    grafana_auth = os.environ.get("GRAFANA_BASIC_AUTH", "")
+    grafana_auth = os.environ.get("GRAFANA_BASIC_AUTH", "YWRtaW46YWRtaW4=")
     api_payload = json.dumps({"dashboard": db, "overwrite": True}).encode("utf-8")
     req = urllib.request.Request(
         "http://127.0.0.1:3000/api/dashboards/db",

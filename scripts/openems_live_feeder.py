@@ -575,6 +575,7 @@ class StationLiveSimulator:
             "batteryInverter0/ActiveDischargeEnergy": self.ess_discharge_energy,
             "batteryInverter0/TemperatureAcHeatSink": 365,
             "batteryInverter0/TemperatureDcHeatSink": 388,
+            "batteryInverter0/CosPhi": 1000,
             "batteryInverter0/State": 0,
 
             # Module Level Extremes (Tier 4)

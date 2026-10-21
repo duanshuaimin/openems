@@ -470,7 +470,7 @@ class VirtualSinexcelPCS:
 pcs = VirtualSinexcelPCS()
 
 def generate_pcs_influx_line(edge_tag, ts_sec):
-    """Generates InfluxDB Line Protocol for PCS telemetry."""
+    """Generates InfluxDB Line Protocol for PCS telemetry, plus BESS/cabinet telemetry for standalone edge."""
     pcs.update_physics()
     fields = {
         "batteryInverter0/ActivePower": int(round(pcs.actual_active_power_w)),
@@ -495,17 +495,71 @@ def generate_pcs_influx_line(edge_tag, ts_sec):
         "batteryInverter0/CosPhi": int(round(pcs.cos_phi * 1000.0)),
         "batteryInverter0/State": 0
     }
+
+    # For edge=pcs, also supply high-voltage BESS rack & cabinet channels so all dashboard panels render seamlessly
+    if edge_tag == "pcs":
+        p_act = pcs.actual_active_power_w
+        fields.update({
+            "cabinet0/State": 2 if p_act > 500 else (1 if p_act < -500 else 3),
+            "cabinet0/ActivePower": int(round(p_act)),
+            "cabinet0/DcPower": int(round(pcs.dc_power_w)),
+            "cabinet0/DailyChargeEnergy": 125000,
+            "cabinet0/DailyDischargeEnergy": 118000,
+            "cabinet0/TotalChargeEnergy": 45200000,
+            "cabinet0/TotalDischargeEnergy": 42800000,
+            "cabinet0/RteEfficiency": int(round(pcs.efficiency * 1000.0)),
+            "cabinet0/AmbientTemp": int(round(pcs.ambient_temp_c * 10.0)),
+            "cabinet0/Humidity": 45,
+            "cabinet0/HvacStatus": 1 if pcs.ac_heatsink_temp_c > 32.0 else 0,
+            "cabinet0/HvacTempSetpoint": 220,
+            "cabinet0/FireSystemStatus": 0,
+            "cabinet0/DoorLimitStatus": 0,
+            "cabinet0/EmergencyStopStatus": 0,
+            "battery0/Voltage": int(round(pcs.dc_voltage_v)),
+            "battery0/Current": int(round(pcs.dc_current_a)),
+            "battery0/Soc": 72,
+            "battery0/Soh": 99,
+            "battery0/CycleCount": 145,
+            "battery0/RemainingCapacity": 72000,
+            "battery0/DailyChargeEnergy": 125000,
+            "battery0/DailyDischargeEnergy": 118000,
+            "battery0/TotalChargeEnergy": 45200000,
+            "battery0/TotalDischargeEnergy": 42800000,
+            "battery0/InsulationResistance": 10000,
+            "battery0/ChargeMaxCurrent": 150,
+            "battery0/DischargeMaxCurrent": 150,
+            "battery0/CellVoltageDelta": 24,
+            "battery0/MaxVoltageCellNumber": 18,
+            "battery0/MinVoltageCellNumber": 9,
+            "battery0/MaxCellTemp": int(round(pcs.ac_heatsink_temp_c * 10.0)),
+            "battery0/MinCellTemp": int(round(pcs.ambient_temp_c * 10.0)),
+            "battery0/MaxTempCellNumber": 25,
+            "battery0/MinTempCellNumber": 1,
+            "battery0/CellTempDelta": int(round((pcs.ac_heatsink_temp_c - pcs.ambient_temp_c) * 10.0)),
+        })
+        for m in range(1, 11):
+            fields[f"battery0/Module_{m:02d}_Voltage"] = int(round(pcs.dc_voltage_v / 10.0 * 10.0))
+            fields[f"battery0/Module_{m:02d}_Temp"] = int(round(pcs.ambient_temp_c * 10.0))
+        for c in range(1, 161):
+            v_offset = int(12 * math.sin(c * 0.35) + 6 * math.cos(c * 0.7))
+            if c == 18:
+                v_offset = 15
+            elif c == 9:
+                v_offset = -12
+            fields[f"battery0/Cell_{c:03d}_V"] = 3300 + v_offset
+            fields[f"battery0/Cell_{c:03d}_T"] = int(round((pcs.ambient_temp_c + 1.2 * math.sin(c * 0.2)) * 10.0))
+
     field_strs = [f"{k}={v}i" for k, v in fields.items()]
     return f"data,edge={edge_tag} " + ",".join(field_strs) + f" {int(ts_sec)}"
 
 async def influx_telemetry_loop():
-    """Continuously writes PCS telemetry points to InfluxDB for edge=pcs and edge=0."""
+    """Continuously writes PCS telemetry points to InfluxDB for edge=pcs, edge=0, and edge=bms."""
     await asyncio.sleep(2.0)
-    print("[PCS InfluxDB Telemetry] Starting periodic telemetry publisher for edge=pcs and edge=0 (interval=2s)...", flush=True)
+    print("[PCS InfluxDB Telemetry] Starting periodic telemetry publisher for edge=pcs, edge=0, edge=bms (interval=2s)...", flush=True)
     while True:
         try:
             now_ts = time.time()
-            for edge in ("pcs", "0"):
+            for edge in ("pcs", "0", "bms"):
                 line = generate_pcs_influx_line(edge, now_ts)
                 body = line.encode("utf-8")
                 req = urllib.request.Request(

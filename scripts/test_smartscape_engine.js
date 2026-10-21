@@ -18,7 +18,7 @@ console.log('=== OpenEMS Smartscape Engine v3.0 Unit Test Suite ===');
 // 1. Build Graph & Verify Counts
 engine.buildGraphData();
 console.log(`[1] Graph built: ${engine.nodes.length} nodes, ${engine.edges.length} edges`);
-assert.strictEqual(engine.nodes.length, 197, 'Expected 197 total nodes');
+assert.strictEqual(engine.nodes.length, 198, 'Expected 198 total nodes (including 7 fleet stations)');
 assert.ok(engine.edges.length >= 260, `Expected >= 260 edges (including 16S chains), got ${engine.edges.length}`);
 
 // Verify dynamic descendant counts
@@ -153,7 +153,13 @@ console.log('[6] PASS: Multi-station switching rebinds selectedNode & updates st
   assert.strictEqual(engine.state.connHealthy, true, 'Live poll for station 2 must succeed');
   assert.strictEqual(engine.state.telemetry.maxCellNo, 72, `Station 2 maxCellNo should be 72, got ${engine.state.telemetry.maxCellNo}`);
   assert.strictEqual(engine.state.telemetry.minCellNo, 41, `Station 2 minCellNo should be 41, got ${engine.state.telemetry.minCellNo}`);
-  console.log('[7] PASS: Live InfluxDB HTTP polling verified across stations bms (#14/#3), edge1 (#43/#22), edge2 (#72/#41).');
+
+  engine.switchStation('pcs');
+  await engine.pollLiveTelemetry();
+  assert.strictEqual(engine.state.connHealthy, true, 'Live poll for station pcs must succeed');
+  assert.ok(engine.state.telemetry.pcs.gridVoltageV > 350, 'PCS grid voltage should be ~380V');
+  assert.ok(engine.state.telemetry.pcs.activePowerKw > 0, 'PCS active power should be positive');
+  console.log('[7] PASS: Live InfluxDB HTTP polling verified across stations bms (#14/#3), edge1 (#43/#22), edge2 (#72/#41), pcs.');
 
   // 8. Verify DOM Inspector Drawer Interactions (Non-Destructive Refresh, L4 Single-Mod Roll-Up, L5 Micro-RC Selection)
   const domElements = new Map();

@@ -64,6 +64,7 @@
   // ----------------------------------------------------
   const STATION_PROFILES = {
     'bms': { id: 'station-bms', name: 'BMS 虚拟高压站 (Pylontech M2)', icon: '⚡', capacityKwh: 100, ratedKw: 100, racks: 1, mods: 10, cells: 160 },
+    'pcs': { id: 'station-pcs', name: '盛弘 100kW PCS 变流电站 (Sinexcel)', icon: '⚡', capacityKwh: 100, ratedKw: 100, racks: 1, mods: 10, cells: 160 },
     '0':   { id: 'station-edge0', name: '园区光储充微电网 (edge0)', icon: '🏭', capacityKwh: 1000, ratedKw: 500, racks: 1, mods: 10, cells: 160 },
     '1':   { id: 'station-edge1', name: '重工业削峰填谷站 (edge1)', icon: '🏗️', capacityKwh: 2000, ratedKw: 1000, racks: 2, mods: 10, cells: 160 },
     '2':   { id: 'station-edge2', name: '电网侧独立调频站 (edge2)', icon: '🗼', capacityKwh: 4000, ratedKw: 2000, racks: 4, mods: 10, cells: 160 },
@@ -136,11 +137,27 @@
       cellsT: Array(160).fill(24.0),
       fleetLive: {
         'bms': { powerKw: 7.9, soc: 69.0 },
+        'pcs': { powerKw: 30.0, soc: 72.0 },
         '0':   { powerKw: -0.1, soc: 94.0 },
         '1':   { powerKw: 175.3, soc: 15.0 },
         '2':   { powerKw: -708.1, soc: 49.0 },
         '3':   { powerKw: 40.0, soc: 95.0 },
         '4':   { powerKw: 18.4, soc: 10.0 }
+      },
+      pcs: {
+        activePowerKw: 30.0,
+        reactivePowerVar: 0,
+        frequencyHz: 50.00,
+        gridVoltageV: 380.0,
+        gridCurrentA: 45.5,
+        dcVoltageV: 528.0,
+        dcCurrentA: 48.5,
+        acIgbtTempC: 29.6,
+        dcIgbtTempC: 30.2,
+        inverterState: 1,
+        gridMode: 1,
+        cosPhi: 1.000,
+        efficiency: 97.8
       }
     },
     nodeHistory: new Map() // nodeId -> { label: string, unit: string, values: number[] }
@@ -148,7 +165,7 @@
 
   // Initialize deterministic realistic fallback distribution prior to first InfluxDB poll
   function seedStationFallbackTelemetry(stationKey) {
-    const stationIdx = stationKey === 'bms' ? 0 : (parseInt(stationKey, 10) || 0);
+    const stationIdx = stationKey === 'bms' ? 0 : (stationKey === 'pcs' ? 6 : (parseInt(stationKey, 10) || 0));
     const maxVCell = ((13 + stationIdx * 29) % 160) + 1;
     const minVCell = ((2 + stationIdx * 19) % 160) + 1;
     const maxTCell = ((94 + stationIdx * 23) % 160) + 1;
@@ -230,8 +247,8 @@
     const activeStId = activeStationNodeId();
     const activeProf = STATION_PROFILES[state.station] || STATION_PROFILES['bms'];
 
-    // --- Tier 0: Fleet Stations (6 Macro Nodes) ---
-    const stationKeys = ['bms', '0', '1', '2', '3', '4'];
+    // --- Tier 0: Fleet Stations (7 Macro Nodes) ---
+    const stationKeys = ['bms', 'pcs', '0', '1', '2', '3', '4'];
     stationKeys.forEach((sKey, idx) => {
       const p = STATION_PROFILES[sKey];
       const live = state.telemetry.fleetLive[sKey] || { powerKw: 0, soc: 50 };
@@ -241,7 +258,7 @@
         name: p.name,
         tier: 'fleet',
         icon: p.icon,
-        x: 240 + idx * 315,
+        x: 180 + idx * 265,
         y: 420,
         type: 'fleet-station',
         status: 'normal',
@@ -290,7 +307,18 @@
         powerPath: true,
         metrics: '液冷恒温 23.5℃ | RTE 92.5%'
       },
-      { id: 'sys-pcs', name: `${activeProf.ratedKw}kW PCS 双向储能变流器`, tier: 'sys', icon: '⚡', x: 1240, type: 'system', status: 'normal', parentId: activeStId, powerPath: true, metrics: '效率 98.2% | cosφ 0.99' },
+      {
+        id: 'sys-pcs',
+        name: `盛弘 PW-100K 储能变流器 (Sinexcel PCS)`,
+        tier: 'sys',
+        icon: '⚡',
+        x: 1240,
+        type: 'system',
+        status: 'normal',
+        parentId: activeStId,
+        powerPath: true,
+        metrics: `AC ${(state.telemetry.pcs.activePowerKw || state.telemetry.powerKw).toFixed(1)}kW | ${(state.telemetry.pcs.gridVoltageV || 380).toFixed(0)}V ${(state.telemetry.pcs.frequencyHz || 50.0).toFixed(2)}Hz`
+      },
       { id: 'sys-load-hvac', name: '工业暖通冷水机房电表', tier: 'sys', icon: '❄️', x: 1540, type: 'system', status: 'normal', parentId: activeStId, powerPath: true, metrics: '负荷 32.5 kW' },
       { id: 'sys-load-machinery', name: '车间主生产线动力电表', tier: 'sys', icon: '🏭', x: 1800, type: 'system', status: 'normal', parentId: activeStId, powerPath: true, metrics: '负荷 48.0 kW' }
     );
@@ -806,8 +834,12 @@
     // Update PCS & Grid/PV metrics
     const pcsNode = nodeById.get('sys-pcs');
     if (pcsNode) {
-      pcsNode.metrics = `AC ${state.telemetry.powerKw}kW | η ${state.telemetry.rteEfficiency}%`;
-      pushNodeHistory('sys-pcs', 'PCS Active Power', 'kW', state.telemetry.powerKw);
+      const pcsP = state.telemetry.pcs.activePowerKw !== undefined ? state.telemetry.pcs.activePowerKw : state.telemetry.powerKw;
+      const pcsV = state.telemetry.pcs.gridVoltageV || 380.0;
+      const pcsF = state.telemetry.pcs.frequencyHz || 50.00;
+      const pcsT = state.telemetry.pcs.acIgbtTempC || 29.6;
+      pcsNode.metrics = `AC ${pcsP >= 0 ? '+' : ''}${pcsP.toFixed(1)}kW | ${pcsV.toFixed(0)}V ${pcsF.toFixed(2)}Hz | IGBT ${pcsT.toFixed(0)}℃`;
+      pushNodeHistory('sys-pcs', 'PCS Active Power', 'kW', pcsP);
     }
 
     // 4. Roll-up Systems -> Active Fleet Station & All Fleet Stations
@@ -2457,6 +2489,21 @@
       addMetricCard(metricsContainer, '模组算术均温 (μT)', mt.toFixed(1), '°C');
       addMetricCard(metricsContainer, '下辖电芯状态', state.expandedContainers.has(node.id) ? '已展开 (16S)' : '已上卷聚合 (16S)', '');
       addMetricCard(metricsContainer, '传染健康状态', node.status.toUpperCase(), '');
+    } else if (node.id === 'sys-pcs') {
+      const pcs = state.telemetry.pcs;
+      const pAct = pcs.activePowerKw !== undefined ? pcs.activePowerKw : state.telemetry.powerKw;
+      const vGrid = pcs.gridVoltageV || 380.0;
+      const fGrid = pcs.frequencyHz || 50.00;
+      const tIgbt = pcs.acIgbtTempC || 29.6;
+      const modeStr = (pcs.gridMode === 1) ? '并网运行 (On-Grid)' : '离网孤岛 (Off-Grid)';
+      addMetricCard(metricsContainer, 'PCS 交流有功 (AC P)', `${pAct >= 0 ? '+' : ''}${pAct.toFixed(1)}`, 'kW');
+      addMetricCard(metricsContainer, '三相电网相线电压 (Uac)', `${vGrid.toFixed(1)}`, 'V');
+      addMetricCard(metricsContainer, '电网实时频率 (Freq)', `${fGrid.toFixed(2)}`, 'Hz');
+      addMetricCard(metricsContainer, 'IGBT 模块结温 (HeatSink)', `${tIgbt.toFixed(1)}`, '°C');
+      addMetricCard(metricsContainer, '电网功率因数 (cosφ)', `${(pcs.cosPhi || 1.0).toFixed(3)}`, '');
+      addMetricCard(metricsContainer, '并网控制模式', modeStr, '');
+      addMetricCard(metricsContainer, '直流端侧电压 (Vdc)', `${state.telemetry.voltage.toFixed(1)}`, 'V');
+      addMetricCard(metricsContainer, '直流端侧电流 (Idc)', `${state.telemetry.current.toFixed(1)}`, 'A');
     } else {
       addMetricCard(metricsContainer, '簇端电压 (Pack V)', state.telemetry.voltage, 'V');
       addMetricCard(metricsContainer, '充放电电流 (Current)', state.telemetry.current.toFixed(1), 'A');
@@ -2772,7 +2819,7 @@
 
       const fleetQuery = `from(bucket: "openems")
   |> range(start: -5m)
-  |> filter(fn: (r) => r._measurement == "data" and (r._field == "cabinet0/ActivePower" or r._field == "battery0/Soc"))
+  |> filter(fn: (r) => r._measurement == "data" and (r._field == "cabinet0/ActivePower" or r._field == "batteryInverter0/ActivePower" or r._field == "battery0/Soc"))
   |> last()
   |> keep(columns: ["edge", "_field", "_value"])`;
 
@@ -2797,6 +2844,8 @@
           if (!state.telemetry.fleetLive[eKey]) state.telemetry.fleetLive[eKey] = { powerKw: 0, soc: 50 };
           if (fleetData[eKey]['cabinet0/ActivePower'] !== undefined) {
             state.telemetry.fleetLive[eKey].powerKw = +(fleetData[eKey]['cabinet0/ActivePower'] / 1000.0).toFixed(1);
+          } else if (fleetData[eKey]['batteryInverter0/ActivePower'] !== undefined) {
+            state.telemetry.fleetLive[eKey].powerKw = +(fleetData[eKey]['batteryInverter0/ActivePower'] / 1000.0).toFixed(1);
           }
           if (fleetData[eKey]['battery0/Soc'] !== undefined) {
             state.telemetry.fleetLive[eKey].soc = fleetData[eKey]['battery0/Soc'];
@@ -2804,9 +2853,45 @@
         });
       }
 
+      // Populate real PCS inverter metrics
+      if (data['batteryInverter0/ActivePower'] !== undefined) {
+        state.telemetry.pcs.activePowerKw = +(data['batteryInverter0/ActivePower'] / 1000.0).toFixed(1);
+      }
+      if (data['batteryInverter0/ReactivePower'] !== undefined) {
+        state.telemetry.pcs.reactivePowerVar = data['batteryInverter0/ReactivePower'];
+      }
+      if (data['batteryInverter0/GridVoltageL1'] !== undefined) {
+        state.telemetry.pcs.gridVoltageV = +(data['batteryInverter0/GridVoltageL1'] / 1000.0).toFixed(1);
+      }
+      if (data['batteryInverter0/GridCurrentL1'] !== undefined) {
+        state.telemetry.pcs.gridCurrentA = +(data['batteryInverter0/GridCurrentL1'] / 1000.0).toFixed(1);
+      }
+      if (data['batteryInverter0/Frequency'] !== undefined) {
+        state.telemetry.pcs.frequencyHz = +(data['batteryInverter0/Frequency'] / 1000.0).toFixed(2);
+      }
+      if (data['batteryInverter0/TemperatureAcHeatSink'] !== undefined) {
+        state.telemetry.pcs.acIgbtTempC = +(data['batteryInverter0/TemperatureAcHeatSink'] / 10.0).toFixed(1);
+      }
+      if (data['batteryInverter0/TemperatureDcHeatSink'] !== undefined) {
+        state.telemetry.pcs.dcIgbtTempC = +(data['batteryInverter0/TemperatureDcHeatSink'] / 10.0).toFixed(1);
+      }
+      if (data['batteryInverter0/InverterState'] !== undefined) {
+        state.telemetry.pcs.inverterState = data['batteryInverter0/InverterState'];
+      }
+      if (data['batteryInverter0/GridMode'] !== undefined) {
+        state.telemetry.pcs.gridMode = data['batteryInverter0/GridMode'];
+      }
+      if (data['batteryInverter0/CosPhi'] !== undefined) {
+        state.telemetry.pcs.cosPhi = +(data['batteryInverter0/CosPhi'] / 1000.0).toFixed(3);
+      }
+
       // Populate real pack & cabinet metrics
       if (data['battery0/Voltage'] !== undefined) state.telemetry.voltage = data['battery0/Voltage'];
+      else if (data['batteryInverter0/DcVoltage'] !== undefined) state.telemetry.voltage = +(data['batteryInverter0/DcVoltage'] / 1000.0).toFixed(1);
+
       if (data['battery0/Current'] !== undefined) state.telemetry.current = data['battery0/Current'];
+      else if (data['batteryInverter0/DcCurrent'] !== undefined) state.telemetry.current = +(data['batteryInverter0/DcCurrent'] / 1000.0).toFixed(1);
+
       if (data['battery0/Soc'] !== undefined) state.telemetry.soc = data['battery0/Soc'];
       if (data['battery0/Soh'] !== undefined) state.telemetry.soh = data['battery0/Soh'];
       if (data['battery0/CycleCount'] !== undefined) state.telemetry.cycleCount = data['battery0/CycleCount'];
@@ -2816,6 +2901,8 @@
 
       if (data['cabinet0/ActivePower'] !== undefined) {
         state.telemetry.powerKw = +(data['cabinet0/ActivePower'] / 1000.0).toFixed(1);
+      } else if (data['batteryInverter0/ActivePower'] !== undefined) {
+        state.telemetry.powerKw = +(data['batteryInverter0/ActivePower'] / 1000.0).toFixed(1);
       } else {
         state.telemetry.powerKw = +(state.telemetry.voltage * state.telemetry.current / 1000.0).toFixed(1);
       }
