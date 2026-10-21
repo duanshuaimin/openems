@@ -1,0 +1,1744 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "title": "🌟 全景态势与核心工况 (Executive Operations & Health)",
+      "type": "row"
+    },
+    {
+      "id": 1,
+      "title": "系统运行工况 (System State)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/State\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "green",
+                  "text": "正常运行 (NORMAL)"
+                },
+                "1": {
+                  "color": "blue",
+                  "text": "信息提示 (INFO)"
+                },
+                "2": {
+                  "color": "yellow",
+                  "text": "系统警告 (WARNING)"
+                },
+                "3": {
+                  "color": "red",
+                  "text": "系统故障 (FAULT)"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "储能运行状态 (ESS State)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/EssActivePower\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "mappings": [
+            {
+              "options": {
+                "from": 1000,
+                "to": 1000000000,
+                "result": {
+                  "color": "#5794F2",
+                  "text": "⚡ 削峰放电中"
+                }
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": -1000000000,
+                "to": -1000,
+                "result": {
+                  "color": "#FF9900",
+                  "text": "🔌 填谷充电中"
+                }
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": -999,
+                "to": 999,
+                "result": {
+                  "color": "gray",
+                  "text": "💤 浮充待机中"
+                }
+              },
+              "type": "range"
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF9900",
+                "value": null
+              },
+              {
+                "color": "gray",
+                "value": -500
+              },
+              {
+                "color": "#5794F2",
+                "value": 500
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "电池荷电状态 (Battery SOC)",
+      "type": "gauge",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/EssSoc\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 20
+              },
+              {
+                "color": "green",
+                "value": 50
+              },
+              {
+                "color": "#5794F2",
+                "value": 85
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 4,
+      "title": "并网/孤岛模式 (Grid Mode)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/GridMode\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "green",
+                  "text": "🌐 并网运行 (ON-GRID)"
+                },
+                "1": {
+                  "color": "orange",
+                  "text": "🏝️ 孤岛离网 (OFF-GRID)"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "物理残差校验 (Residual Power)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\")\n  |> filter(fn: (r) => r._field == \"_sum/ConsumptionActivePower\" or r._field == \"_sum/ProductionActivePower\" or r._field == \"_sum/EssActivePower\" or r._field == \"_sum/GridActivePower\")\n  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({\n      _time: r._time,\n      _field: \"Residual\",\n      _value: r[\"_sum/ConsumptionActivePower\"] - (r[\"_sum/ProductionActivePower\"] + r[\"_sum/EssActivePower\"] + r[\"_sum/GridActivePower\"])\n  }))\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": -10
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "储能额定总容量 (Capacity)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/EssCapacity\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watth",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 101,
+      "title": "⚡ 核心节点实时功率流 (Real-Time Power Flows)",
+      "type": "row"
+    },
+    {
+      "id": 7,
+      "title": "电网交互功率 (Grid Power)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 0,
+        "y": 6
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/GridActivePower\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 300000
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "储能实时功率 (ESS Power)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 5,
+        "y": 6
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/EssActivePower\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF9900",
+                "value": null
+              },
+              {
+                "color": "#5794F2",
+                "value": 0
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "光伏出力功率 (PV Production)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 10,
+        "y": 6
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/ProductionActivePower\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green",
+                "value": null
+              },
+              {
+                "color": "#73BF69",
+                "value": 1000
+              }
+            ]
+          },
+          "noValue": "0 W"
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "负荷用电功率 (Consumption)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 15,
+        "y": 6
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/ConsumptionActivePower\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 1000
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "智能充电桩功率 (EVCS)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 6
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"evcs0/ActivePower\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              },
+              {
+                "color": "#B877D9",
+                "value": 1000
+              }
+            ]
+          },
+          "noValue": "0 W"
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 102,
+      "title": "📈 微电网四象限物理平衡与功率流向 (Microgrid Power Balance & Conservation)",
+      "type": "row"
+    },
+    {
+      "id": 12,
+      "title": "微电网多源物理功率守恒平衡大屏曲线 (Load = PV + ESS + Grid)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\")\n  |> filter(fn: (r) => r._field == \"_sum/ConsumptionActivePower\" or r._field == \"_sum/ProductionActivePower\" or r._field == \"_sum/EssActivePower\" or r._field == \"_sum/GridActivePower\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "spanNulls": false,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/ProductionActivePower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "🌞 光伏发电功率 (PV Production)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#73BF69",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/ConsumptionActivePower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "🏭 负荷消耗总功率 (Load Consumption)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FF780A",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/EssActivePower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "🔋 储能充放电功率 (ESS Power)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#5794F2",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/GridActivePower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "⚡ 电网交互功率 (Grid Active Power)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F2495C",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 103,
+      "title": "🔋 储能电池深度分析与充放电调度 (ESS Deep Analytics & Scheduling)",
+      "type": "row"
+    },
+    {
+      "id": 13,
+      "title": "储能电池荷电状态轨迹曲线 (Battery SOC % 0-100%)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/EssSoc\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "color": {
+            "fixedColor": "#3274D9",
+            "mode": "fixed"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 35,
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/EssSoc"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "电池系统实时 SOC (%)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "储能充放功率限额与实际功率对照 (Allowed vs Actual Power)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\")\n  |> filter(fn: (r) => r._field == \"ess0/AllowedChargePower\" or r._field == \"ess0/AllowedDischargePower\" or r._field == \"ess0/ActivePower\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ess0/ActivePower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "实际出力功率 (Actual Power)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#5794F2",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ess0/AllowedChargePower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "允许最大充电门限 (Allowed Charge Limit)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FF9900",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    4,
+                    4
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ess0/AllowedDischargePower"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "允许最大放电门限 (Allowed Discharge Limit)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#E02F44",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    4,
+                    4
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 104,
+      "title": "🔌 三相电能质量与平衡度监测 (Three-Phase Balance)",
+      "type": "row"
+    },
+    {
+      "id": 15,
+      "title": "电网三相功率平衡分布 (Grid L1 / L2 / L3)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 31
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\")\n  |> filter(fn: (r) => r._field == \"_sum/GridActivePowerL1\" or r._field == \"_sum/GridActivePowerL2\" or r._field == \"_sum/GridActivePowerL3\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/GridActivePowerL1"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "A相有功功率 (Phase L1)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#EAB839",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/GridActivePowerL2"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "B相有功功率 (Phase L2)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#73BF69",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/GridActivePowerL3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C相有功功率 (Phase L3)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F2495C",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "title": "负荷三相用电平衡分布 (Load L1 / L2 / L3)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 31
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\")\n  |> filter(fn: (r) => r._field == \"_sum/ConsumptionActivePowerL1\" or r._field == \"_sum/ConsumptionActivePowerL2\" or r._field == \"_sum/ConsumptionActivePowerL3\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/ConsumptionActivePowerL1"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "A相负荷 (Load L1)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FF9900",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/ConsumptionActivePowerL2"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "B相负荷 (Load L2)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#73BF69",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "_sum/ConsumptionActivePowerL3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C相负荷 (Load L3)"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#1F60C4",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "min",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      },
+      "id": 105,
+      "title": "📊 累计电能量测与资产运行统计 (Cumulative Energy & Economics)",
+      "type": "row"
+    },
+    {
+      "id": 17,
+      "title": "储能系统累计充电总量 (Total Charged)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 39
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/EssActiveChargeEnergy\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watth",
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF9900",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 18,
+      "title": "储能系统累计放电总量 (Total Discharged)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 39
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/EssActiveDischargeEnergy\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watth",
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 19,
+      "title": "电网总购入电量 (Grid Buy Energy)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 39
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/GridBuyActiveEnergy\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watth",
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#F2495C",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 20,
+      "title": "光储上网总售电量 (Grid Feed-In Energy)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 39
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"_sum/GridSellActiveEnergy\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watth",
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      },
+      "id": 106,
+      "title": "🚨 核心控制算法与长连接链路监控 (Controller Status & RPC Health)",
+      "type": "row"
+    },
+    {
+      "id": 21,
+      "title": "防逆流控制与微网调度目标设定 (Controller Balancing Target Setpoint)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 44
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"ctrlBalancing0/_PropertyTargetGridSetpoint\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 22,
+      "title": "云端 UI 会话活动连接数 (UiWebsocket Active Connections)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 44
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"uiwebsocket0/Connections\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 23,
+      "title": "边缘反向长连接隧道池 (EdgeWebsocket Active Connections)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 44
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"edgewebsocket0/Connections\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#5794F2",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 24,
+      "title": "JSON-RPC 核心请求处理池 (CoreJsonRpc Completed)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 44
+      },
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P0DBC1A8D6496B50C"
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"openems\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r.edge == \"${edge}\")\n  |> filter(fn: (r) => r._measurement == \"data\" and r._field == \"coreJsonRpcRequestHandler0/Completed\")\n  |> last()",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "openems",
+    "microgrid",
+    "ess",
+    "storage",
+    "command-center"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "0",
+          "value": "0"
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "P0DBC1A8D6496B50C"
+        },
+        "definition": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"openems\", tag: \"edge\")",
+        "hide": 0,
+        "includeAll": false,
+        "label": "选择监控电站 (Edge Fleet)",
+        "multi": false,
+        "name": "edge",
+        "options": [],
+        "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"openems\", tag: \"edge\")",
+        "refresh": 1,
+        "regex": "/^[0-9]+$/",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "OpenEMS 智慧微电网与储能电站智能运维调度中心 (Microgrid & ESS Command Center)",
+  "uid": "openems-ess-analytics",
+  "version": 2
+}

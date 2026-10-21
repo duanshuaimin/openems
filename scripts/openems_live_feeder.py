@@ -764,6 +764,17 @@ class StationLiveSimulator:
                 "evcsgoehttp/ActivePowerL3": evcs_p_phase,
                 "evcsgoehttp/Phases": 3
             })
+        else:
+            channel_data.update({
+                "evcs0/State": 0,
+                "evcs0/Status": 1,
+                "evcs0/ChargeState": 0,
+                "evcs0/ActivePower": 0,
+                "evcs0/ChargePower": 0,
+                "evcs0/ActiveConsumptionEnergy": 0,
+                "evcs0/Voltage": v_avg,
+                "evcs0/Current": 0
+            })
 
         if self.station_type == "heavy_industrial":
             channel_data.update({
