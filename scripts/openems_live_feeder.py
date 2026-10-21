@@ -409,16 +409,44 @@ class StationLiveSimulator:
         soc_int = int(round(self.current_soc))
         self.rpc_completed += 1
 
-        # BMS Telemetry & Diagnostics
-        v_mult = 1.0 if self.capacity_wh <= 500_000 else (1.8 if self.capacity_wh <= 1_500_000 else 2.5)
-        bms_pack_v = int((740_000 + (self.current_soc - 50.0) * 1200) * v_mult)
-        bms_pack_i = int(-p_ess / (bms_pack_v / 1000.0) * 1000)
+        # BMS Telemetry & Diagnostics (Bottom-Up 160-Cell -> 10-Module -> Pack Consistency)
+        st_num = int(self.edge_tag) if str(self.edge_tag).isdigit() else 0
+        st_max_vc = (14 + st_num * 29 - 1) % 160 + 1
+        st_min_vc = (3 + st_num * 19 - 1) % 160 + 1
+        st_max_tc = (8 + st_num * 23 - 1) % 160 + 1
+        st_min_tc = (1 + st_num * 13 - 1) % 160 + 1
+
         bms_min_cell_v = int(3150 + self.current_soc * 2.6)
         bms_max_cell_v = bms_min_cell_v + 18 + int((abs(p_ess) / self.max_power_w) * 15)
         bms_min_cell_t = int(220 + (abs(p_ess) / self.max_power_w) * 55)
         bms_max_cell_t = bms_min_cell_t + 16 + int((abs(p_ess) / self.max_power_w) * 10)
         cell_delta_v = bms_max_cell_v - bms_min_cell_v
         cell_temp_spread = bms_max_cell_t - bms_min_cell_t
+
+        cell_v_map = {
+            c: (bms_max_cell_v if c == st_max_vc else (bms_min_cell_v if c == st_min_vc else bms_min_cell_v + 1 + int((bms_max_cell_v - bms_min_cell_v - 2) * (((c + st_num * 11) * 47) % 100) / 100.0)))
+            for c in range(1, 161)
+        }
+        cell_t_map = {
+            c: (bms_max_cell_t if c == st_max_tc else (bms_min_cell_t if c == st_min_tc else bms_min_cell_t + 1 + int(max(1, cell_temp_spread - 2) * (((c + st_num * 7) * 31) % 100) / 100.0)))
+            for c in range(1, 161)
+        }
+        mod_v_map = {
+            m: int(round(sum(cell_v_map[c] for c in range((m - 1) * 16 + 1, m * 16 + 1)) / 100.0))
+            for m in range(1, 11)
+        }
+        mod_t_map = {
+            m: int(round(sum(cell_t_map[c] for c in range((m - 1) * 16 + 1, m * 16 + 1)) / 16.0))
+            for m in range(1, 11)
+        }
+        max_mod_no = max(mod_v_map, key=mod_v_map.get)
+        min_mod_no = min(mod_v_map, key=mod_v_map.get)
+        max_mod_t_no = max(mod_t_map, key=mod_t_map.get)
+        min_mod_t_no = min(mod_t_map, key=mod_t_map.get)
+
+        bms_pack_v = sum(cell_v_map.values())
+        # Positive current = Discharge (p_ess > 0), Negative current = Charge (p_ess < 0)
+        bms_pack_i = int(p_ess / (bms_pack_v / 1000.0) * 1000)
         cycle_count = 120 + int(self.ess_discharge_energy / self.capacity_wh)
         insulation_res = 8500 + random.randint(-100, 100)
 
@@ -441,12 +469,6 @@ class StationLiveSimulator:
         curr_ess_l2 = int(abs(p_ess_l2) / (v_l2 / 1000.0) * 1000) if p_ess != 0 else 0
         curr_ess_l3 = int(abs(p_ess_l3) / (v_l3 / 1000.0) * 1000) if p_ess != 0 else 0
         curr_ess_tot = curr_ess_l1 + curr_ess_l2 + curr_ess_l3
-
-        st_num = int(self.edge_tag) if str(self.edge_tag).isdigit() else 0
-        st_max_vc = (14 + st_num * 29 - 1) % 160 + 1
-        st_min_vc = (3 + st_num * 19 - 1) % 160 + 1
-        st_max_tc = (8 + st_num * 23 - 1) % 160 + 1
-        st_min_tc = (1 + st_num * 13 - 1) % 160 + 1
 
         channel_data = {
             "_sum/State": 0,
@@ -530,8 +552,8 @@ class StationLiveSimulator:
             "battery0/State": 0,
             "battery0/Soc": soc_int,
             "battery0/Soh": 98,
-            "battery0/Voltage": int(round(bms_pack_v / 1000.0)) if bms_pack_v > 2000 else bms_pack_v,
-            "battery0/Current": int(round(bms_pack_i / 1000.0)) if abs(bms_pack_i) > 500 else bms_pack_i,
+            "battery0/Voltage": int(round(bms_pack_v / 1000.0)),
+            "battery0/Current": int(round(bms_pack_i / 1000.0)),
             "battery0/MinCellVoltage": bms_min_cell_v,
             "battery0/MaxCellVoltage": bms_max_cell_v,
             "battery0/MaxVoltageCellNumber": st_max_vc,
@@ -566,8 +588,8 @@ class StationLiveSimulator:
             "batteryInverter0/GridCurrentL1": curr_ess_l1,
             "batteryInverter0/GridCurrentL2": curr_ess_l2,
             "batteryInverter0/GridCurrentL3": curr_ess_l3,
-            "batteryInverter0/DcVoltage": int(round(bms_pack_v / 1000.0 * 1000.0)) if bms_pack_v > 2000 else int(round(bms_pack_v * 1000.0)),
-            "batteryInverter0/DcCurrent": int(round(bms_pack_i / 1000.0 * 1000.0)) if abs(bms_pack_i) > 500 else int(round(bms_pack_i * 1000.0)),
+            "batteryInverter0/DcVoltage": bms_pack_v,
+            "batteryInverter0/DcCurrent": bms_pack_i,
             "batteryInverter0/DcPower": p_ess,
             "batteryInverter0/InverterState": 1,
             "batteryInverter0/GridMode": 1,
@@ -579,20 +601,20 @@ class StationLiveSimulator:
             "batteryInverter0/State": 0,
 
             # Module Level Extremes (Tier 4)
-            "battery0/MaxModuleVoltage": int(round((((int(round(bms_pack_v / 1000.0)) if bms_pack_v > 2000 else bms_pack_v) / 10.0) + 0.35) * 10.0)),
-            "battery0/MinModuleVoltage": int(round((((int(round(bms_pack_v / 1000.0)) if bms_pack_v > 2000 else bms_pack_v) / 10.0) - 0.28) * 10.0)),
-            "battery0/MaxVoltageModuleNumber": 2,
-            "battery0/MinVoltageModuleNumber": 1,
-            "battery0/MaxModuleTemperature": bms_max_cell_t,
-            "battery0/MinModuleTemperature": bms_min_cell_t,
-            "battery0/MaxTemperatureModuleNumber": 4,
-            "battery0/MinTemperatureModuleNumber": 8,
-            "battery0/ModuleVoltageDelta": 6,
-            "battery0/ModuleTemperatureSpread": cell_temp_spread,
+            "battery0/MaxModuleVoltage": mod_v_map[max_mod_no],
+            "battery0/MinModuleVoltage": mod_v_map[min_mod_no],
+            "battery0/MaxVoltageModuleNumber": max_mod_no,
+            "battery0/MinVoltageModuleNumber": min_mod_no,
+            "battery0/MaxModuleTemperature": mod_t_map[max_mod_t_no],
+            "battery0/MinModuleTemperature": mod_t_map[min_mod_t_no],
+            "battery0/MaxTemperatureModuleNumber": max_mod_t_no,
+            "battery0/MinTemperatureModuleNumber": min_mod_t_no,
+            "battery0/ModuleVoltageDelta": mod_v_map[max_mod_no] - mod_v_map[min_mod_no],
+            "battery0/ModuleTemperatureSpread": mod_t_map[max_mod_t_no] - mod_t_map[min_mod_t_no],
 
             # Array Level (Tier 2)
-            "array0/DcVoltage": int(round(bms_pack_v / 1000.0)) if bms_pack_v > 2000 else bms_pack_v,
-            "array0/DcCurrent": int(round(bms_pack_i / 1000.0)) if abs(bms_pack_i) > 500 else bms_pack_i,
+            "array0/DcVoltage": int(round(bms_pack_v / 1000.0)),
+            "array0/DcCurrent": int(round(bms_pack_i / 1000.0)),
             "array0/DcPower": p_ess,
             "array0/ParallelPiles": 1 if self.capacity_wh <= 500_000 else (2 if self.capacity_wh <= 1_500_000 else 4),
             "array0/SocBalanceVariance": 8,
@@ -620,12 +642,12 @@ class StationLiveSimulator:
             "cabinet0/EmergencyStopStatus": 0,
 
             # Individual 10 Modules (Tier 4)
-            **{f"battery0/Module_{m:02d}_Voltage": int(round((((int(round(bms_pack_v / 1000.0)) if bms_pack_v > 2000 else bms_pack_v) / 10.0) + (0.35 if m==2 else (-0.28 if m==1 else 0.04 * (m-5)))) * 10.0)) for m in range(1, 11)},
-            **{f"battery0/Module_{m:02d}_Temp": bms_min_cell_t + int(cell_temp_spread * ((m * 3) % 10) / 10.0) for m in range(1, 11)},
+            **{f"battery0/Module_{m:02d}_Voltage": mod_v_map[m] for m in range(1, 11)},
+            **{f"battery0/Module_{m:02d}_Temp": mod_t_map[m] for m in range(1, 11)},
 
             # Individual 160 Cells (Tier 5)
-            **{f"battery0/Cell_{c:03d}_V": (bms_max_cell_v if c == st_max_vc else (bms_min_cell_v if c == st_min_vc else bms_min_cell_v + 1 + int((bms_max_cell_v - bms_min_cell_v - 2) * (((c + st_num * 11) * 47) % 100) / 100.0))) for c in range(1, 161)},
-            **{f"battery0/Cell_{c:03d}_T": (bms_max_cell_t if c == st_max_tc else (bms_min_cell_t if c == st_min_tc else bms_min_cell_t + 1 + int(max(1, cell_temp_spread - 2) * (((c + st_num * 7) * 31) % 100) / 100.0))) for c in range(1, 161)},
+            **{f"battery0/Cell_{c:03d}_V": cell_v_map[c] for c in range(1, 161)},
+            **{f"battery0/Cell_{c:03d}_T": cell_t_map[c] for c in range(1, 161)},
 
             # Meteorological & Solar Irradiance
             "weather/SolarIrradiance": solar_irr,

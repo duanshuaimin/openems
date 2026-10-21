@@ -553,13 +553,13 @@ def generate_pcs_influx_line(edge_tag, ts_sec):
     return f"data,edge={edge_tag} " + ",".join(field_strs) + f" {int(ts_sec)}"
 
 async def influx_telemetry_loop():
-    """Continuously writes PCS telemetry points to InfluxDB for edge=pcs, edge=0, and edge=bms."""
+    """Continuously writes PCS telemetry points to InfluxDB for edge=pcs and edge=bms."""
     await asyncio.sleep(2.0)
-    print("[PCS InfluxDB Telemetry] Starting periodic telemetry publisher for edge=pcs, edge=0, edge=bms (interval=2s)...", flush=True)
+    print("[PCS InfluxDB Telemetry] Starting periodic telemetry publisher for edge=pcs, edge=bms (interval=2s)...", flush=True)
     while True:
         try:
             now_ts = time.time()
-            for edge in ("pcs", "0", "bms"):
+            for edge in ("pcs", "bms"):
                 line = generate_pcs_influx_line(edge, now_ts)
                 body = line.encode("utf-8")
                 req = urllib.request.Request(

@@ -311,7 +311,74 @@ console.log('[6] PASS: Multi-station switching rebinds selectedNode & updates st
   });
   console.log('[10] PASS: Tooltip collision avoidance verified (never covers mouse cursor or node icon).');
 
-  console.log('=== ALL SMARTSCAPE ENGINE v3.0 TESTS PASSED ===');
+  // 11. Verify All 5 Microgrid Stations (edge 0..4) Pack Voltage Consistency, Sign Convention & No Dual-Writer Collision
+  for (const st of ['0', '1', '2', '3', '4']) {
+    engine.switchStation(st);
+    await engine.pollLiveTelemetry();
+    assert.strictEqual(engine.state.connHealthy, true, `Live poll for station ${st} must succeed`);
+    const cellSumV = +(engine.state.telemetry.cellsV.reduce((a, b) => a + b, 0) / 1000.0).toFixed(1);
+    assert.ok(
+      Math.abs(engine.state.telemetry.voltage - cellSumV) <= 1.5,
+      `Station ${st} pack voltage (${engine.state.telemetry.voltage}V) must match 160-cell sum (${cellSumV}V) within 1.5V`
+    );
+    assert.strictEqual(
+      engine.state.telemetry.pcs.activePowerKw,
+      engine.state.telemetry.powerKw,
+      `Station ${st} PCS activePowerKw (${engine.state.telemetry.pcs.activePowerKw}) must equal cabinet powerKw (${engine.state.telemetry.powerKw})`
+    );
+    if (Math.abs(engine.state.telemetry.powerKw) >= 1.0) {
+      assert.strictEqual(
+        Math.sign(engine.state.telemetry.current),
+        Math.sign(engine.state.telemetry.powerKw),
+        `Station ${st} current (${engine.state.telemetry.current}A) sign must match powerKw (${engine.state.telemetry.powerKw}kW)`
+      );
+      const rc = engine.buildCellMicroTwin(engine.nodeById.get('cell-001'));
+      if (engine.state.telemetry.powerKw > 0) {
+        assert.ok(rc.vOcvMv > rc.vTermMv, `Station ${st} discharging: Vocv (${rc.vOcvMv}) must exceed Vterm (${rc.vTermMv})`);
+      } else {
+        assert.ok(rc.vOcvMv < rc.vTermMv, `Station ${st} charging: Vocv (${rc.vOcvMv}) must be below Vterm (${rc.vTermMv})`);
+      }
+    }
+  }
+  console.log('[11] PASS: All 5 stations (edge=0..4) pack voltage 160S sum, current sign convention, and PCS/cabinet synchronization verified.');
+
+  // 12. Verify Peripheral System, Control, and Application Nodes Bind to Live InfluxDB Telemetry
+  engine.switchStation('1');
+  await engine.pollLiveTelemetry();
+  const gridMetrics1 = engine.nodeById.get('sys-grid').metrics;
+  const hvacMetrics1 = engine.nodeById.get('sys-load-hvac').metrics;
+  const machMetrics1 = engine.nodeById.get('sys-load-machinery').metrics;
+  const edgeMetrics1 = engine.nodeById.get('ctrl-edge').metrics;
+  assert.ok(!gridMetrics1.endsWith('95kW'), `Station 1 sys-grid must reflect live power instead of static 95kW, got: ${gridMetrics1}`);
+  assert.ok(!hvacMetrics1.includes('32.5'), `Station 1 sys-load-hvac must reflect live HVAC power, got: ${hvacMetrics1}`);
+  assert.ok(!machMetrics1.includes('48.0'), `Station 1 sys-load-machinery must reflect live machinery power, got: ${machMetrics1}`);
+  assert.ok(edgeMetrics1.includes('RPC '), `Station 1 ctrl-edge must reflect live RPC counter, got: ${edgeMetrics1}`);
+
+  // Select sys-grid in drawer and verify 4 domain-specific metric cards render
+  engine.selectNode(engine.nodeById.get('sys-grid'));
+  assert.strictEqual(domElements.get('drawer-metrics').children.length, 4, 'sys-grid must render 4 grid metric cards in drawer');
+  console.log('[12] PASS: Peripheral System, Control, and Application nodes dynamically bound to live InfluxDB channels.');
+
+  // 13. Verify Power-Coupled Particle Flow Speed, Direction Reversal, and Standby Pause
+  engine.state.particlePhase = 0.5;
+  engine.state.telemetry.powerKw = 0.0;
+  engine.state.telemetry.current = 0.0;
+  engine.stepParticlePhase(1.0);
+  assert.strictEqual(engine.state.particlePhase, 0.5, 'Particle phase must pause when powerKw=0 and current=0 (standby)');
+
+  engine.state.telemetry.powerKw = 200.0;
+  engine.state.telemetry.current = 380.0;
+  const pAfterDis = engine.stepParticlePhase(1.0);
+  assert.ok(pAfterDis > 0.5, `Discharging (+200kW) must advance particlePhase forward (>0.5), got ${pAfterDis}`);
+
+  engine.state.particlePhase = 0.5;
+  engine.state.telemetry.powerKw = -200.0;
+  engine.state.telemetry.current = -380.0;
+  const pAfterChg = engine.stepParticlePhase(1.0);
+  assert.ok(pAfterChg < 0.5, `Charging (-200kW) must reverse particlePhase (<0.5), got ${pAfterChg}`);
+  console.log('[13] PASS: Power-coupled particle flow speed, charge reversal, and standby pause verified.');
+
+  console.log('=== ALL SMARTSCAPE ENGINE v3.0 TESTS PASSED (13/13) ===');
 })().catch(err => {
   console.error('Live test failed:', err);
   process.exit(1);

@@ -276,8 +276,8 @@ async def check_live_websocket():
         cycles = current_data.get("battery0/CycleCount")
         insul = current_data.get("battery0/InsulationResistance")
         
-        print(f" • Battery DC Pack Voltage : {bms_v/1000.0:8.2f} V ({bms_v} mV, Industrial HV Cluster)", flush=True)
-        print(f" • Battery DC Pack Current : {bms_i/1000.0:8.2f} A ({bms_i} mA)", flush=True)
+        print(f" • Battery DC Pack Voltage : {bms_v:8d} V (160S LiFePO4 Cluster Sum)", flush=True)
+        print(f" • Battery DC Pack Current : {bms_i:8d} A (+Discharge / -Charge)", flush=True)
         print(f" • Battery State of Health : {bms_soh}% (Healthy Pack)", flush=True)
         print(f" • Cell Voltage Range      : {min_v} mV ~ {max_v} mV (Delta: {delta_v} mV <= 30 mV -> {'PASS' if delta_v <= 30 else 'WARN'})", flush=True)
         print(f" • Cell Temperature Range  : {min_t/10.0:.1f}°C ~ {max_t/10.0:.1f}°C (Spread: {spread_t/10.0:.1f}°C <= 3.0°C -> {'PASS' if spread_t <= 30 else 'WARN'})", flush=True)

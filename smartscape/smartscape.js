@@ -113,8 +113,20 @@
       powerKw: 7.9,
       dcPowerKw: 7.9,
       gridPowerKw: 95.0,
+      gridVoltageV: 380.0,
+      gridFreqHz: 50.00,
       pvPowerKw: 78.0,
-      loadPowerKw: 80.5,
+      solarIrradiance: 850,
+      loadPowerKw: 180.9,
+      hvacPowerKw: 32.5,
+      machineryPowerKw: 48.0,
+      evcsPowerKw: 60.0,
+      peakShavingLimitKw: 750.0,
+      spotPriceCnyKwh: 1.25,
+      rpcCompleted: 1280,
+      wsConnections: 4,
+      parallelPiles: 1,
+      dcBreakerClosed: 1,
       maxCellV: 3317,
       minCellV: 3287,
       maxCellNo: 14,
@@ -172,9 +184,20 @@
     const minTCell = ((0 + stationIdx * 31) % 160) + 1;
 
     const live = state.telemetry.fleetLive[stationKey] || { powerKw: 7.9, soc: 69.0 };
+    const prof = STATION_PROFILES[stationKey] || STATION_PROFILES['bms'];
     state.telemetry.powerKw = live.powerKw;
+    state.telemetry.pcs.activePowerKw = live.powerKw;
     state.telemetry.soc = live.soc;
     state.telemetry.current = +(live.powerKw * 1000.0 / 528.0).toFixed(1);
+    state.telemetry.parallelPiles = prof.racks || 1;
+    state.telemetry.gridPowerKw = stationKey === '1' ? 580.0 : (stationKey === '2' ? 320.0 : (stationKey === '4' ? 0.0 : 95.0));
+    state.telemetry.pvPowerKw = (stationKey === '1' || stationKey === '2') ? 0.0 : (stationKey === '0' ? 185.0 : 78.0);
+    state.telemetry.hvacPowerKw = stationKey === '1' ? 210.0 : 32.5;
+    state.telemetry.machineryPowerKw = stationKey === '1' ? 420.0 : 48.0;
+    state.telemetry.loadPowerKw = +(state.telemetry.gridPowerKw + state.telemetry.pvPowerKw + state.telemetry.powerKw).toFixed(1);
+    state.telemetry.evcsPowerKw = (stationKey === '0' || stationKey === '3') ? 60.0 : 0.0;
+    state.telemetry.peakShavingLimitKw = stationKey === '1' ? 750.0 : +(prof.ratedKw * 0.75).toFixed(0);
+    state.telemetry.spotPriceCnyKwh = +(0.68 + stationIdx * 0.08).toFixed(2);
 
     for (let i = 0; i < 160; i++) {
       const cNo = i + 1;
@@ -759,8 +782,8 @@
     }
 
     rackSumV = +rackSumV.toFixed(1);
-    // Keep pack voltage synchronized with bottom-up sum when within sensor tolerance
-    if (!state.telemetry.voltage || Math.abs(state.telemetry.voltage - rackSumV) > 5) {
+    // Keep pack voltage synchronized with bottom-up sum only when no live sensor reading is present
+    if (!state.telemetry.voltage) {
       state.telemetry.voltage = rackSumV;
     }
 
@@ -798,9 +821,16 @@
     }
 
     // Update sibling array nodes
+    const hvbox = nodeById.get('arr-hvbox');
+    if (hvbox) {
+      const brkStr = state.telemetry.dcBreakerClosed !== 0 ? 'KM+/KM- 闭合' : '分闸保护';
+      const insMohm = +((state.telemetry.insulation || 10000) / 1000.0).toFixed(1);
+      hvbox.metrics = `${brkStr} | ${insMohm}MΩ`;
+    }
     const dcbus = nodeById.get('arr-dcbus');
     if (dcbus) {
-      dcbus.metrics = `${rackSumV.toFixed(1)}V DC | ${state.telemetry.current.toFixed(1)}A`;
+      const piles = state.telemetry.parallelPiles || 1;
+      dcbus.metrics = `${rackSumV.toFixed(1)}V DC | ${state.telemetry.current.toFixed(1)}A (${piles}P)`;
       pushNodeHistory('arr-dcbus', 'DC Bus Current', 'A', state.telemetry.current);
     }
     const bmu = nodeById.get('arr-bmu');
@@ -831,7 +861,7 @@
       pushNodeHistory('sys-cabinet', 'Cabinet Power', 'kW', state.telemetry.powerKw);
     }
 
-    // Update PCS & Grid/PV metrics
+    // Update PCS & Peripheral System / Control / Application nodes with live telemetry
     const pcsNode = nodeById.get('sys-pcs');
     if (pcsNode) {
       const pcsP = state.telemetry.pcs.activePowerKw !== undefined ? state.telemetry.pcs.activePowerKw : state.telemetry.powerKw;
@@ -840,6 +870,80 @@
       const pcsT = state.telemetry.pcs.acIgbtTempC || 29.6;
       pcsNode.metrics = `AC ${pcsP >= 0 ? '+' : ''}${pcsP.toFixed(1)}kW | ${pcsV.toFixed(0)}V ${pcsF.toFixed(2)}Hz | IGBT ${pcsT.toFixed(0)}℃`;
       pushNodeHistory('sys-pcs', 'PCS Active Power', 'kW', pcsP);
+    }
+
+    const gridNode = nodeById.get('sys-grid');
+    if (gridNode) {
+      const gV = state.telemetry.gridVoltageV || state.telemetry.pcs.gridVoltageV || 380.0;
+      const gF = state.telemetry.gridFreqHz || state.telemetry.pcs.frequencyHz || 50.00;
+      const gP = state.telemetry.gridPowerKw !== undefined ? state.telemetry.gridPowerKw : 95.0;
+      gridNode.metrics = `${gV.toFixed(0)}V/${gF.toFixed(2)}Hz | ${gP >= 0 ? '+' : ''}${gP.toFixed(1)}kW`;
+      pushNodeHistory('sys-grid', 'Grid Active Power', 'kW', gP);
+    }
+
+    const pvNode = nodeById.get('sys-pv');
+    if (pvNode) {
+      const pvP = state.telemetry.pvPowerKw !== undefined ? state.telemetry.pvPowerKw : 78.0;
+      const irr = state.telemetry.solarIrradiance !== undefined ? state.telemetry.solarIrradiance : 850;
+      pvNode.metrics = `日照 ${Math.round(irr)}W/m² | ${pvP.toFixed(1)}kW`;
+      pushNodeHistory('sys-pv', 'PV Production', 'kW', pvP);
+    }
+
+    const hvacNode = nodeById.get('sys-load-hvac');
+    if (hvacNode) {
+      const hvacP = state.telemetry.hvacPowerKw !== undefined ? state.telemetry.hvacPowerKw : 32.5;
+      hvacNode.metrics = `负荷 ${hvacP.toFixed(1)} kW`;
+      pushNodeHistory('sys-load-hvac', 'HVAC Load', 'kW', hvacP);
+    }
+
+    const machNode = nodeById.get('sys-load-machinery');
+    if (machNode) {
+      const machP = state.telemetry.machineryPowerKw !== undefined ? state.telemetry.machineryPowerKw : 48.0;
+      machNode.metrics = `负荷 ${machP.toFixed(1)} kW`;
+      pushNodeHistory('sys-load-machinery', 'Machinery Load', 'kW', machP);
+    }
+
+    // Update Control Plane nodes (Tier 2)
+    const ctrlEdge = nodeById.get('ctrl-edge');
+    if (ctrlEdge) {
+      ctrlEdge.name = `OpenEMS Edge (${state.station})`;
+      ctrlEdge.metrics = `周期 1000ms | RPC ${state.telemetry.rpcCompleted || 1280}`;
+    }
+    const ctrlBackend = nodeById.get('ctrl-backend');
+    if (ctrlBackend) {
+      ctrlBackend.metrics = `WSS 8084 | ${state.telemetry.wsConnections || 4} 隧道在线`;
+    }
+    const ctrlInflux = nodeById.get('ctrl-influx');
+    if (ctrlInflux) {
+      ctrlInflux.metrics = `Flux 引擎 | ${state.connHealthy ? '实时落库' : '缓存态'}`;
+    }
+
+    // Update Business Application nodes (Tier 1)
+    const appVpp = nodeById.get('app-vpp');
+    if (appVpp) {
+      const fleetTotalKw = Object.values(state.telemetry.fleetLive || {}).reduce((acc, s) => acc + Math.abs((s && s.powerKw) || 0), 0);
+      appVpp.metrics = `集群聚合 ${(fleetTotalKw > 0 ? fleetTotalKw : 979.8).toFixed(1)}kW | 7站在线`;
+    }
+    const appPs = nodeById.get('app-peakshaving');
+    if (appPs) {
+      const psLim = state.telemetry.peakShavingLimitKw || 750;
+      const gP = state.telemetry.gridPowerKw !== undefined ? state.telemetry.gridPowerKw : 95.0;
+      appPs.metrics = `阈值 ${psLim.toFixed(0)}kW | 关口 ${gP.toFixed(1)}kW`;
+    }
+    const appBal = nodeById.get('app-balancing');
+    if (appBal) {
+      const resW = Math.round(((state.telemetry.gridPowerKw || 0) + (state.telemetry.pvPowerKw || 0) + (state.telemetry.powerKw || 0) - (state.telemetry.loadPowerKw || 0)) * 1000);
+      appBal.metrics = Math.abs(resW) <= 50 ? '并网点残差 0W (精确守恒)' : `并网点动态平衡 (Δ=${resW}W)`;
+    }
+    const appEv = nodeById.get('app-evcs');
+    if (appEv) {
+      const evP = state.telemetry.evcsPowerKw !== undefined ? state.telemetry.evcsPowerKw : 60.0;
+      appEv.metrics = evP > 0 ? `有序充电 ${evP.toFixed(1)}kW` : `智能待机 0.0kW`;
+    }
+    const appSpot = nodeById.get('app-spot');
+    if (appSpot) {
+      const sp = state.telemetry.spotPriceCnyKwh !== undefined ? state.telemetry.spotPriceCnyKwh : 1.25;
+      appSpot.metrics = `日前电价 ${sp.toFixed(2)}元/kWh`;
     }
 
     // 4. Roll-up Systems -> Active Fleet Station & All Fleet Stations
@@ -1886,14 +1990,22 @@
   // ----------------------------------------------------
   // Main 60FPS Render Loop (O(V + E_vis) per frame)
   // ----------------------------------------------------
+  function stepParticlePhase(dt = 1.0) {
+    const rawKw = typeof state.telemetry.powerKw === 'number' ? state.telemetry.powerKw : 0;
+    const absKw = Math.abs(rawKw);
+    if (absKw < 0.05 && Math.abs(state.telemetry.current || 0) < 0.1) {
+      // Standby (zero power): pause particle flow
+      return state.particlePhase;
+    }
+    const speedFactor = Math.min(3.5, Math.max(0.25, Math.log10(absKw + 1) * 0.85));
+    const dir = (rawKw < -0.05 || (Math.abs(rawKw) <= 0.05 && state.telemetry.current < 0)) ? -1 : 1;
+    state.particlePhase = (state.particlePhase + 0.012 * speedFactor * dir * dt + 10.0) % 1.0;
+    return state.particlePhase;
+  }
+
   function renderLoop() {
     state.animTime += 0.025;
-
-    // Power-proportional particle speed & direction
-    const absKw = Math.max(2.0, Math.abs(state.telemetry.powerKw || 10.0));
-    const speedFactor = Math.min(3.5, Math.max(0.35, Math.log10(absKw + 1) * 0.75));
-    const dir = state.telemetry.current < 0 ? -1 : 1;
-    state.particlePhase = (state.particlePhase + 0.012 * speedFactor * dir + 10.0) % 1.0;
+    stepParticlePhase(1.0);
 
     if (state.targetPanX !== null) {
       state.panX += (state.targetPanX - state.panX) * 0.14;
@@ -2048,9 +2160,11 @@
 
         // Power flow particle animation (speed & direction coupled to real kW)
         const pt = getBezierPoint(sx, sy, sx, cp1y, tx, cp2y, tx, ty, state.particlePhase);
-        ctx.fillStyle = state.telemetry.current < 0 ? '#fbbf24' : '#38bdf8';
+        const isStandby = Math.abs(state.telemetry.powerKw || 0) < 0.05 && Math.abs(state.telemetry.current || 0) < 0.1;
+        const isCharging = (state.telemetry.powerKw < -0.05) || (Math.abs(state.telemetry.powerKw || 0) <= 0.05 && state.telemetry.current < -0.1);
+        ctx.fillStyle = isStandby ? '#10b981' : (isCharging ? '#fbbf24' : '#38bdf8');
         ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = isStandby ? 4 : 8;
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, src.tier === 'cell' ? 2.4 : 3.8, 0, Math.PI * 2);
         ctx.fill();
@@ -2504,6 +2618,34 @@
       addMetricCard(metricsContainer, '并网控制模式', modeStr, '');
       addMetricCard(metricsContainer, '直流端侧电压 (Vdc)', `${state.telemetry.voltage.toFixed(1)}`, 'V');
       addMetricCard(metricsContainer, '直流端侧电流 (Idc)', `${state.telemetry.current.toFixed(1)}`, 'A');
+    } else if (node.id === 'sys-grid') {
+      const gV = state.telemetry.gridVoltageV || state.telemetry.pcs.gridVoltageV || 380.0;
+      const gF = state.telemetry.gridFreqHz || state.telemetry.pcs.frequencyHz || 50.00;
+      const gP = state.telemetry.gridPowerKw !== undefined ? state.telemetry.gridPowerKw : 95.0;
+      addMetricCard(metricsContainer, '并网关口有功 (Pgrid)', `${gP >= 0 ? '+' : ''}${gP.toFixed(1)}`, 'kW');
+      addMetricCard(metricsContainer, '母线线电压 (Ugrid)', gV.toFixed(1), 'V');
+      addMetricCard(metricsContainer, '电网工频 (Freq)', gF.toFixed(2), 'Hz');
+      addMetricCard(metricsContainer, '园区总负荷 (Pload)', (state.telemetry.loadPowerKw || 0).toFixed(1), 'kW');
+    } else if (node.id === 'sys-pv') {
+      const pvP = state.telemetry.pvPowerKw !== undefined ? state.telemetry.pvPowerKw : 78.0;
+      const irr = state.telemetry.solarIrradiance !== undefined ? state.telemetry.solarIrradiance : 850;
+      addMetricCard(metricsContainer, '光伏有功出力 (Ppv)', pvP.toFixed(1), 'kW');
+      addMetricCard(metricsContainer, '太阳辐照度 (Irradiance)', Math.round(irr), 'W/m²');
+      addMetricCard(metricsContainer, '场站环境温度 (Tamb)', state.telemetry.ambientT.toFixed(1), '°C');
+      addMetricCard(metricsContainer, '消纳状态', pvP > 0.1 ? '并网发电 ☀️' : '夜间待机 🌙', '');
+    } else if (node.id === 'sys-load-hvac' || node.id === 'sys-load-machinery') {
+      const isHvac = node.id === 'sys-load-hvac';
+      const subP = isHvac ? (state.telemetry.hvacPowerKw || 0) : (state.telemetry.machineryPowerKw || 0);
+      const totP = Math.max(0.1, state.telemetry.loadPowerKw || (subP * 2));
+      addMetricCard(metricsContainer, isHvac ? '暖通冷机负荷 (Phvac)' : '产线动力负荷 (Pmach)', subP.toFixed(1), 'kW');
+      addMetricCard(metricsContainer, '园区总负荷 (Pload)', (state.telemetry.loadPowerKw || 0).toFixed(1), 'kW');
+      addMetricCard(metricsContainer, '分项能耗占比', `${Math.min(100, (subP / totP) * 100).toFixed(1)}`, '%');
+      addMetricCard(metricsContainer, '供电母线电压', (state.telemetry.gridVoltageV || 380.0).toFixed(0), 'V');
+    } else if (node.tier === 'app' || node.tier === 'ctrl') {
+      addMetricCard(metricsContainer, '当前关联场站', state.station, '');
+      addMetricCard(metricsContainer, '实时运行指标', node.metrics || 'ONLINE', '');
+      addMetricCard(metricsContainer, '储能有功功率', `${state.telemetry.powerKw >= 0 ? '+' : ''}${state.telemetry.powerKw}`, 'kW');
+      addMetricCard(metricsContainer, '日前现货电价', (state.telemetry.spotPriceCnyKwh || 1.25).toFixed(2), '元/kWh');
     } else {
       addMetricCard(metricsContainer, '簇端电压 (Pack V)', state.telemetry.voltage, 'V');
       addMetricCard(metricsContainer, '充放电电流 (Current)', state.telemetry.current.toFixed(1), 'A');
@@ -2804,16 +2946,23 @@
     return result;
   }
 
+  let activePollPromise = null;
+
   async function pollLiveTelemetry() {
-    if (state.isPolling || typeof fetch === 'undefined') return;
+    if (typeof fetch === 'undefined') return;
+    if (state.isPolling && activePollPromise) {
+      await activePollPromise;
+    }
     state.isPolling = true;
+    const polledStation = state.station;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 4000);
 
+    activePollPromise = (async () => {
     try {
       const stationQuery = `from(bucket: "openems")
   |> range(start: -5m)
-  |> filter(fn: (r) => r.edge == "${state.station}" and r._measurement == "data")
+  |> filter(fn: (r) => r.edge == "${polledStation}" and r._measurement == "data")
   |> last()
   |> keep(columns: ["_field", "_value"])`;
 
@@ -2910,6 +3059,66 @@
       if (data['cabinet0/HvacStatus'] !== undefined) state.telemetry.hvacStatus = data['cabinet0/HvacStatus'];
       if (data['cabinet0/RteEfficiency'] !== undefined) state.telemetry.rteEfficiency = +(data['cabinet0/RteEfficiency'] / 10.0).toFixed(1);
 
+      // Populate peripheral system, control, and application metrics from InfluxDB
+      if (data['_sum/GridActivePower'] !== undefined) {
+        state.telemetry.gridPowerKw = +(data['_sum/GridActivePower'] / 1000.0).toFixed(1);
+      } else if (data['meter0/ActivePower'] !== undefined) {
+        state.telemetry.gridPowerKw = +(data['meter0/ActivePower'] / 1000.0).toFixed(1);
+      }
+      if (data['meter0/Voltage'] !== undefined) {
+        const rawV = data['meter0/Voltage'];
+        state.telemetry.gridVoltageV = rawV > 2000 ? +(rawV / 1000.0 * 1.73205).toFixed(1) : +rawV.toFixed(1);
+      }
+      if (data['meter0/Frequency'] !== undefined) {
+        const rawF = data['meter0/Frequency'];
+        state.telemetry.gridFreqHz = rawF > 100 ? +(rawF / 1000.0).toFixed(2) : +rawF.toFixed(2);
+      }
+      if (data['_sum/ProductionActivePower'] !== undefined) {
+        state.telemetry.pvPowerKw = +(data['_sum/ProductionActivePower'] / 1000.0).toFixed(1);
+      } else if (data['meter1/ActivePower'] !== undefined) {
+        state.telemetry.pvPowerKw = +(data['meter1/ActivePower'] / 1000.0).toFixed(1);
+      }
+      if (data['weather/SolarIrradiance'] !== undefined) {
+        state.telemetry.solarIrradiance = data['weather/SolarIrradiance'];
+      }
+      if (data['_sum/ConsumptionActivePower'] !== undefined) {
+        state.telemetry.loadPowerKw = +(data['_sum/ConsumptionActivePower'] / 1000.0).toFixed(1);
+      }
+      if (data['meter_hvac/ActivePower'] !== undefined) {
+        state.telemetry.hvacPowerKw = +(data['meter_hvac/ActivePower'] / 1000.0).toFixed(1);
+      } else if (data['meter2/ActivePower'] !== undefined) {
+        state.telemetry.hvacPowerKw = +(data['meter2/ActivePower'] / 1000.0).toFixed(1);
+      }
+      if (data['meter_production/ActivePower'] !== undefined) {
+        state.telemetry.machineryPowerKw = +(data['meter_production/ActivePower'] / 1000.0).toFixed(1);
+      } else if (data['meter3/ActivePower'] !== undefined) {
+        state.telemetry.machineryPowerKw = +(data['meter3/ActivePower'] / 1000.0).toFixed(1);
+      }
+      if (data['evcs0/ActivePower'] !== undefined) {
+        state.telemetry.evcsPowerKw = +(data['evcs0/ActivePower'] / 1000.0).toFixed(1);
+      }
+      if (data['ctrlPeakShaving0/PeakShavingPowerLimit'] !== undefined) {
+        state.telemetry.peakShavingLimitKw = +(data['ctrlPeakShaving0/PeakShavingPowerLimit'] / 1000.0).toFixed(1);
+      }
+      if (data['timeOfUseTariff0/MarketPrice'] !== undefined) {
+        state.telemetry.spotPriceCnyKwh = +(data['timeOfUseTariff0/MarketPrice'] / 1000.0).toFixed(2);
+      } else if (data['tariff/MarketPrice'] !== undefined) {
+        state.telemetry.spotPriceCnyKwh = +(data['tariff/MarketPrice'] / 1000.0).toFixed(2);
+      }
+      if (data['coreJsonRpcRequestHandler0/Completed'] !== undefined) {
+        state.telemetry.rpcCompleted = data['coreJsonRpcRequestHandler0/Completed'];
+      }
+      if (data['uiwebsocket0/Connections'] !== undefined || data['edgewebsocket0/Connections'] !== undefined) {
+        state.telemetry.wsConnections = (data['uiwebsocket0/Connections'] || 0) + (data['edgewebsocket0/Connections'] || 0);
+      }
+      if (data['array0/ParallelPiles'] !== undefined) {
+        state.telemetry.parallelPiles = data['array0/ParallelPiles'];
+      }
+      if (data['array0/DcBreakerStatus'] !== undefined) {
+        state.telemetry.dcBreakerStatus = data['array0/DcBreakerStatus'];
+        state.telemetry.dcBreakerClosed = data['array0/DcBreakerStatus'];
+      }
+
       // Populate real 160 cells voltage & temperature from InfluxDB
       for (let c = 1; c <= 160; c++) {
         const keyV = `battery0/Cell_${c < 10 ? '00' + c : (c < 100 ? '0' + c : c)}_V`;
@@ -2948,7 +3157,11 @@
     } finally {
       clearTimeout(timer);
       state.isPolling = false;
+      activePollPromise = null;
     }
+    })();
+
+    return activePollPromise;
   }
 
   function updateTopBanner() {
@@ -3164,6 +3377,7 @@
     recomputeVisibilityCache,
     getDescendantSummary,
     maxSeverityStatus,
+    stepParticlePhase,
     openGrafanaDashboard
   };
 });
