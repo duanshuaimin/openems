@@ -77,8 +77,11 @@ def build_dashboard():
   <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; position: relative;">
     
     <!-- Level 1: 储能柜 -->
-    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=1&v=3.2', '_blank')" title="双击即下钻进入 L1 储能柜系统层拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #3b82f6; border-radius: 10px; padding: 14px; position: relative; transition: all 0.3s ease;">
-      <div style="font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.5px;">Level 1 • 系统级 (双击下钻 🔽)</div>
+    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=1&v=3.3', '_blank')" title="双击或点击下方按钮即下钻进入 L1 储能柜系统层拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #3b82f6; border-radius: 10px; padding: 14px; position: relative; transition: all 0.3s ease;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.5px;">Level 1 • 系统级</span>
+        <a href="/smartscape/index.html?station=${edge}&depth=1&v=3.3" target="_blank" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: #93c5fd; background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; border-radius: 4px; padding: 1px 6px; text-decoration: none;">下钻 ↗</a>
+      </div>
       <div style="font-size: 16px; font-weight: 700; color: #f3f4f6; margin: 4px 0 8px 0; display: flex; align-items: center; gap: 6px;">
         <span>🏢</span> 储能柜 (Cabinet)
       </div>
@@ -94,8 +97,11 @@ def build_dashboard():
     </div>
 
     <!-- Level 2: 电池阵列 -->
-    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=2&v=3.2', '_blank')" title="双击即下钻进入 L2 电池阵列与汇流层拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #8b5cf6; border-radius: 10px; padding: 14px; position: relative;">
-      <div style="font-size: 11px; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.5px;">Level 2 • 阵列级 (双击下钻 🔽)</div>
+    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=2&v=3.3', '_blank')" title="双击或点击下方按钮即下钻进入 L2 电池阵列与汇流层拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #8b5cf6; border-radius: 10px; padding: 14px; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.5px;">Level 2 • 阵列级</span>
+        <a href="/smartscape/index.html?station=${edge}&depth=2&v=3.3" target="_blank" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: #c4b5fd; background: rgba(139, 92, 246, 0.2); border: 1px solid #8b5cf6; border-radius: 4px; padding: 1px 6px; text-decoration: none;">下钻 ↗</a>
+      </div>
       <div style="font-size: 16px; font-weight: 700; color: #f3f4f6; margin: 4px 0 8px 0; display: flex; align-items: center; gap: 6px;">
         <span>⚡</span> 电池阵列 (Array)
       </div>
@@ -111,8 +117,11 @@ def build_dashboard():
     </div>
 
     <!-- Level 3: 电池簇 / Pack -->
-    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=2&v=3.2', '_blank')" title="双击即下钻进入 L2/L3 高压电池簇层拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #ec4899; border-radius: 10px; padding: 14px; position: relative;">
-      <div style="font-size: 11px; font-weight: 700; color: #f472b6; text-transform: uppercase; letter-spacing: 0.5px;">Level 3 • 电池簇 (双击下钻 🔽)</div>
+    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=2&v=3.3', '_blank')" title="双击或点击下方按钮即下钻进入 L2/L3 高压电池簇层拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #ec4899; border-radius: 10px; padding: 14px; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; font-weight: 700; color: #f472b6; text-transform: uppercase; letter-spacing: 0.5px;">Level 3 • 电池簇</span>
+        <a href="/smartscape/index.html?station=${edge}&depth=2&v=3.3" target="_blank" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: #fbcfe8; background: rgba(236, 72, 153, 0.2); border: 1px solid #ec4899; border-radius: 4px; padding: 1px 6px; text-decoration: none;">下钻 ↗</a>
+      </div>
       <div style="font-size: 16px; font-weight: 700; color: #f3f4f6; margin: 4px 0 8px 0; display: flex; align-items: center; gap: 6px;">
         <span>🔋</span> 电池簇 (Pack / Rack)
       </div>
@@ -128,8 +137,11 @@ def build_dashboard():
     </div>
 
     <!-- Level 4: 电池模组 -->
-    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=3&v=3.2', '_blank')" title="双击即下钻进入 L3 10串联模组层拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #f59e0b; border-radius: 10px; padding: 14px; position: relative;">
-      <div style="font-size: 11px; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.5px;">Level 4 • 模组级 (双击下钻 🔽)</div>
+    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=3&v=3.3', '_blank')" title="双击或点击下方按钮即下钻进入 L3 10串联模组层拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #f59e0b; border-radius: 10px; padding: 14px; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.5px;">Level 4 • 模组级</span>
+        <a href="/smartscape/index.html?station=${edge}&depth=3&v=3.3" target="_blank" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: #fde68a; background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; border-radius: 4px; padding: 1px 6px; text-decoration: none;">下钻 ↗</a>
+      </div>
       <div style="font-size: 16px; font-weight: 700; color: #f3f4f6; margin: 4px 0 8px 0; display: flex; align-items: center; gap: 6px;">
         <span>🧱</span> 电池模组 (Module)
       </div>
@@ -145,8 +157,11 @@ def build_dashboard():
     </div>
 
     <!-- Level 5: 单体电芯 -->
-    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=4&v=3.2', '_blank')" title="双击即下钻进入 L4 160颗单体电芯矩阵拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #10b981; border-radius: 10px; padding: 14px; position: relative;">
-      <div style="font-size: 11px; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px;">Level 5 • 电芯级 (双击下钻 🔽)</div>
+    <div ondblclick="window.open('/smartscape/index.html?station=${edge}&depth=4&v=3.3', '_blank')" title="双击或点击下方按钮即下钻进入 L4 160颗单体电芯矩阵拓扑" style="cursor: pointer; background: rgba(31, 41, 55, 0.7); border: 1px solid #10b981; border-radius: 10px; padding: 14px; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px;">Level 5 • 电芯级</span>
+        <a href="/smartscape/index.html?station=${edge}&depth=4&v=3.3" target="_blank" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: #a7f3d0; background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; border-radius: 4px; padding: 1px 6px; text-decoration: none;">下钻 ↗</a>
+      </div>
       <div style="font-size: 16px; font-weight: 700; color: #f3f4f6; margin: 4px 0 8px 0; display: flex; align-items: center; gap: 6px;">
         <span>🔬</span> 单体电芯 (Cell)
       </div>
