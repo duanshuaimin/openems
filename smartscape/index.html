@@ -76,13 +76,17 @@
       <!-- Center Interactive Canvas Area -->
       <main id="canvas-wrapper">
         <div class="canvas-grid-bg"></div>
-        <canvas id="topology-canvas"></canvas>
+        <canvas id="topology-canvas" tabindex="0" role="application" aria-label="OpenEMS Smartscape 可下钻与上卷交互式拓扑画布"></canvas>
 
         <!-- Floating Global KPI Status Banner -->
         <div class="global-kpi-banner">
           <div class="kpi-item">
             <span class="kpi-label">当前拓扑层级状态</span>
             <span id="kpi-depth-status" class="kpi-val"><span class="status-dot"></span>L3: 10模组聚合态</span>
+          </div>
+          <div class="kpi-item">
+            <span class="kpi-label">遥测链路状态</span>
+            <span id="kpi-conn-status" class="kpi-val" style="color: #10b981;">🟢 实时同步 (Influx)</span>
           </div>
           <div class="kpi-item">
             <span class="kpi-label">上卷总功率 (∑ Power)</span>
@@ -97,8 +101,8 @@
             <span id="kpi-delta-v" class="kpi-val" style="color: #fbbf24;">27 mV (#14/#03)</span>
           </div>
           <div class="kpi-item">
-            <span class="kpi-label">可见实体 / 总实体</span>
-            <span id="kpi-node-count" class="kpi-val" style="color: #38bdf8;">30 / 191 Nodes</span>
+            <span class="kpi-label">可见实体 / 聚合边</span>
+            <span id="kpi-node-count" class="kpi-val" style="color: #38bdf8;">42 / 197 Nodes</span>
           </div>
         </div>
 
@@ -158,7 +162,10 @@
 
           <!-- Rolling 30-Second Sparkline Trend -->
           <div>
-            <div class="section-label">📈 动态时序趋势 (30s Rolling Trend)</div>
+            <div class="section-label">
+              <span>📈 节点专属30秒时序趋势 (Node 30s Trend)</span>
+              <span id="sparkline-metric-label" style="color:#38bdf8;font-family:monospace;">Voltage</span>
+            </div>
             <div class="sparkline-box">
               <canvas id="sparkline-canvas"></canvas>
             </div>

@@ -580,6 +580,7 @@ class StationLiveSimulator:
 
             # Individual 160 Cells (Tier 5)
             **{f"battery0/Cell_{c:03d}_V": (bms_max_cell_v if c == 14 else (bms_min_cell_v if c == 3 else bms_min_cell_v + int((bms_max_cell_v - bms_min_cell_v) * ((c * 47) % 100) / 100.0))) for c in range(1, 161)},
+            **{f"battery0/Cell_{c:03d}_T": (bms_max_cell_t if c == 8 else (bms_min_cell_t if c == 1 else bms_min_cell_t + int(cell_temp_spread * ((c * 31) % 100) / 100.0))) for c in range(1, 161)},
 
             # Meteorological & Solar Irradiance
             "weather/SolarIrradiance": solar_irr,

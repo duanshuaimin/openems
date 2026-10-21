@@ -174,13 +174,13 @@
 
 ## 5. 前后端技术栈与通信管道
 
-### 4.1 前端自研引擎（零外部网络依赖）
-- **渲染核心**：原生 HTML5 Canvas 2D + CSS3 3D Transform + SVG 图标引擎，零外部 CDN 依赖，在无外网隔离内网环境下 100% 毫秒级秒开。
-- **视口引擎**：高精度仿射变换（Screen-to-World / World-to-Screen），支持平滑拖拽平移、滚轮缩放（0.3x ~ 2.5x）、自适应居中（Fit-to-Screen）。
-- **动效流水线**：基于 `requestAnimationFrame` 的统一 60FPS 渲染调度器，驱动能量流粒子、脉冲虚线与状态呼吸环。
+### 5.1 前端自研引擎（零外部网络依赖，O(1) 索引架构）
+- **通用树与 O(1) 哈希索引**：基于 `nodeById`、`childrenById`、`inEdgesById`、`outEdgesById`、`adjById` 五大 `Map` 索引构建 **197 个节点** 与 **261 条边**（含 10 个模组内部 16S 电芯串联铜排链路）；状态切换时一次性计算可见集 `visibleNodeIds` 与聚合边 `effectiveEdges`，保证 60FPS 渲染循环复杂度严格为 $O(V_{\text{vis}} + E_{\text{vis}})$。
+- **Dynatrace 边上卷引擎 (Edge Roll-Up)**：当子实体随父容器收起时，所有跨容器边界的物理、控制与通信连线自动通过 `findVisibleAncestor(id)` 投影至最近的可见祖先容器，并自动合并平行链路、在连线中点渲染 `×N 上卷链路` 聚合徽章。
+- **二阶 Thevenin RC 等效电路严格物理一致性**：在 `L5` 电芯微观数字孪生视图中，严格遵循基尔霍夫电压定律 $V_{\text{term}}(t) = V_{\text{ocv}}(\text{SOC}) - I(t) \cdot R_0 - U_1(t) - U_2(t)$（以放电 $I > 0$ 为正），实时反推 $V_{\text{ocv}} = V_{\text{term}} + \Delta U_0 + U_1 + U_2$。
 
-### 4.2 Nginx 反向代理与跨域穿透
-Nginx（端口 `80` 与 `8081`）已配置了原生低延迟静态资源托管与 API 代理：
+### 5.2 Nginx 只读最小权限反向代理与安全加固
+Nginx（端口 `80` 与 `8081`）已启用严格的方法白名单与最小权限只读凭据加固：
 
 ```nginx
 # 1. Dynatrace-Style Smartscape 独立全景应用
@@ -190,28 +190,34 @@ location /smartscape {
     try_files $uri $uri/ /smartscape/index.html;
 }
 
-# 2. OpenEMS Edge REST API 高速免密代理
+# 2. OpenEMS Edge REST API 只读代理 (强制拦截 POST/PUT/DELETE 写入 + Guest 只读凭据)
 location /openems-rest/ {
+    limit_except GET {
+        deny all;
+    }
     proxy_pass http://127.0.0.1:8095/rest/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
-    proxy_set_header Authorization "Basic YWRtaW46YWRtaW4=";
+    proxy_set_header Authorization "Basic Z3Vlc3Q6Z3Vlc3Q=";
 }
 
-# 3. OpenEMS InfluxDB 时序查询免密代理
+# 3. OpenEMS InfluxDB 时序查询只读代理 (绑定 --read-bucket 只读范围令牌，内核级拒绝 to() 写入)
 location /openems-influx {
-    proxy_pass http://127.0.0.1:8086/api/v2/query?org=openems;
+    limit_except POST {
+        deny all;
+    }
+    proxy_pass http://127.0.0.1:8086/api/v2/query?orgID=6cbd3b34c2aada40;
     proxy_http_version 1.1;
-    proxy_set_header Authorization "Token OpenEmsInfluxSecretToken2026!";
+    proxy_set_header Authorization "Token <SCOPED_READONLY_BUCKET_TOKEN>";
     proxy_set_header Content-Type "application/vnd.flux";
 }
 ```
 
-### 4.3 实时数据轮询与数字孪生闭环
-Smartscape 前端守护引擎每 1.5 秒向 `/openems-rest/` 发送后台探针：
-- 实时获取 `battery0/Voltage`、`battery0/Current`、`battery0/Soc`；
-- 实时同步单体电压极值（`MaxCellVoltage`、`MinCellVoltage`）与电芯号（`MaxVoltageCellNumber=14`、`MinVoltageCellNumber=3`）；
-- 自动更新顶部全站状态胶囊指示器，驱动实时测绘走势。
+### 5.3 真实 InfluxDB 160电芯遥测与多场站 (`?station=${edge}`) 闭环
+Smartscape 前端守护引擎支持通过 URL 参数 `?station=bms|0..4` 与 Grafana `${edge}` 变量实时联动，每 1.5 秒带 `AbortController` 防重入保护向 `/openems-influx` 拉取全量真实时序数据：
+- 一次性获取当前场站全部 240+ 个真实物理通道（含 `battery0/Cell_001_V` ~ `Cell_160_V` 单体电压、`battery0/Cell_001_T` ~ `Cell_160_T` 单体温度、`Module_01` ~ `Module_10` 模组电压/温度、电池簇总压/电流/SOC 及机柜有功功率）；
+- 同步拉取全车队 6 座电站（`bms`, `0`..`4`）的实时有功功率与 SOC%，驱动 `L0` 集群视图；
+- 为每个节点维护独立的 **30秒环形缓冲区 (`nodeHistory`)**，在右侧探针抽屉中实时绘制所选节点专属的 30 秒趋势曲线。
 
 ---
 

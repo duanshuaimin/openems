@@ -434,6 +434,7 @@ def generate_influx_lines(edge_tag, ts_sec):
     for c in range(160):
         c_id = c + 1
         fields[f"battery0/Cell_{c_id:03d}_V"] = bms.cell_voltages_mv[c]
+        fields[f"battery0/Cell_{c_id:03d}_T"] = int(round(bms.cell_temps_c[c] * 10.0))
 
     field_strs = [f"{k}={v}i" for k, v in fields.items()]
     return f"data,edge={edge_tag} " + ",".join(field_strs) + f" {int(ts_sec)}"

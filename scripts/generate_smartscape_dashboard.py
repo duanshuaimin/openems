@@ -250,12 +250,12 @@ def build_dashboard():
     smartscape_iframe_html = """
 <div style="width: 100%; height: 100%; min-height: 760px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
   <iframe 
-    src="/smartscape/index.html?v=rollup2" 
+    src="/smartscape/index.html?station=${edge}&v=rollup3" 
     style="width: 100%; height: 100%; min-height: 760px; border: none; display: block; background: #0a0e17;"
     title="OpenEMS Dynatrace-Style Smartscape Drill-Down & Roll-Up Topology">
   </iframe>
   <div style="position: absolute; bottom: 12px; right: 16px; pointer-events: auto;">
-    <a href="/smartscape/index.html?v=rollup2" target="_blank" style="background: rgba(37,99,235,0.85); backdrop-filter: blur(8px); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);">
+    <a href="/smartscape/index.html?station=${edge}&v=rollup3" target="_blank" style="background: rgba(37,99,235,0.85); backdrop-filter: blur(8px); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);">
       <span>↗️</span> 全屏新窗口独立运行 (Drill-Down / Roll-Up)
     </a>
   </div>
