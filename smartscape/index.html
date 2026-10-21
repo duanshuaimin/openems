@@ -6,6 +6,17 @@
   <title>OpenEMS Smartscape | 可下钻(Drill-Down)与上卷聚合(Roll-Up)全栈立体拓扑</title>
   <link rel="stylesheet" href="smartscape.css?v=3.3">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <script>
+    function openGrafanaDashboard(uid) {
+      const u = uid || 'openems-smartscape-topology';
+      const protocol = window.location.protocol || 'http:';
+      const hostname = window.location.hostname || '127.0.0.1';
+      const sel = document.getElementById('station-select');
+      const station = sel ? sel.value : '0';
+      const targetUrl = protocol + '//' + hostname + ':3000/d/' + u + '?var-edge=' + encodeURIComponent(station);
+      window.open(targetUrl, '_blank');
+    }
+  </script>
 </head>
 <body>
   <div id="app-container">
@@ -43,7 +54,8 @@
         <input type="text" id="search-box" class="search-box" placeholder="🔍 搜索节点/模组/电芯...">
 
         <button id="btn-fit" class="header-btn" title="自适应居中">🎯 居中复位</button>
-        <button onclick="window.open('/d/openems-bess-topology', '_blank')" class="header-btn" title="查看 Grafana 五级深度分析看板">📊 Grafana 看板</button>
+        <button onclick="openGrafanaDashboard('openems-smartscape-topology')" class="header-btn" title="查看当前站场的 Grafana Smartscape 交互式立体拓扑全景看板 (对应页面)">📊 Grafana 看板</button>
+        <button onclick="openGrafanaDashboard('openems-bess-topology')" class="header-btn" title="查看当前站场的 Grafana 储能柜五级深度物理拓扑看板">🔋 BESS 深度看板</button>
       </div>
     </header>
 
@@ -204,7 +216,8 @@
             <div class="section-label">🛠️ 设备指令与控制动作 (Actions)</div>
             <div class="action-btn-row">
               <button onclick="window.open('/openems-rest/channel/battery0/Soc', '_blank')" class="action-btn action-btn-outline">🔍 REST 通道探针</button>
-              <button onclick="window.open('/d/openems-bess-topology', '_blank')" class="action-btn action-btn-primary">📊 Grafana 诊断大屏</button>
+              <button onclick="openGrafanaDashboard('openems-smartscape-topology')" class="action-btn action-btn-primary">🌐 Smartscape 全景大屏</button>
+              <button onclick="openGrafanaDashboard('openems-bess-topology')" class="action-btn action-btn-outline">🔋 BESS 诊断大屏</button>
             </div>
           </div>
         </div>

@@ -3121,6 +3121,21 @@
     });
   }
 
+  function openGrafanaDashboard(dashboardUid = 'openems-smartscape-topology') {
+    const protocol = (typeof window !== 'undefined' && window.location && window.location.protocol) ? window.location.protocol : 'http:';
+    const hostname = (typeof window !== 'undefined' && window.location && window.location.hostname) ? window.location.hostname : '127.0.0.1';
+    const station = (state && state.station) ? state.station : '0';
+    const url = `${protocol}//${hostname}:3000/d/${dashboardUid}?var-edge=${encodeURIComponent(station)}`;
+    if (typeof window !== 'undefined' && window.open) {
+      window.open(url, '_blank');
+    }
+    return url;
+  }
+
+  if (typeof window !== 'undefined') {
+    window.openGrafanaDashboard = openGrafanaDashboard;
+  }
+
   // Export public API for automated Node.js unit testing
   return {
     state,
@@ -3148,6 +3163,7 @@
     updateTooltip,
     recomputeVisibilityCache,
     getDescendantSummary,
-    maxSeverityStatus
+    maxSeverityStatus,
+    openGrafanaDashboard
   };
 });
