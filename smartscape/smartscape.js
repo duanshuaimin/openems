@@ -1680,6 +1680,7 @@
     if (state.isDragging) {
       state.panX = e.clientX - state.dragStartX;
       state.panY = e.clientY - state.dragStartY;
+      updateTooltip(null, 0, 0);
     } else {
       const hovered = findNodeAt(mx, my);
       if (canvas.parentElement) {
@@ -1688,9 +1689,9 @@
       if (hovered !== state.hoveredNode) {
         state.hoveredNode = hovered;
         recomputeLineageHighlight();
-        updateTooltip(hovered, e.clientX, e.clientY);
+        updateTooltip(hovered, mx, my);
       } else if (hovered) {
-        updateTooltip(hovered, e.clientX, e.clientY);
+        updateTooltip(hovered, mx, my);
       }
     }
   }
@@ -2624,15 +2625,12 @@
   }
 
   function updateTooltip(node, mouseX, mouseY) {
-    const tip = document.getElementById('smartscape-tooltip');
-    if (!tip) return;
+    const tip = typeof document !== 'undefined' ? document.getElementById('smartscape-tooltip') : null;
+    if (!tip) return null;
     if (!node) {
       tip.style.display = 'none';
-      return;
+      return null;
     }
-    tip.style.display = 'block';
-    tip.style.left = `${mouseX}px`;
-    tip.style.top = `${mouseY}px`;
 
     const tierObj = TIER_BY_ID.get(node.tier);
     let rollupInfo = '';
@@ -2667,6 +2665,59 @@
       ${rollupInfo}
       <div class="tooltip-hint">${actionHint}</div>
     `;
+    tip.style.display = 'block';
+
+    // Compute collision-free placement so tooltip NEVER covers mouse cursor (mouseX, mouseY) or node icon
+    const tipW = tip.offsetWidth || 260;
+    const tipH = tip.offsetHeight || 148;
+    const wrapEl = (typeof canvas !== 'undefined' && canvas && canvas.parentElement) ? canvas.parentElement : null;
+    const wrapW = (wrapEl && wrapEl.clientWidth) || 1400;
+    const wrapH = (wrapEl && wrapEl.clientHeight) || 800;
+
+    const drawerEl = typeof document !== 'undefined' ? document.getElementById('inspector-drawer') : null;
+    const isDrawerOpen = drawerEl && drawerEl.classList && typeof drawerEl.classList.contains === 'function' && !drawerEl.classList.contains('collapsed');
+    const maxRight = isDrawerOpen ? Math.max(360, wrapW - 408) : wrapW;
+
+    const nodeScreenX = (node.x || 0) * state.scale + state.panX;
+    const nodeScreenY = getNodeY(node) * state.scale + state.panY;
+    const iconRadius = ((node.tier === 'cell' && node.type === 'cell-leaf') ? 16 : 40) * state.scale;
+
+    const CLEARANCE = 26;
+    // Prefer placing to the right of both mouse cursor and node icon
+    let left = Math.max(mouseX + CLEARANCE, nodeScreenX + iconRadius + 16);
+    if (left + tipW > maxRight - 12) {
+      // Flip to the left of both mouse cursor and node icon
+      left = Math.min(mouseX - tipW - CLEARANCE, nodeScreenX - iconRadius - tipW - 16);
+    }
+    left = Math.max(12, Math.min(left, maxRight - tipW - 12));
+
+    // Prefer placing slightly above cursor, or below if near top banner
+    let top = mouseY - tipH - 18;
+    if (top < 76) {
+      top = Math.max(mouseY + CLEARANCE, nodeScreenY + iconRadius + 14);
+    }
+    if (top + tipH > wrapH - 12) {
+      top = Math.max(12, wrapH - tipH - 12);
+    }
+
+    // Final guarantee: if clamping pushed tooltip over (mouseX, mouseY), shift vertically/horizontally off cursor
+    const overlapsX = mouseX >= left - 14 && mouseX <= left + tipW + 14;
+    const overlapsY = mouseY >= top - 14 && mouseY <= top + tipH + 14;
+    if (overlapsX && overlapsY) {
+      if (mouseX + CLEARANCE + tipW <= maxRight - 8) {
+        left = mouseX + CLEARANCE;
+      } else if (mouseX - CLEARANCE - tipW >= 8) {
+        left = mouseX - CLEARANCE - tipW;
+      } else if (mouseY - CLEARANCE - tipH >= 8) {
+        top = mouseY - CLEARANCE - tipH;
+      } else {
+        top = mouseY + CLEARANCE;
+      }
+    }
+
+    tip.style.left = `${Math.round(left)}px`;
+    tip.style.top = `${Math.round(top)}px`;
+    return { left: Math.round(left), top: Math.round(top), width: tipW, height: tipH };
   }
 
   // ----------------------------------------------------
@@ -3007,6 +3058,7 @@
     drillDownOneLevel,
     rollUpOneLevel,
     findNodeAt,
+    updateTooltip,
     recomputeVisibilityCache,
     getDescendantSummary,
     maxSeverityStatus

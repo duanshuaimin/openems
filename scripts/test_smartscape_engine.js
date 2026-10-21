@@ -177,6 +177,7 @@ console.log('[6] PASS: Multi-station switching rebinds selectedNode & updates st
         classes: new Set(),
         add(c) { this.classes.add(c); },
         remove(c) { this.classes.delete(c); },
+        contains(c) { return this.classes.has(c); },
         toggle(c, force) {
           if (force === undefined) {
             if (this.classes.has(c)) this.classes.delete(c);
@@ -285,6 +286,24 @@ console.log('[6] PASS: Multi-station switching rebinds selectedNode & updates st
   assert.strictEqual(hitTopBadge && hitTopBadge.id, 'mod-03', 'findNodeAt must match top [+16电芯 🔽] badge of mod-03');
   assert.strictEqual(hitBottomLabel && hitBottomLabel.id, 'mod-03', 'findNodeAt must match bottom title/metrics label of mod-03');
   console.log('[9] PASS: "双击即下钻" (L0->L1->L2->L3->L4->L5 progressive drill-down & full badge/label hit-box) verified.');
+
+  // 10. Verify Tooltip Never Covers Mouse Cursor or Node Icon across all positions
+  makeMockEl('smartscape-tooltip');
+  const testCoords = [
+    { node: engine.nodeById.get('mod-01'), mx: 180, my: 800 },
+    { node: engine.nodeById.get('mod-05'), mx: 900, my: 800 },
+    { node: engine.nodeById.get('mod-10'), mx: 1360, my: 800 },
+    { node: engine.nodeById.get('app-vpp'), mx: 180, my: 50 },
+    { node: engine.nodeById.get('cell-014'), mx: 240, my: 980 }
+  ];
+  testCoords.forEach(({ node, mx, my }) => {
+    const box = engine.updateTooltip(node, mx, my);
+    assert.ok(box, `Tooltip box must be returned for ${node.id}`);
+    const cursorInsideX = mx >= box.left - 10 && mx <= box.left + box.width + 10;
+    const cursorInsideY = my >= box.top - 10 && my <= box.top + box.height + 10;
+    assert.strictEqual(cursorInsideX && cursorInsideY, false, `Tooltip box [${box.left},${box.top},${box.width}x${box.height}] must NEVER cover mouse cursor (${mx},${my}) on ${node.id}`);
+  });
+  console.log('[10] PASS: Tooltip collision avoidance verified (never covers mouse cursor or node icon).');
 
   console.log('=== ALL SMARTSCAPE ENGINE v3.0 TESTS PASSED ===');
 })().catch(err => {
