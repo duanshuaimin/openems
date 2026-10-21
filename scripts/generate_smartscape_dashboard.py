@@ -242,33 +242,33 @@ def build_dashboard():
         "collapsed": False,
         "gridPos": {"h": 1, "w": 24, "x": 0, "y": 4},
         "id": pid,
-        "title": "🌐 Dynatrace Smartscape 储能全景立体拓扑交互系统 (Interactive Full-Stack Topology)",
+        "title": "🌐 Dynatrace Smartscape 储能全景拓扑：支持 L0~L5 六级下钻 (Drill-Down) 与自底向上指标上卷 (Roll-Up)",
         "type": "row"
     })
     pid += 1
 
     smartscape_iframe_html = """
-<div style="width: 100%; height: 100%; min-height: 720px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+<div style="width: 100%; height: 100%; min-height: 760px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
   <iframe 
-    src="/smartscape/index.html" 
-    style="width: 100%; height: 100%; min-height: 720px; border: none; display: block; background: #0a0e17;"
-    title="OpenEMS Dynatrace-Style Smartscape Topology">
+    src="/smartscape/index.html?v=rollup2" 
+    style="width: 100%; height: 100%; min-height: 760px; border: none; display: block; background: #0a0e17;"
+    title="OpenEMS Dynatrace-Style Smartscape Drill-Down & Roll-Up Topology">
   </iframe>
   <div style="position: absolute; bottom: 12px; right: 16px; pointer-events: auto;">
-    <a href="/smartscape/index.html" target="_blank" style="background: rgba(37,99,235,0.85); backdrop-filter: blur(8px); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);">
-      <span>↗️</span> 全屏新窗口独立运行
+    <a href="/smartscape/index.html?v=rollup2" target="_blank" style="background: rgba(37,99,235,0.85); backdrop-filter: blur(8px); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);">
+      <span>↗️</span> 全屏新窗口独立运行 (Drill-Down / Roll-Up)
     </a>
   </div>
 </div>
 """
     panels.append({
-        "gridPos": {"h": 18, "w": 24, "x": 0, "y": 5},
+        "gridPos": {"h": 20, "w": 24, "x": 0, "y": 5},
         "id": pid,
         "options": {
             "content": smartscape_iframe_html,
             "mode": "html"
         },
-        "title": "Dynatrace Smartscape 实时拓扑数字孪生中心 (Live Environment Topology)",
+        "title": "Dynatrace Smartscape 实时拓扑数字孪生中心 (双击节点下钻 / 面包屑上卷 / ∑V·μT·ΔV·状态传染聚合)",
         "type": "text"
     })
     pid += 1
@@ -278,7 +278,7 @@ def build_dashboard():
     # ----------------------------------------------------
     panels.append({
         "collapsed": False,
-        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 23},
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 25},
         "id": pid,
         "title": "📊 物理时序遥测校验与动态演进 (Deep Physical Telemetry & Analytical Trends)",
         "type": "row"

@@ -6,8 +6,9 @@
 
 - 🌐 **[OpenEMS 仿 Dynatrace Smartscape 储能全景立体拓扑可视化系统架构与实现报告](OPENEMS_DYNATRACE_SMARTSCAPE_TOPOLOGY.md)**：
   - **Dynatrace Smartscape 六级纵向体系**：**应用与调度层 (Applications) $\rightarrow$ 控制中枢与平台层 (Control Plane) $\rightarrow$ 系统柜与变流器并网层 (Systems & Cabinets) $\rightarrow$ 直流母线阵列与高压簇层 (DC Arrays & Racks) $\rightarrow$ 电池模组层 (Modules) $\rightarrow$ 单体电芯层 (Cells)**
+  - **六级逐层下钻 (Drill-Down) 与自底向上聚合上卷 (Roll-Up) 引擎**：支持 `L0 集团车队上卷 (Fleet)`、`L1 储能柜系统上卷 (Cabinet)`、`L2 高压电池簇上卷 (Rack)`、`L3 10模组聚合+按需单模组展开 (Module Roll-Up)`、`L4 160电芯全景展开 (Full Unroll)` 与 `L5 单颗电芯内部二阶 Thevenin RC 等效电路微观下钻 (Cell Micro-Twin)`；内置实时 `∑ SUM`、`μ AVG`、`MAX/MIN` 跨层极值定位、`Δ SPREAD` 极差与 `STATUS` 最差状态传染上卷算子
   - **四大多模态拓扑视角**：全景分层拓扑（Smartscape）、能流脉冲拓扑（Power Flow，粒子流向/速度反映实际 kW）、软 PLC 与数采通信网（Control & Comm，展示 Modbus/WSS 隧道）、储能五级数字孪生（BESS 物理层级穿透与 160 电芯色温矩阵）
-  - **标志性高保真交互体验**：左侧竖立式 Smartscape 垂直导轨（一键层级聚焦）、视口仿射变换（平移/缩放/自适应）、悬停全栈因果血缘高亮（Lineage Hover）、右侧抽屉式实体全景探针（带 30s 动态时序 Sparkline、实时健康指标与上下游依赖树）
+  - **标志性高保真交互体验**：交互式面包屑导航栏（一键上卷）、左侧竖立式 Smartscape 垂直导轨（一键层级聚焦/自动下钻展开）、画布节点双击下钻/收起、悬停全栈因果血缘高亮（Lineage Hover）、右侧抽屉式实体全景探针（带数学上卷汇总卡片、下辖子实体直达列表、30s 动态时序 Sparkline 与上下游依赖树）
   - **双端融合部署**：独立微前端应用（`http://127.0.0.1/smartscape/`）+ Grafana 专用看板嵌入（`openems-smartscape-topology`），与调度中心（`openems-ess-analytics`）及物理拓扑（`openems-bess-topology`）构建三屏无缝漫游
   - **高保真数据闭环**：通过 Nginx 逆向代理直通 OpenEMS Edge REST API（`/openems-rest/`）与 InfluxDB 时序引擎（`/openems-influx`），1.5s 毫秒级遥测自愈
 

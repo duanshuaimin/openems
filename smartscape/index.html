@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpenEMS Smartscape | 储能系统与微电网立体全栈拓扑</title>
+  <title>OpenEMS Smartscape | 可下钻(Drill-Down)与上卷聚合(Roll-Up)全栈立体拓扑</title>
   <link rel="stylesheet" href="smartscape.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 </head>
 <body>
   <div id="app-container">
 
-    <!-- Top Navigation Header -->
+    <!-- 1. Top Navigation Header -->
     <header id="smartscape-header">
       <div class="brand-section">
         <div class="brand-icon">⚡</div>
         <div class="brand-title">
           OpenEMS Smartscape
-          <span class="brand-tag">Cyber-Physical Digital Twin</span>
+          <span class="brand-tag">Drill-Down & Roll-Up Digital Twin</span>
         </div>
       </div>
 
@@ -39,19 +39,38 @@
           <option value="4">🏝️ 海岛多能互补离网系统 (edge4)</option>
         </select>
 
-        <input type="text" id="search-box" class="search-box" placeholder="🔍 搜索节点/组件/电芯...">
+        <input type="text" id="search-box" class="search-box" placeholder="🔍 搜索节点/模组/电芯...">
 
         <button id="btn-fit" class="header-btn" title="自适应居中">🎯 居中复位</button>
-        <button onclick="window.open('/d/openems-bess-topology', '_blank')" class="header-btn" title="查看 Grafana 五级深度分析看板">📊 Grafana 深度分析</button>
+        <button onclick="window.open('/d/openems-bess-topology', '_blank')" class="header-btn" title="查看 Grafana 五级深度分析看板">📊 Grafana 看板</button>
       </div>
     </header>
 
-    <!-- Main Viewport (Rail + Canvas + Inspector Drawer) -->
+    <!-- 2. Drill-Down Breadcrumb & Roll-Up Granularity Bar -->
+    <nav id="drilldown-bar">
+      <div class="breadcrumb-trail" id="breadcrumb-trail">
+        <!-- Dynamically populated breadcrumb trail: Fleet > Cabinet > Rack > Module > Cell -->
+      </div>
+
+      <div class="depth-controls">
+        <span class="depth-label">📐 拓扑聚合粒度 (Roll-Up Depth):</span>
+        <button class="depth-pill" data-depth="0" title="将全站上卷为电站集群节点">L0: 集群上卷</button>
+        <button class="depth-pill" data-depth="1" title="将阵列/电池簇/模组/电芯上卷至储能柜">L1: 储能柜上卷</button>
+        <button class="depth-pill" data-depth="2" title="将10个模组与160颗电芯上卷至高压电池簇">L2: 电池簇上卷</button>
+        <button class="depth-pill active" data-depth="3" title="展示10个串联模组，每个模组聚合16颗电芯 (双击单模组可精准下钻)">L3: 10模组聚合</button>
+        <button class="depth-pill" data-depth="4" title="下钻展开全部160颗单体电芯矩阵">L4: 160电芯全展开</button>
+
+        <button id="btn-top-drilldown" class="rollup-action-btn" title="向下钻取展开子拓扑 (Drill Down)">🔽 下钻一级</button>
+        <button id="btn-top-rollup" class="rollup-action-btn up" title="向上卷起聚合至父容器 (Roll Up)">🔼 上卷一级</button>
+      </div>
+    </nav>
+
+    <!-- 3. Main Viewport (Rail + Canvas + Inspector Drawer) -->
     <div id="main-viewport">
 
       <!-- Left Vertical Smartscape Rail -->
       <aside id="smartscape-rail">
-        <!-- Dynamically populated with Tiers: Apps, Control, Systems, Arrays, Modules, Cells -->
+        <!-- Dynamically populated with Tiers & Roll-Up badges -->
       </aside>
 
       <!-- Center Interactive Canvas Area -->
@@ -62,27 +81,34 @@
         <!-- Floating Global KPI Status Banner -->
         <div class="global-kpi-banner">
           <div class="kpi-item">
-            <span class="kpi-label">系统运行状态</span>
-            <span class="kpi-val"><span class="status-dot"></span>NORMAL 正常</span>
+            <span class="kpi-label">当前拓扑层级状态</span>
+            <span id="kpi-depth-status" class="kpi-val"><span class="status-dot"></span>L3: 10模组聚合态</span>
           </div>
           <div class="kpi-item">
-            <span class="kpi-label">实时交直流有功功率</span>
+            <span class="kpi-label">上卷总功率 (∑ Power)</span>
             <span id="kpi-power" class="kpi-val">-12.9 kW (填谷充电)</span>
           </div>
           <div class="kpi-item">
-            <span class="kpi-label">电池簇荷电状态</span>
-            <span id="kpi-soc" class="kpi-val" style="color: #34d399;">68.5%</span>
+            <span class="kpi-label">簇上卷电压 / SOC</span>
+            <span id="kpi-soc" class="kpi-val" style="color: #34d399;">528.0V | 68.5%</span>
           </div>
           <div class="kpi-item">
-            <span class="kpi-label">电芯单体最大压差 (ΔV)</span>
-            <span id="kpi-delta-v" class="kpi-val" style="color: #fbbf24;">27 mV</span>
+            <span class="kpi-label">穿透极值压差 (Max ΔV)</span>
+            <span id="kpi-delta-v" class="kpi-val" style="color: #fbbf24;">27 mV (#14/#03)</span>
+          </div>
+          <div class="kpi-item">
+            <span class="kpi-label">可见实体 / 总实体</span>
+            <span id="kpi-node-count" class="kpi-val" style="color: #38bdf8;">30 / 191 Nodes</span>
           </div>
         </div>
 
         <!-- Canvas Floating Bottom Toolbar -->
         <div class="canvas-toolbar">
-          <button id="btn-zoom-in" class="canvas-tool-btn" title="放大">➕</button>
-          <button id="btn-zoom-out" class="canvas-tool-btn" title="缩小">➖</button>
+          <button id="btn-zoom-in" class="canvas-tool-btn" title="放大视口">➕ 放大</button>
+          <button id="btn-zoom-out" class="canvas-tool-btn" title="缩小视口">➖ 缩小</button>
+          <button id="btn-expand-all-mods" class="canvas-tool-btn" title="展开全部模组电芯">🔬 展开160电芯</button>
+          <button id="btn-collapse-all-mods" class="canvas-tool-btn" title="收起全部电芯上卷至模组">📦 上卷收起电芯</button>
+          <span class="toolbar-hint">💡 提示：双击任意带 <b>[+N]</b> 聚合角标的容器节点即可<b>下钻 (Drill-Down)</b>，双击展开容器或点击面包屑即可<b>上卷 (Roll-Up)</b></span>
         </div>
 
         <!-- Hover Floating Tooltip -->
@@ -95,12 +121,33 @@
           <div>
             <div id="drawer-badge" class="drawer-entity-badge">TIER</div>
             <div id="drawer-title" class="drawer-title">实体全景探针</div>
-            <div id="drawer-subtitle" class="drawer-subtitle">选择拓扑节点查看实时健康体检</div>
+            <div id="drawer-subtitle" class="drawer-subtitle">选择拓扑节点查看实时健康体检与上卷聚合数据</div>
           </div>
           <button id="drawer-close" class="drawer-close-btn" title="收起抽屉">✕</button>
         </div>
 
+        <!-- Hierarchy Drill-Down & Roll-Up Controls in Drawer -->
+        <div class="drawer-hierarchy-actions">
+          <button id="btn-drawer-drilldown" class="hierarchy-btn drill-down">
+            <span>🔽</span> <span id="lbl-drawer-drilldown">下钻展开子拓扑</span>
+          </button>
+          <button id="btn-drawer-rollup" class="hierarchy-btn roll-up">
+            <span>🔼</span> <span id="lbl-drawer-rollup">上卷至父容器</span>
+          </button>
+        </div>
+
         <div class="drawer-body">
+          <!-- Bottom-Up Roll-Up Mathematical Summary Section -->
+          <div id="drawer-rollup-section" style="display: none;">
+            <div class="section-label">
+              <span>📦 下级子拓扑上卷聚合引擎 (Roll-Up Aggregations)</span>
+              <span id="drawer-rollup-badge" style="color:#fbbf24;font-family:monospace;">16 Children</span>
+            </div>
+            <div id="drawer-rollup-box" class="rollup-summary-box">
+              <!-- Dynamically populated roll-up math formulas & values -->
+            </div>
+          </div>
+
           <!-- Real-Time Metrics Grid -->
           <div>
             <div class="section-label">⚡ 实时运行遥测指标 (Real-Time KPIs)</div>
@@ -117,9 +164,20 @@
             </div>
           </div>
 
+          <!-- Drill-Down Child Entities List -->
+          <div id="drawer-children-section" style="display: none;">
+            <div class="section-label">
+              <span>🔽 包含的下级子实体 (点击直接下钻聚焦)</span>
+              <span id="drawer-children-count" style="color:#34d399;"></span>
+            </div>
+            <div id="drawer-children-list" class="dep-tree">
+              <!-- Dynamically populated child nodes -->
+            </div>
+          </div>
+
           <!-- Upstream Dependencies -->
           <div>
-            <div class="section-label">⬆️ 上游供给与控制依赖 (Inbound Dependencies)</div>
+            <div class="section-label">⬆️ 上游父容器与供给依赖 (Parent & Inbound)</div>
             <div id="drawer-deps-in" class="dep-tree">
               <!-- Dynamically populated -->
             </div>
@@ -127,7 +185,7 @@
 
           <!-- Downstream Dependencies -->
           <div>
-            <div class="section-label">⬇️ 下游受控与下级拓扑 (Outbound Containment)</div>
+            <div class="section-label">⬇️ 下游受控与横向关联 (Outbound Links)</div>
             <div id="drawer-deps-out" class="dep-tree">
               <!-- Dynamically populated -->
             </div>
