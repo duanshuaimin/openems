@@ -25,8 +25,20 @@ import urllib.error
 PORT = 8503
 UNIT_ID = 1
 
+def _load_influx_token():
+    if os.environ.get("INFLUX_TOKEN"):
+        return os.environ["INFLUX_TOKEN"]
+    try:
+        with open("/etc/openems/influx.env", "r") as f:
+            for line in f:
+                if line.startswith("INFLUX_TOKEN="):
+                    return line.strip().split("=", 1)[1]
+    except Exception:
+        pass
+    return ""
+
 INFLUX_WRITE_URL = "http://127.0.0.1:8086/api/v2/write?bucket=openems&org=openems&precision=s"
-AUTH_TOKEN = "OpenEmsInfluxSecretToken2026!"
+AUTH_TOKEN = _load_influx_token()
 
 class VirtualPylontechBMS:
     def __init__(self):
@@ -440,15 +452,14 @@ def generate_influx_lines(edge_tag, ts_sec):
     return f"data,edge={edge_tag} " + ",".join(field_strs) + f" {int(ts_sec)}"
 
 async def influx_telemetry_loop():
-    """Continuously writes 5-tier topology points to InfluxDB for edge=bms and edge=0."""
+    """Continuously writes 5-tier topology points to InfluxDB for edge=bms."""
     await asyncio.sleep(2.0)
-    print("[BMS InfluxDB Telemetry] Starting periodic 5-tier telemetry publisher (interval=2s)...", flush=True)
+    print("[BMS InfluxDB Telemetry] Starting periodic 5-tier telemetry publisher for edge=bms (interval=2s)...", flush=True)
     while True:
         try:
             now_ts = time.time()
             line_bms = generate_influx_lines("bms", now_ts)
-            line_edge0 = generate_influx_lines("0", now_ts)
-            body = (line_bms + "\n" + line_edge0).encode("utf-8")
+            body = line_bms.encode("utf-8")
             
             req = urllib.request.Request(
                 INFLUX_WRITE_URL,

@@ -33,14 +33,26 @@ console.log('[1] PASS: Dynamic tree descendant counts verified.');
 
 // 2. Verify Dynamic Extremes & True Bottom-Up Status Propagation (No hardcoded m === 1)
 for (let i = 0; i < 160; i++) {
+  engine.state.telemetry.cellsV[i] = 3300 + (i % 3); // deltaV = 2mV (healthy balanced pack)
+  engine.state.telemetry.cellsT[i] = 24.0;
+}
+engine.computeRollUpAggregations();
+assert.strictEqual(engine.nodeById.get('arr-rack').status, 'normal', 'Healthy balanced pack (deltaV=2mV) must have normal rack status');
+assert.strictEqual(engine.nodeById.get('sys-cabinet').status, 'normal', 'Healthy balanced pack must have normal cabinet status');
+
+// Now inject warning cell at #77 (in Mod #05) and min cell at #42 (in Mod #03)
+for (let i = 0; i < 160; i++) {
   engine.state.telemetry.cellsV[i] = 3300;
   engine.state.telemetry.cellsT[i] = 24.0;
 }
-// Put max cell at #77 (in Mod #05) and min cell at #42 (in Mod #03)
 engine.state.telemetry.cellsV[76] = 3330; // Cell #77 (Mod #05)
 engine.state.telemetry.cellsV[41] = 3285; // Cell #42 (Mod #03)
 engine.state.telemetry.cellsT[119] = 27.2; // Cell #120 (Mod #08)
 engine.computeRollUpAggregations();
+
+const balOut = engine.edges.filter(e => e.source === 'cell-balancing-bus');
+assert.ok(balOut.some(e => e.target === 'cell-077'), 'Balancing bus max edge must dynamically retarget cell-077');
+assert.ok(balOut.some(e => e.target === 'cell-042'), 'Balancing bus min edge must dynamically retarget cell-042');
 
 assert.strictEqual(engine.state.telemetry.maxCellNo, 77, 'Dynamic maxCellNo should be 77');
 assert.strictEqual(engine.state.telemetry.minCellNo, 42, 'Dynamic minCellNo should be 42');

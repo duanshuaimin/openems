@@ -177,6 +177,8 @@
   const visibleNodeIds = new Set();
   const lineageNodeIds = new Set();
   let effectiveEdges = [];
+  let balEdgeMax = null;
+  let balEdgeMin = null;
 
   function pushNodeHistory(nodeId, label, unit, val) {
     if (typeof val !== 'number' || Number.isNaN(val)) return;
@@ -465,8 +467,8 @@
       }
     }
 
-    addEdge('cell-balancing-bus', 'cell-014', 'power', '主动能量释放 (Max V)');
-    addEdge('cell-balancing-bus', 'cell-003', 'power', '主动电荷补充 (Min V)');
+    balEdgeMax = addEdge('cell-balancing-bus', 'cell-014', 'power', '主动能量释放 (Max V)');
+    balEdgeMin = addEdge('cell-balancing-bus', 'cell-003', 'power', '主动电荷补充 (Min V)');
 
     // Compute initial bottom-up roll-up aggregations & visibility cache
     computeRollUpAggregations();
@@ -480,6 +482,26 @@
     if (inEdgesById.has(target)) inEdgesById.get(target).push(edge);
     if (adjById.has(source)) adjById.get(source).add(target);
     if (adjById.has(target)) adjById.get(target).add(source);
+    return edge;
+  }
+
+  function retargetEdge(edgeObj, newTargetId, newLabel) {
+    if (!edgeObj || edgeObj.target === newTargetId) {
+      if (edgeObj && newLabel) edgeObj.label = newLabel;
+      return;
+    }
+    const oldTargetId = edgeObj.target;
+    if (inEdgesById.has(oldTargetId)) {
+      const arr = inEdgesById.get(oldTargetId);
+      const idx = arr.indexOf(edgeObj);
+      if (idx >= 0) arr.splice(idx, 1);
+    }
+    edgeObj.target = newTargetId;
+    edgeObj.id = `${edgeObj.source}->${newTargetId}`;
+    if (newLabel) edgeObj.label = newLabel;
+    if (inEdgesById.has(newTargetId)) inEdgesById.get(newTargetId).push(edgeObj);
+    if (adjById.has(edgeObj.source)) adjById.get(edgeObj.source).add(newTargetId);
+    if (adjById.has(newTargetId)) adjById.get(newTargetId).add(edgeObj.source);
   }
 
   // ----------------------------------------------------
@@ -596,13 +618,13 @@
         if (t < minT) minT = t;
 
         const devFromMean = Math.abs(v - globalMeanCellMv);
-        const isBalancing = devFromMean >= 12 || cNo === globalMaxVNo || cNo === globalMinVNo;
+        const isBalancing = devFromMean >= 12 || (state.telemetry.deltaV >= 20 && (cNo === globalMaxVNo || cNo === globalMinVNo));
         if (isBalancing) balCount++;
 
         let cStatus = 'normal';
         if (v >= 3400 || v <= 3150 || t >= 35.0) {
           cStatus = 'critical';
-        } else if (cNo === globalMaxVNo || devFromMean >= 15 || t >= 28.5) {
+        } else if ((cNo === globalMaxVNo && state.telemetry.deltaV >= 25) || devFromMean >= 15 || v >= 3360 || v <= 3220 || t >= 28.5) {
           cStatus = 'warning';
         }
         childStatuses.push(cStatus);
@@ -667,6 +689,10 @@
     }
 
     // Update balancing bus dynamic edges & metrics
+    const fmtCellId = (idx) => `cell-${idx < 10 ? '00' + idx : (idx < 100 ? '0' + idx : idx)}`;
+    retargetEdge(balEdgeMax, fmtCellId(globalMaxVNo), `主动能量释放 (#${globalMaxVNo} Max ${globalMaxV}mV)`);
+    retargetEdge(balEdgeMin, fmtCellId(globalMinVNo), `主动电荷补充 (#${globalMinVNo} Min ${globalMinV}mV)`);
+
     const balBus = nodeById.get('cell-balancing-bus');
     if (balBus) {
       balBus.metrics = `${rackBalancingCells}路电荷转移 (ΔV ${state.telemetry.deltaV}mV: #${globalMaxVNo}→#${globalMinVNo})`;
@@ -799,14 +825,16 @@
     const vOcvMv = +(vTermMv + u0Mv + u1Mv + u2Mv).toFixed(2);
     const jouleW = +((currentA * currentA) * (r0 + r1 + r2) / 1000.0).toFixed(2);
 
+    const rcMeta = { vTermMv, vOcvMv, u0Mv, u1Mv, u2Mv, currentA, tempC, jouleW, r0, r1, r2 };
+
     microNodes.push(
-      { id: 'rc-ocv', name: '理想开路电压源 Vocv(SOC)', tier: 'cell', icon: '🔋', x: 340, y: 480, type: 'micro-rc', status: 'normal', metrics: `Vocv = ${vOcvMv.toFixed(1)} mV (SOC ${state.telemetry.soc.toFixed(1)}%)` },
-      { id: 'rc-r0', name: '欧姆内阻 R0 (电解液/极耳)', tier: 'cell', icon: '〰️', x: 650, y: 480, type: 'micro-rc', status: 'normal', metrics: `R0 = ${r0} mΩ | ΔU0 = ${u0Mv >= 0 ? '+' : ''}${u0Mv} mV` },
-      { id: 'rc-r1c1', name: '一阶电化学极化网络 (R1||C1)', tier: 'cell', icon: '⚡', x: 960, y: 370, type: 'micro-rc', status: 'normal', metrics: `R1 = ${r1} mΩ | C1 = 4200F | U1 = ${u1Mv >= 0 ? '+' : ''}${u1Mv} mV` },
-      { id: 'rc-r2c2', name: '二阶浓差极化网络 (R2||C2)', tier: 'cell', icon: '🌊', x: 960, y: 590, type: 'micro-rc', status: 'normal', metrics: `R2 = ${r2} mΩ | C2 = 28kF | U2 = ${u2Mv >= 0 ? '+' : ''}${u2Mv} mV` },
-      { id: 'rc-term', name: '电芯极柱端电压输出 Vterm', tier: 'cell', icon: '🔌', x: 1300, y: 480, type: 'micro-rc', status: cellNode.status || 'normal', metrics: `Vterm = ${vTermMv} mV | I = ${currentA.toFixed(1)} A` },
-      { id: 'rc-mosfet', name: '主动均衡 MOSFET 旁路支路', tier: 'cell', icon: '🔀', x: 1300, y: 260, type: 'micro-rc', status: cellNode.isMaxV ? 'warning' : 'normal', metrics: cellNode.isMaxV ? '导通均衡中 (Ibal = 150mA)' : '关断待机 (Ibal = 0mA)' },
-      { id: 'rc-thermal', name: '电芯焦耳热耦合核心 (Q=I²R)', tier: 'cell', icon: '🌡️', x: 800, y: 730, type: 'micro-rc', status: tempC >= 28.5 ? 'warning' : 'normal', metrics: `Tcore = ${tempC.toFixed(1)} ℃ | Q = ${jouleW} W` }
+      { id: 'rc-ocv', name: '理想开路电压源 Vocv(SOC)', tier: 'cell', icon: '🔋', x: 340, y: 480, type: 'micro-rc', parentId: cellNode.id, rcMeta, status: 'normal', metrics: `Vocv = ${vOcvMv.toFixed(1)} mV (SOC ${state.telemetry.soc.toFixed(1)}%)` },
+      { id: 'rc-r0', name: '欧姆内阻 R0 (电解液/极耳)', tier: 'cell', icon: '〰️', x: 650, y: 480, type: 'micro-rc', parentId: cellNode.id, rcMeta, status: 'normal', metrics: `R0 = ${r0} mΩ | ΔU0 = ${u0Mv >= 0 ? '+' : ''}${u0Mv} mV` },
+      { id: 'rc-r1c1', name: '一阶电化学极化网络 (R1||C1)', tier: 'cell', icon: '⚡', x: 960, y: 370, type: 'micro-rc', parentId: cellNode.id, rcMeta, status: 'normal', metrics: `R1 = ${r1} mΩ | C1 = 4200F | U1 = ${u1Mv >= 0 ? '+' : ''}${u1Mv} mV` },
+      { id: 'rc-r2c2', name: '二阶浓差极化网络 (R2||C2)', tier: 'cell', icon: '🌊', x: 960, y: 590, type: 'micro-rc', parentId: cellNode.id, rcMeta, status: 'normal', metrics: `R2 = ${r2} mΩ | C2 = 28kF | U2 = ${u2Mv >= 0 ? '+' : ''}${u2Mv} mV` },
+      { id: 'rc-term', name: '电芯极柱端电压输出 Vterm', tier: 'cell', icon: '🔌', x: 1300, y: 480, type: 'micro-rc', parentId: cellNode.id, rcMeta, status: cellNode.status || 'normal', metrics: `Vterm = ${vTermMv} mV | I = ${currentA.toFixed(1)} A` },
+      { id: 'rc-mosfet', name: '主动均衡 MOSFET 旁路支路', tier: 'cell', icon: '🔀', x: 1300, y: 260, type: 'micro-rc', parentId: cellNode.id, rcMeta, status: cellNode.isMaxV ? 'warning' : 'normal', metrics: cellNode.isMaxV ? '导通均衡中 (Ibal = 150mA)' : '关断待机 (Ibal = 0mA)' },
+      { id: 'rc-thermal', name: '电芯焦耳热耦合核心 (Q=I²R)', tier: 'cell', icon: '🌡️', x: 800, y: 730, type: 'micro-rc', parentId: cellNode.id, rcMeta, status: tempC >= 28.5 ? 'warning' : 'normal', metrics: `Tcore = ${tempC.toFixed(1)} ℃ | Q = ${jouleW} W` }
     );
 
     microEdges.push(
@@ -946,7 +974,42 @@
     });
 
     effectiveEdges = Array.from(edgeMap.values());
+    relayoutVisibleNodes();
     recomputeLineageHighlight();
+  }
+
+  function relayoutVisibleNodes() {
+    // Auto-distribute visible macro nodes horizontally across each tier [180 .. 1800]
+    ['fleet', 'app', 'ctrl', 'sys', 'array', 'mod'].forEach(tierId => {
+      const visTierNodes = nodes.filter(n => n.tier === tierId && visibleNodeIds.has(n.id));
+      const count = visTierNodes.length;
+      if (count === 0) return;
+      if (count === 1) {
+        visTierNodes[0].x = 990;
+      } else {
+        const minX = 180;
+        const maxX = 1800;
+        const step = (maxX - minX) / (count - 1);
+        visTierNodes.forEach((n, idx) => {
+          n.x = Math.round(minX + idx * step);
+        });
+      }
+    });
+
+    // Align each module's 16 child cells in a 4x4 sub-matrix directly centered beneath its parent module's x
+    for (let m = 1; m <= 10; m++) {
+      const mid = `mod-${m < 10 ? '0' + m : m}`;
+      const modNode = nodeById.get(mid);
+      if (!modNode) continue;
+      const baseX = modNode.x - 54;
+      const children = childrenById.get(mid) || [];
+      children.forEach((cNode, idx) => {
+        const col = idx % 4;
+        const row = Math.floor(idx / 4);
+        cNode.x = baseX + col * 36;
+        cNode.y = 980 + row * 38;
+      });
+    }
   }
 
   function recomputeLineageHighlight() {
@@ -1644,8 +1707,7 @@
     getExpandedModuleIds().forEach(modId => {
       const modNode = nodeById.get(modId);
       if (!modNode || !visibleNodeIds.has(modNode.id)) return;
-      const mIdx = modNode.modIndex - 1;
-      const boxX = 82 + mIdx * 182;
+      const boxX = modNode.x - 79;
       const boxY = 948;
       const boxW = 158;
       const boxH = 175;
@@ -2110,7 +2172,14 @@
     const metricsContainer = document.getElementById('drawer-metrics');
     metricsContainer.innerHTML = '';
 
-    if (node.tier === 'cell' && node.cellIndex) {
+    if (node.type === 'micro-rc' && node.rcMeta) {
+      const m = node.rcMeta;
+      const totalPol = +(m.u0Mv + m.u1Mv + m.u2Mv).toFixed(2);
+      addMetricCard(metricsContainer, '开路电压 (Vocv)', m.vOcvMv.toFixed(1), 'mV');
+      addMetricCard(metricsContainer, '极柱端电压 (Vterm)', m.vTermMv, 'mV');
+      addMetricCard(metricsContainer, '总极化压降 (∑ΔU)', `${totalPol >= 0 ? '+' : ''}${totalPol}`, 'mV');
+      addMetricCard(metricsContainer, '焦耳热功率 (Q=I²R)', m.jouleW, 'W');
+    } else if (node.tier === 'cell' && node.cellIndex) {
       const v = state.telemetry.cellsV[node.cellIndex - 1] || 3300;
       const t = state.telemetry.cellsT[node.cellIndex - 1] || 24.0;
       addMetricCard(metricsContainer, '单体电压 (Cell V)', v, 'mV');

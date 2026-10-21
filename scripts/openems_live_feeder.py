@@ -17,6 +17,7 @@ Multi-Domain Simulation Data Sources:
   • Grid Power Quality (Frequency, 3-Phase Voltages, Power Factor, Reactive Power)
 """
 
+import os
 import sys
 import time
 import math
@@ -27,9 +28,21 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
+def _load_influx_token():
+    if os.environ.get("INFLUX_TOKEN"):
+        return os.environ["INFLUX_TOKEN"]
+    try:
+        with open("/etc/openems/influx.env", "r") as f:
+            for line in f:
+                if line.startswith("INFLUX_TOKEN="):
+                    return line.strip().split("=", 1)[1]
+    except Exception:
+        pass
+    return ""
+
 INFLUX_WRITE_URL = "http://127.0.0.1:8086/api/v2/write?bucket=openems&org=openems&precision=s"
 INFLUX_QUERY_URL = "http://127.0.0.1:8086/api/v2/query?org=openems"
-AUTH_TOKEN = "OpenEmsInfluxSecretToken2026!"
+AUTH_TOKEN = _load_influx_token()
 BACKEND_WS_URL = "ws://127.0.0.1:8084"
 FEED_INTERVAL = 5.0  # seconds
 
@@ -425,6 +438,12 @@ class StationLiveSimulator:
         curr_ess_l3 = int(abs(p_ess_l3) / (v_l3 / 1000.0) * 1000) if p_ess != 0 else 0
         curr_ess_tot = curr_ess_l1 + curr_ess_l2 + curr_ess_l3
 
+        st_num = int(self.edge_tag) if str(self.edge_tag).isdigit() else 0
+        st_max_vc = (14 + st_num * 29 - 1) % 160 + 1
+        st_min_vc = (3 + st_num * 19 - 1) % 160 + 1
+        st_max_tc = (8 + st_num * 23 - 1) % 160 + 1
+        st_min_tc = (1 + st_num * 13 - 1) % 160 + 1
+
         channel_data = {
             "_sum/State": 0,
             "_sum/GridMode": grid_mode,
@@ -511,12 +530,12 @@ class StationLiveSimulator:
             "battery0/Current": int(round(bms_pack_i / 1000.0)) if abs(bms_pack_i) > 500 else bms_pack_i,
             "battery0/MinCellVoltage": bms_min_cell_v,
             "battery0/MaxCellVoltage": bms_max_cell_v,
-            "battery0/MaxVoltageCellNumber": 14,
-            "battery0/MinVoltageCellNumber": 3,
+            "battery0/MaxVoltageCellNumber": st_max_vc,
+            "battery0/MinVoltageCellNumber": st_min_vc,
             "battery0/MinCellTemperature": bms_min_cell_t,
             "battery0/MaxCellTemperature": bms_max_cell_t,
-            "battery0/MaxTemperatureCellNumber": 8,
-            "battery0/MinTemperatureCellNumber": 1,
+            "battery0/MaxTemperatureCellNumber": st_max_tc,
+            "battery0/MinTemperatureCellNumber": st_min_tc,
             "battery0/CellVoltageDelta": cell_delta_v,
             "battery0/CellTemperatureSpread": cell_temp_spread,
             "battery0/CycleCount": cycle_count,
@@ -579,8 +598,8 @@ class StationLiveSimulator:
             **{f"battery0/Module_{m:02d}_Temp": bms_min_cell_t + int(cell_temp_spread * ((m * 3) % 10) / 10.0) for m in range(1, 11)},
 
             # Individual 160 Cells (Tier 5)
-            **{f"battery0/Cell_{c:03d}_V": (bms_max_cell_v if c == 14 else (bms_min_cell_v if c == 3 else bms_min_cell_v + int((bms_max_cell_v - bms_min_cell_v) * ((c * 47) % 100) / 100.0))) for c in range(1, 161)},
-            **{f"battery0/Cell_{c:03d}_T": (bms_max_cell_t if c == 8 else (bms_min_cell_t if c == 1 else bms_min_cell_t + int(cell_temp_spread * ((c * 31) % 100) / 100.0))) for c in range(1, 161)},
+            **{f"battery0/Cell_{c:03d}_V": (bms_max_cell_v if c == st_max_vc else (bms_min_cell_v if c == st_min_vc else bms_min_cell_v + 1 + int((bms_max_cell_v - bms_min_cell_v - 2) * (((c + st_num * 11) * 47) % 100) / 100.0))) for c in range(1, 161)},
+            **{f"battery0/Cell_{c:03d}_T": (bms_max_cell_t if c == st_max_tc else (bms_min_cell_t if c == st_min_tc else bms_min_cell_t + 1 + int(max(1, cell_temp_spread - 2) * (((c + st_num * 7) * 31) % 100) / 100.0))) for c in range(1, 161)},
 
             # Meteorological & Solar Irradiance
             "weather/SolarIrradiance": solar_irr,
