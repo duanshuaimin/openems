@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpenEMS Smartscape | 可下钻(Drill-Down)与上卷聚合(Roll-Up)全栈立体拓扑</title>
-  <link rel="stylesheet" href="smartscape.css">
+  <link rel="stylesheet" href="smartscape.css?v=3.2">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 </head>
 <body>
@@ -112,7 +112,7 @@
           <button id="btn-zoom-out" class="canvas-tool-btn" title="缩小视口">➖ 缩小</button>
           <button id="btn-expand-all-mods" class="canvas-tool-btn" title="展开全部模组电芯">🔬 展开160电芯</button>
           <button id="btn-collapse-all-mods" class="canvas-tool-btn" title="收起全部电芯上卷至模组">📦 上卷收起电芯</button>
-          <span class="toolbar-hint">💡 提示：双击任意带 <b>[+N]</b> 聚合角标的容器节点即可<b>下钻 (Drill-Down)</b>，双击展开容器或点击面包屑即可<b>上卷 (Roll-Up)</b></span>
+          <span class="toolbar-hint">💡 提示：<b>双击即下钻</b> (L0→L1→L2→L3→L4→L5，双击任意节点/角标/标签直接向下深钻)；点击面包屑或「🔼 上卷一级」向上聚合</span>
         </div>
 
         <!-- Hover Floating Tooltip -->
@@ -212,6 +212,6 @@
     </div>
   </div>
 
-  <script src="smartscape.js"></script>
+  <script src="smartscape.js?v=3.2"></script>
 </body>
 </html>

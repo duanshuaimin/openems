@@ -96,6 +96,10 @@
     dragStartY: 0,
     animTime: 0,
     particlePhase: 0,
+    lastClickTime: 0,
+    lastClickedNodeId: null,
+    lastDrillTimestamp: 0,
+    drillRipples: [],
     isPolling: false,
     connHealthy: true,
     lastSyncTime: null,
@@ -546,18 +550,47 @@
     const isExpanded = state.expandedContainers.has(node.id);
     if (node.tier === 'fleet') {
       const prof = STATION_PROFILES[node.stationKey] || STATION_PROFILES['bms'];
-      return state.rollupDepth === 0 ? `+${prof.racks}簇/${prof.mods}组/${prof.cells}芯 🔽` : '[-] 上卷 🔼';
+      return `+${prof.racks}簇/${prof.mods}组/${prof.cells}芯 (双击下钻) 🔽`;
     }
     if (node.id === 'sys-cabinet') {
-      return isExpanded ? `[-${counts.total}] 上卷 🔼` : `+${counts.array}阵列/${counts.mod}组/${counts.cell}芯 🔽`;
+      return isExpanded ? `已展${counts.array}阵列 (双击深钻) 🔽` : `+${counts.array}阵列/${counts.mod}组/${counts.cell}芯 🔽`;
     }
     if (node.id === 'arr-rack') {
-      return isExpanded ? `[-${counts.mod}组] 上卷 🔼` : `+${counts.mod}模组/${counts.cell}芯 🔽`;
+      const allModsExp = getExpandedModuleIds().length === 10;
+      return isExpanded
+        ? (allModsExp ? `已展160芯 (双击深钻L5) 🔽` : `已展10组 (双击展160芯) 🔽`)
+        : `+${counts.mod}模组/${counts.cell}芯 🔽`;
     }
     if (node.tier === 'mod') {
-      return isExpanded ? `[-${counts.cell}] 收起 🔼` : `+${counts.cell}电芯 🔽`;
+      return isExpanded ? `已展${counts.cell}芯 (双击深钻L5) 🔽` : `+${counts.cell}电芯 (双击下钻) 🔽`;
     }
     return '';
+  }
+
+  function getPeakCellForModule(modNode) {
+    const children = (modNode && childrenById.get(modNode.id)) || [];
+    if (children.length === 0) return nodeById.get('cell-014');
+    let best = children[0];
+    let bestV = -Infinity;
+    children.forEach(c => {
+      const v = state.telemetry.cellsV[(c.cellIndex || 1) - 1] || 3300;
+      if (v > bestV) {
+        bestV = v;
+        best = c;
+      }
+    });
+    return best;
+  }
+
+  function triggerDrillRipple(node) {
+    if (!node) return;
+    state.drillRipples.push({
+      x: node.x || 960,
+      y: getNodeY(node),
+      radius: 18,
+      alpha: 0.95
+    });
+    if (state.drillRipples.length > 8) state.drillRipples.shift();
   }
 
   // ----------------------------------------------------
@@ -1186,9 +1219,12 @@
     pollLiveTelemetry();
   }
 
+  // Double-Click Always Drills Down (双击即下钻: L0 -> L1 -> L2 -> L3 -> L4 -> L5)
   function drillDownNode(node) {
     if (!node) return;
+    triggerDrillRipple(node);
 
+    // 1. Fleet Station -> Drill down to L1 (Cabinet / Systems)
     if (node.tier === 'fleet') {
       if (node.stationKey && node.stationKey !== state.station) {
         switchStation(node.stationKey);
@@ -1199,58 +1235,146 @@
       return;
     }
 
+    // 2. BESS Cabinet -> Progressive Drill-Down (L1 -> L2 -> L3 -> L4 -> L5, never collapses)
     if (node.id === 'sys-cabinet') {
-      if (state.rollupDepth >= 2 && state.expandedContainers.has('sys-cabinet')) {
-        // Toggle roll-up to L1
-        setRollupDepth(1, node);
-      } else {
+      if (state.rollupDepth < 2 || !state.expandedContainers.has('sys-cabinet')) {
         const rack = nodeById.get('arr-rack');
         setRollupDepth(2, rack);
         selectNode(rack);
-      }
-      return;
-    }
-
-    if (node.id === 'arr-rack') {
-      if (state.rollupDepth >= 3 && state.expandedContainers.has('arr-rack')) {
-        setRollupDepth(2, node);
-      } else {
-        setRollupDepth(3, node);
+      } else if (state.rollupDepth === 2 || !state.expandedContainers.has('arr-rack')) {
+        const m1 = nodeById.get('mod-01');
+        setRollupDepth(3, m1);
+        selectNode(m1);
+      } else if (state.rollupDepth === 3 && getExpandedModuleIds().length < 10) {
+        setRollupDepth(4, nodeById.get('arr-rack'));
         selectNode(nodeById.get('mod-01'));
+      } else {
+        const maxNo = state.telemetry.maxCellNo || 14;
+        const cid = `cell-${maxNo < 10 ? '00' + maxNo : (maxNo < 100 ? '0' + maxNo : maxNo)}`;
+        const peakCell = nodeById.get(cid) || nodeById.get('cell-014');
+        state.focusedMicroCellId = peakCell.id;
+        setRollupDepth(5, peakCell);
+        selectNode(peakCell);
       }
       return;
     }
 
+    // 3. Battery Rack -> Progressive Drill-Down (L2 -> L3 -> L4 -> L5, never collapses)
+    if (node.id === 'arr-rack') {
+      if (state.rollupDepth < 3 || !state.expandedContainers.has('arr-rack')) {
+        const m1 = nodeById.get('mod-01');
+        setRollupDepth(3, m1);
+        selectNode(m1);
+      } else if (state.rollupDepth === 3 && getExpandedModuleIds().length < 10) {
+        setRollupDepth(4, node);
+        selectNode(nodeById.get('mod-01'));
+      } else {
+        const maxNo = state.telemetry.maxCellNo || 14;
+        const cid = `cell-${maxNo < 10 ? '00' + maxNo : (maxNo < 100 ? '0' + maxNo : maxNo)}`;
+        const peakCell = nodeById.get(cid) || nodeById.get('cell-014');
+        state.focusedMicroCellId = peakCell.id;
+        setRollupDepth(5, peakCell);
+        selectNode(peakCell);
+      }
+      return;
+    }
+
+    // 4. Battery Module -> Unexpanded: Expand 16 Cells; Already Expanded: Drill Down to Peak Cell L5 RC Micro-Twin
     if (node.tier === 'mod') {
       if (state.rollupDepth < 3) {
         state.rollupDepth = 3;
         syncExpandedContainersForDepth(3);
       }
-      if (state.expandedContainers.has(node.id)) {
-        state.expandedContainers.delete(node.id);
-        if (state.rollupDepth === 4) state.rollupDepth = 3;
-      } else {
+      if (!state.expandedContainers.has(node.id)) {
         state.expandedContainers.add(node.id);
         if (getExpandedModuleIds().length === 10) state.rollupDepth = 4;
+        state.savedL3Modules = getExpandedModuleIds();
+        recomputeVisibilityCache();
         if (typeof canvas !== 'undefined' && canvas && canvas.parentElement) {
           const canvasW = canvas.parentElement.clientWidth;
           const canvasH = canvas.parentElement.clientHeight;
-          animateCameraTo(canvasW / 2 - node.x * 0.95, canvasH / 2 - 960 * 0.95, 0.95);
+          animateCameraTo(canvasW / 2 - node.x * 0.95, canvasH / 2 - 930 * 0.95, 0.95);
         }
+        updateDepthUI();
+        updateBreadcrumb();
+        updateLeftRail();
+        selectNode(node);
+      } else {
+        // Module is already expanded -> Drill down deeper into this module's highest-voltage cell (L5 Micro-Twin)
+        const peakCell = getPeakCellForModule(node);
+        state.focusedMicroCellId = peakCell.id;
+        setRollupDepth(5, peakCell);
+        selectNode(peakCell);
       }
-      state.savedL3Modules = getExpandedModuleIds();
-      recomputeVisibilityCache();
-      updateDepthUI();
-      updateBreadcrumb();
-      updateLeftRail();
-      populateDrawer(node);
       return;
     }
 
+    // 5. Individual Cell -> Drill down to L5 2nd-Order Thevenin RC Micro-Twin
     if (node.tier === 'cell' && node.type === 'cell-leaf') {
       state.focusedMicroCellId = node.id;
       setRollupDepth(5, node);
       selectNode(node);
+      return;
+    }
+
+    // 6. Active Balancing Bus -> Drill down to L5 on Max-V cell & select active MOSFET branch
+    if (node.id === 'cell-balancing-bus') {
+      const maxNo = state.telemetry.maxCellNo || 14;
+      const cid = `cell-${maxNo < 10 ? '00' + maxNo : (maxNo < 100 ? '0' + maxNo : maxNo)}`;
+      const peakCell = nodeById.get(cid) || nodeById.get('cell-014');
+      state.focusedMicroCellId = peakCell.id;
+      setRollupDepth(5, peakCell);
+      const mosfetNode = microNodes.find(n => n.id === 'rc-mosfet') || peakCell;
+      selectNode(mosfetNode);
+      return;
+    }
+
+    // 7. L5 Micro-RC Component -> Focus & zoom onto that RC component
+    if (node.type === 'micro-rc') {
+      selectNode(node);
+      if (typeof canvas !== 'undefined' && canvas && canvas.parentElement) {
+        const canvasW = canvas.parentElement.clientWidth;
+        const canvasH = canvas.parentElement.clientHeight;
+        animateCameraTo(canvasW / 2 - node.x * 1.15, canvasH / 2 - node.y * 1.15, 1.15);
+      }
+      return;
+    }
+
+    // 8. Non-container nodes (Applications, Control Plane, Sibling Systems & DC Array nodes) -> Drill down to downstream tier
+    if (node.tier === 'app') {
+      if (state.rollupDepth === 0) setRollupDepth(1);
+      const out = (outEdgesById.get(node.id) || []).map(e => nodeById.get(e.target)).find(Boolean) || nodeById.get('ctrl-edge');
+      if (out) {
+        selectNode(out);
+        if (typeof canvas !== 'undefined' && canvas && canvas.parentElement) {
+          animateCameraTo(canvas.parentElement.clientWidth / 2 - out.x * 0.9, canvas.parentElement.clientHeight / 2 - getNodeY(out) * 0.9, 0.9);
+        }
+      }
+      return;
+    }
+
+    if (node.tier === 'ctrl') {
+      if (state.rollupDepth < 2) setRollupDepth(state.rollupDepth + 1);
+      const out = (outEdgesById.get(node.id) || [])
+        .map(e => nodeById.get(e.target))
+        .find(n => n && (n.tier === 'sys' || n.tier === 'array')) || nodeById.get('sys-cabinet');
+      if (out) selectNode(out);
+      return;
+    }
+
+    if (node.tier === 'sys') {
+      const nextDepth = state.rollupDepth < 2 ? 2 : Math.min(4, state.rollupDepth + 1);
+      setRollupDepth(nextDepth);
+      const target = nodeById.get('arr-dcbus') || nodeById.get('arr-rack');
+      if (target) selectNode(target);
+      return;
+    }
+
+    if (node.tier === 'array') {
+      const nextDepth = state.rollupDepth < 3 ? 3 : 4;
+      setRollupDepth(nextDepth);
+      const target = node.id === 'arr-bmu' ? (nodeById.get('cell-balancing-bus') || nodeById.get('mod-01')) : nodeById.get('mod-01');
+      if (target) selectNode(target);
       return;
     }
   }
@@ -1509,27 +1633,41 @@
     const my = e.clientY - rect.top;
 
     const clickedNode = findNodeAt(mx, my);
+    const now = Date.now();
     if (clickedNode) {
+      if (state.lastClickedNodeId === clickedNode.id && (now - state.lastClickTime) <= 380 && (now - state.lastDrillTimestamp) > 300) {
+        state.lastDrillTimestamp = now;
+        state.lastClickTime = 0;
+        state.lastClickedNodeId = null;
+        drillDownNode(clickedNode);
+        return;
+      }
+      state.lastClickTime = now;
+      state.lastClickedNodeId = clickedNode.id;
       selectNode(clickedNode);
       return;
     }
 
+    state.lastClickedNodeId = null;
     state.isDragging = true;
     state.dragStartX = e.clientX - state.panX;
     state.dragStartY = e.clientY - state.panY;
   }
 
   function onDoubleClick(e) {
+    e.preventDefault();
+    const now = Date.now();
+    if (now - state.lastDrillTimestamp <= 320) return;
+    state.lastDrillTimestamp = now;
+
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     const clickedNode = findNodeAt(mx, my);
     if (clickedNode) {
-      if (clickedNode.type === 'micro-rc') {
-        rollUpOneLevel();
-      } else {
-        drillDownNode(clickedNode);
-      }
+      drillDownNode(clickedNode);
+    } else if (state.rollupDepth < 5) {
+      drillDownOneLevel();
     }
   }
 
@@ -1544,6 +1682,9 @@
       state.panY = e.clientY - state.dragStartY;
     } else {
       const hovered = findNodeAt(mx, my);
+      if (canvas.parentElement) {
+        canvas.parentElement.style.cursor = hovered ? 'pointer' : 'grab';
+      }
       if (hovered !== state.hoveredNode) {
         state.hoveredNode = hovered;
         recomputeLineageHighlight();
@@ -1563,10 +1704,21 @@
     const t = e.touches[0];
     const rect = canvas.getBoundingClientRect();
     const clicked = findNodeAt(t.clientX - rect.left, t.clientY - rect.top);
+    const now = Date.now();
     if (clicked) {
+      if (state.lastClickedNodeId === clicked.id && (now - state.lastClickTime) <= 400 && (now - state.lastDrillTimestamp) > 300) {
+        state.lastDrillTimestamp = now;
+        state.lastClickTime = 0;
+        state.lastClickedNodeId = null;
+        drillDownNode(clicked);
+        return;
+      }
+      state.lastClickTime = now;
+      state.lastClickedNodeId = clicked.id;
       selectNode(clicked);
       return;
     }
+    state.lastClickedNodeId = null;
     state.isDragging = true;
     state.dragStartX = t.clientX - state.panX;
     state.dragStartY = t.clientY - state.panY;
@@ -1637,22 +1789,58 @@
         const mn = microNodes[i];
         const dx = worldPos.x - mn.x;
         const dy = worldPos.y - mn.y;
-        if (dx * dx + dy * dy <= 42 * 42) return mn;
+        if (Math.abs(dx) <= 74 && dy >= -56 && dy <= 66) return mn;
       }
       return null;
     }
 
+    // 1. Check visible Cell Leaf nodes first (tight 4x4 grid tiles)
     for (let i = nodes.length - 1; i >= 0; i--) {
       const n = nodes[i];
-      if (visibleNodeIds.has(n.id)) {
-        const radius = n.tier === 'cell' && n.type === 'cell-leaf' ? 15 : 36;
+      if (n.tier === 'cell' && n.type === 'cell-leaf' && visibleNodeIds.has(n.id)) {
         const dx = worldPos.x - n.x;
         const dy = worldPos.y - getNodeY(n);
-        if (dx * dx + dy * dy <= radius * radius) {
+        if (Math.abs(dx) <= 17 && Math.abs(dy) <= 18) {
           return n;
         }
       }
     }
+
+    // 2. Check visible Macro nodes (circle + top [+N 🔽] badge + bottom health bar & labels)
+    let bestNode = null;
+    let bestDistSq = Infinity;
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i];
+      if ((n.tier !== 'cell' || n.type !== 'cell-leaf') && visibleNodeIds.has(n.id)) {
+        const ny = getNodeY(n);
+        const dx = worldPos.x - n.x;
+        const dy = worldPos.y - ny;
+        if (Math.abs(dx) <= 72 && dy >= -58 && dy <= 66) {
+          const dSq = dx * dx + dy * dy;
+          if (dSq < bestDistSq) {
+            bestDistSq = dSq;
+            bestNode = n;
+          }
+        }
+      }
+    }
+    if (bestNode) return bestNode;
+
+    // 3. Check Expanded Module Sub-Topology Box header/frame (maps to parent module node for L5 drill-down)
+    if (state.rollupDepth >= 3 && state.rollupDepth < 5) {
+      const expMods = getExpandedModuleIds();
+      for (let i = 0; i < expMods.length; i++) {
+        const modNode = nodeById.get(expMods[i]);
+        if (modNode && visibleNodeIds.has(modNode.id)) {
+          const boxX = modNode.x - 79;
+          const boxY = 948;
+          if (worldPos.x >= boxX && worldPos.x <= boxX + 158 && worldPos.y >= boxY && worldPos.y <= boxY + 175) {
+            return modNode;
+          }
+        }
+      }
+    }
+
     return null;
   }
 
@@ -1708,8 +1896,29 @@
       drawEdges();
       drawNodes();
     }
+    drawDrillRipples();
 
     ctx.restore();
+  }
+
+  function drawDrillRipples() {
+    if (!state.drillRipples || state.drillRipples.length === 0) return;
+    for (let i = state.drillRipples.length - 1; i >= 0; i--) {
+      const rp = state.drillRipples[i];
+      rp.radius += 3.2;
+      rp.alpha -= 0.04;
+      if (rp.alpha <= 0) {
+        state.drillRipples.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.strokeStyle = `rgba(56, 189, 248, ${rp.alpha.toFixed(2)})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(rp.x, rp.y, rp.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   function drawTierBands() {
@@ -2038,7 +2247,7 @@
     ctx.fillStyle = '#22d3ee';
     ctx.font = 'bold 16px -apple-system, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`🔬 ${cNode ? cNode.name : '电芯 #014'} — 二阶 Thevenin RC 等效电路与焦耳热耦合微观数字孪生 (双击节点或点击上卷返回模组)`, 250, 210);
+    ctx.fillText(`🔬 ${cNode ? cNode.name : '电芯 #014'} — 二阶 Thevenin RC 等效电路与焦耳热耦合微观数字孪生 (双击元件聚焦放大 | 点击上卷返回模组)`, 250, 210);
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '12px monospace';
@@ -2111,20 +2320,27 @@
     const btnRoll = document.getElementById('btn-drawer-rollup');
     const lblRoll = document.getElementById('lbl-drawer-rollup');
 
-    if (node.isExpandable) {
+    if (node.type === 'micro-rc') {
+      btnDrill.disabled = false;
+      lblDrill.textContent = '聚焦放大当前RC元件 (Focus)';
+      btnDrill.onclick = () => drillDownNode(node);
+    } else {
       btnDrill.disabled = false;
       if (node.tier === 'mod') {
         const isExp = state.expandedContainers.has(node.id);
-        lblDrill.textContent = isExp ? '收起16颗电芯 (Roll Up)' : '下钻16颗电芯 (Drill Down)';
+        lblDrill.textContent = isExp ? '深钻极值电芯RC电路 (L5)' : '下钻展开16颗电芯 (Drill Down)';
       } else if (node.tier === 'cell') {
         lblDrill.textContent = '下钻电芯RC电路 (Micro Twin)';
+      } else if (node.id === 'arr-rack') {
+        lblDrill.textContent = (state.rollupDepth >= 3 && getExpandedModuleIds().length < 10)
+          ? '下钻展开160颗电芯 (L4)'
+          : (state.rollupDepth >= 4 ? '深钻极值电芯RC电路 (L5)' : '下钻展开10串联模组 (L3)');
+      } else if (node.id === 'sys-cabinet') {
+        lblDrill.textContent = state.rollupDepth >= 2 ? '继续向下深钻一级 (Drill Deeper)' : '下钻展开阵列与电池簇 (L2)';
       } else {
-        lblDrill.textContent = '下钻展开子拓扑 (Drill Down)';
+        lblDrill.textContent = '下钻展开关联子拓扑 (Drill Down)';
       }
       btnDrill.onclick = () => drillDownNode(node);
-    } else {
-      btnDrill.disabled = true;
-      lblDrill.textContent = '已达叶节点';
     }
 
     if (node.parentId || state.rollupDepth > 0) {
@@ -2303,6 +2519,10 @@
         updateLeftRail();
         selectNode(ch);
       };
+      item.ondblclick = (ev) => {
+        if (ev && ev.stopPropagation) ev.stopPropagation();
+        drillDownNode(ch);
+      };
       list.appendChild(item);
     });
   }
@@ -2341,12 +2561,13 @@
         item.className = 'dep-node-item';
         item.innerHTML = `<span>${srcNode.icon} ${srcNode.name}</span><span style="font-size:10px;color:#94a3b8;">${e.label}</span>`;
         item.onclick = () => selectNode(srcNode);
+        item.ondblclick = () => drillDownNode(srcNode);
         inContainer.appendChild(item);
       }
     });
 
     if (outEdges.length === 0) {
-      outContainer.innerHTML = '<div style="font-size:11px;color:#64748b;">(无横向输出边，双击节点可下钻或上卷)</div>';
+      outContainer.innerHTML = '<div style="font-size:11px;color:#64748b;">(无横向输出边，双击节点可继续下钻)</div>';
     } else {
       outEdges.forEach(e => {
         const tgtNode = lookupNode(e.target);
@@ -2355,6 +2576,7 @@
           item.className = 'dep-node-item';
           item.innerHTML = `<span>${tgtNode.icon} ${tgtNode.name}</span><span style="font-size:10px;color:#94a3b8;">${e.label}</span>`;
           item.onclick = () => selectNode(tgtNode);
+          item.ondblclick = () => drillDownNode(tgtNode);
           outContainer.appendChild(item);
         }
       });
@@ -2423,9 +2645,20 @@
       `;
     }
 
-    const actionHint = node.isExpandable
-      ? (state.expandedContainers.has(node.id) ? '💡 双击节点：收起子实体向上卷曲 (Roll-Up)' : '💡 双击节点：向下钻取展开子拓扑 (Drill-Down)')
-      : '💡 单击查看实体详情与上游父容器';
+    let actionHint = '💡 双击节点：立即向下钻取关联子拓扑 (Drill-Down)';
+    if (node.tier === 'mod') {
+      actionHint = state.expandedContainers.has(node.id)
+        ? '💡 双击节点：深钻本模组极值电芯二阶RC电路 (L5 Micro-Twin)'
+        : '💡 双击节点：下钻展开本模组16颗串联电芯矩阵 (Drill-Down)';
+    } else if (node.tier === 'cell') {
+      actionHint = '💡 双击电芯：下钻进入二阶Thevenin RC等效电路微观孪生 (L5)';
+    } else if (node.id === 'arr-rack') {
+      actionHint = state.rollupDepth >= 3 && getExpandedModuleIds().length < 10
+        ? '💡 双击节点：下钻展开全簇160颗单体电芯矩阵 (L4 Unroll)'
+        : '💡 双击节点：向下钻取电池簇内部串联子拓扑 (Drill-Down)';
+    } else if (node.type === 'micro-rc') {
+      actionHint = '💡 双击元件：聚焦放大该RC极化/热耦合元件参数';
+    }
 
     tip.innerHTML = `
       <div class="tooltip-title">${node.icon} ${node.name}</div>
@@ -2647,12 +2880,17 @@
         updateLeftRail();
         updateDepthUI();
       };
+      btn.ondblclick = () => {
+        state.activeTier = null;
+        const reqDepth = tier.id === 'fleet' ? 0 : (tier.id === 'sys' ? 1 : (tier.id === 'array' ? 2 : (tier.id === 'mod' ? 3 : 4)));
+        setRollupDepth(reqDepth);
+      };
       rail.appendChild(btn);
     });
   }
 
   function initUI() {
-    // Parse ?station= or ?edge= URL query parameter for Grafana variable linkage
+    // Parse ?station= / ?edge= and ?depth= URL query parameters for Grafana linkage
     if (typeof window !== 'undefined' && window.location) {
       const params = new URLSearchParams(window.location.search);
       const urlStation = params.get('station') || params.get('edge');
@@ -2664,6 +2902,10 @@
         recomputeVisibilityCache();
         const sel = document.getElementById('station-select');
         if (sel) sel.value = urlStation;
+      }
+      const urlDepth = params.get('depth');
+      if (urlDepth !== null && !Number.isNaN(parseInt(urlDepth, 10))) {
+        setRollupDepth(parseInt(urlDepth, 10));
       }
     }
 
@@ -2762,7 +3004,9 @@
     refreshDrawerLiveValues,
     pollLiveTelemetry,
     drillDownNode,
+    drillDownOneLevel,
     rollUpOneLevel,
+    findNodeAt,
     recomputeVisibilityCache,
     getDescendantSummary,
     maxSeverityStatus

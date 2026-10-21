@@ -241,6 +241,51 @@ console.log('[6] PASS: Multi-station switching rebinds selectedNode & updates st
   assert.ok(domElements.get('drawer-deps-out').children.length >= 2, 'L5 rc-r0 must list downstream microEdges in drawer');
   console.log('[8] PASS: DOM Inspector Drawer (non-destructive refresh, L4 cell roll-up, L5 micro-rc dependencies) verified.');
 
+  // 9. Verify "双击即下钻" (Double-Click Always Drills Down L0 -> L1 -> L2 -> L3 -> L4 -> L5 & Full Hit-Box)
+  engine.setRollupDepth(0);
+  // L0 -> L1 via Fleet Station
+  engine.drillDownNode(engine.nodeById.get('station-bms'));
+  assert.strictEqual(engine.state.rollupDepth, 1, 'Double-clicking station at L0 must drill down to L1');
+  assert.strictEqual(engine.state.selectedNode.id, 'sys-cabinet', 'L1 drill-down must select sys-cabinet');
+
+  // L1 -> L2 via Cabinet
+  engine.drillDownNode(engine.nodeById.get('sys-cabinet'));
+  assert.strictEqual(engine.state.rollupDepth, 2, 'Double-clicking sys-cabinet at L1 must drill down to L2');
+  assert.strictEqual(engine.state.selectedNode.id, 'arr-rack', 'L2 drill-down must select arr-rack');
+
+  // L2 -> L3 via Cabinet or Rack (never collapses!)
+  engine.drillDownNode(engine.nodeById.get('sys-cabinet'));
+  assert.strictEqual(engine.state.rollupDepth, 3, 'Double-clicking already-expanded sys-cabinet at L2 must drill deeper to L3');
+
+  // L3 -> L4 via Rack (never collapses to L2!)
+  engine.drillDownNode(engine.nodeById.get('arr-rack'));
+  assert.strictEqual(engine.state.rollupDepth, 4, 'Double-clicking already-expanded arr-rack at L3 must drill deeper to L4 (160 cells)');
+
+  // L4 -> L5 via Rack
+  engine.drillDownNode(engine.nodeById.get('arr-rack'));
+  assert.strictEqual(engine.state.rollupDepth, 5, 'Double-clicking arr-rack at L4 must drill deeper to L5 (Cell RC Micro-Twin)');
+
+  // Module Two-Stage Drill-Down: Collapsed Mod-02 -> Expand 16 Cells -> Peak Cell L5 Micro-Twin
+  engine.state.savedL3Modules = ['mod-01'];
+  engine.setRollupDepth(3);
+  assert.strictEqual(engine.state.expandedContainers.has('mod-02'), false, 'mod-02 starts collapsed at L3');
+  engine.drillDownNode(engine.nodeById.get('mod-02'));
+  assert.strictEqual(engine.state.expandedContainers.has('mod-02'), true, '1st double-click on mod-02 must expand its 16 cells');
+  engine.drillDownNode(engine.nodeById.get('mod-02'));
+  assert.strictEqual(engine.state.rollupDepth, 5, '2nd double-click on already-expanded mod-02 must drill down to L5 (never collapse)');
+
+  // Hit-Box Test: Clicking on top badge (dy = -45) and bottom label (dy = +50) of a macro node
+  engine.setRollupDepth(3);
+  engine.state.panX = 0;
+  engine.state.panY = 0;
+  engine.state.scale = 1.0;
+  const mod3 = engine.nodeById.get('mod-03');
+  const hitTopBadge = engine.findNodeAt(mod3.x, 800 - 45);
+  const hitBottomLabel = engine.findNodeAt(mod3.x, 800 + 50);
+  assert.strictEqual(hitTopBadge && hitTopBadge.id, 'mod-03', 'findNodeAt must match top [+16电芯 🔽] badge of mod-03');
+  assert.strictEqual(hitBottomLabel && hitBottomLabel.id, 'mod-03', 'findNodeAt must match bottom title/metrics label of mod-03');
+  console.log('[9] PASS: "双击即下钻" (L0->L1->L2->L3->L4->L5 progressive drill-down & full badge/label hit-box) verified.');
+
   console.log('=== ALL SMARTSCAPE ENGINE v3.0 TESTS PASSED ===');
 })().catch(err => {
   console.error('Live test failed:', err);
