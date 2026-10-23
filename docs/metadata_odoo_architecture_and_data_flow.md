@@ -13,55 +13,57 @@
 ```mermaid
 flowchart TD
     subgraph EdgeDevices["Edge 边缘端集群"]
-        E0["Edge #0"]
-        E1["Edge #1"]
-        En["Edge #n"]
+        E0["Edge 0"]
+        E1["Edge 1"]
+        En["Edge N"]
     end
 
     subgraph BackendCore["OpenEMS Backend OSGi Core"]
-        EWS["Edge.Websocket 8084\n(设备接入网关)"]
-        UWS["Ui.Websocket 8082\n(用户交互网关)"]
-        EAdmin["OSGi EventAdmin\n(事件总线)"]
+        EWS["Edge.Websocket 8084 (设备接入网关)"]
+        UWS["Ui.Websocket 8082 (用户交互网关)"]
+        EAdmin["OSGi EventAdmin (事件总线)"]
         
         subgraph MetadataOdoo["io.openems.backend.metadata.odoo"]
             MO["MetadataOdoo (主服务组件)"]
-            EC["EdgeCache\n(O(1) 内存设备三向哈希字典)"]
+            EC["EdgeCache (内存三向哈希字典)"]
             
             subgraph ChannelPG["通道一: PostgreSQL 直连通道 (HikariCP)"]
                 PGH["PostgresHandler"]
                 PEH["PgEdgeHandler"]
-                IEW["InitializeEdgesWorker\n(启动批量预热缓存)"]
-                PWW["PeriodicWriteWorker\n(30s 周期性批量聚合写)"]
+                IEW["InitializeEdgesWorker (启动批量预热缓存)"]
+                PWW["PeriodicWriteWorker (30s 周期性批量聚合写)"]
             end
             
             subgraph ChannelOdoo["通道二: Odoo 业务中枢通道 (Virtual Threads)"]
                 OH["OdooHandler"]
-                OU["OdooUtils (JSON-RPC & XML-RPC)"]
+                OU["OdooUtils (JSON-RPC / XML-RPC)"]
                 ReqExec["requestExecutor (Java 21 虚拟线程池)"]
             end
         end
     end
 
     subgraph DataStorage["底层持久化与业务层"]
-        PG[("PostgreSQL 14+\n(库名: odoo)")]
-        ODOO["Odoo ERP 16+ (端口: 8069)\n(Addon: odoo-addon-openems)"]
+        PG[("PostgreSQL 14+ (库名: odoo)")]
+        ODOO["Odoo ERP 16+ (端口: 8069)"]
     end
 
-    E0 & E1 & En <==>|WSS 长连接| EWS
+    E0 <-->|WSS 长连接| EWS
+    E1 <-->|WSS 长连接| EWS
+    En <-->|WSS 长连接| EWS
     EWS -->|Apikey 快速鉴权| EC
     EWS -->|ON_SET_ONLINE / ON_SET_CONFIG| EAdmin
-    EAdmin -->|handleEvent()| MO
+    EAdmin -->|handleEvent| MO
     
     MO -->|高频变更暂存| PWW
-    PWW ==>|批量 UPDATE (每30s)| PG
-    IEW ==>|启动全量 SELECT| PG
+    PWW -->|批量 UPDATE 每30s| PG
+    IEW -->|启动全量 SELECT| PG
     IEW -->|写入| EC
-    PEH ==>|配置与系统日志 CRUD| PG
+    PEH -->|配置与系统日志 CRUD| PG
     
     UWS -->|密码鉴权 / 设备列表查询| MO
     MO -->|复杂业务 / 角色计算| OH
     OH -->|JSON-RPC / XML-RPC| ODOO
-    ODOO ==>|ORM 业务表管理| PG
+    ODOO -->|ORM 业务表管理| PG
 ```
 
 ### 通道对比与职责划分
@@ -78,7 +80,7 @@ flowchart TD
 ## 二、 核心组件与内存数据模型
 
 ### 1. `EdgeCache`：三向高并发内存字典
-在 `EdgeCache.java` 中，维护了针对储能电站的三向映射表，保证在任意维度均具备 $O(1)$ 的寻址性能：
+在 `EdgeCache.java` 中，维护了针对储能电站的三向映射表，保证在任意维度均具备 O(1) 的常数级寻址性能：
 - `edgeIdToEdge`（`Map<String, MyEdge>`）：通过 Edge 字符串标号（如 `edge0`, `edge1`）寻址。
 - `odooIdToEdgeId`（`Map<Integer, String>`）：通过 Odoo 数据库主键 `id` 寻址。
 - `apikeyToEdgeId`（`Map<String, String>`）：通过边缘端携带的通讯密钥 API-Key 快速完成握手校验。
@@ -117,59 +119,49 @@ sequenceDiagram
     participant Odoo as Odoo Web/ORM
 
     %% Flow 1: Edge Connect
-    rect rgb(240, 248, 255)
-    note right of Edge: 数据流 1: Edge 设备上线握手与配置同步
-    Edge->>EWS: WebSocket 握手 (Headers: Apikey=edge0)
+    Note over Edge,MO: 数据流 1: Edge 设备上线握手与配置同步
+    Edge->>EWS: WebSocket 握手 (Apikey=edge0)
     EWS->>MO: getEdgeIdForApikey("edge0")
     MO->>EC: getEdgeForApikey("edge0")
-    EC-->>MO: 返回 MyEdge 实例 (O(1) 内存命中)
+    EC-->>MO: 返回 MyEdge 实例 (内存命中)
     MO-->>EWS: 鉴权通过 (EdgeId = "edge0")
-    EWS->>MO: 发布事件 ON_SET_ONLINE(true)
-    MO->>PWW: onSetOnline(edge, true) 加入等待队列
-    Edge->>EWS: 发送 edgeConfigNotification(config)
+    EWS->>MO: 发布事件 ON_SET_ONLINE
+    MO->>PWW: onSetOnline 加入等待队列
+    Edge->>EWS: 发送 edgeConfigNotification
     EWS->>MO: 发布事件 ON_SET_CONFIG
-    MO->>PG: PgEdgeHandler 直写 openems_config & diff 历史
-    end
+    MO->>PG: PgEdgeHandler 直写配置与差异记录
 
     %% Flow 2: Telemetry Heartbeat & Periodic Write
-    rect rgb(255, 250, 240)
-    note right of Edge: 数据流 2: 实时心跳与定时批量刷盘
+    Note over Edge,PG: 数据流 2: 实时心跳与定时批量刷盘
     loop 每数秒一次数据上报
         Edge->>EWS: timestampedData / SumState
         EWS->>MO: ON_SET_LASTMESSAGE & ON_SET_SUM_STATE
-        MO->>PWW: 加入 lastMessageOdooIds 队列
+        MO->>PWW: 加入 lastMessage 队列
     end
-    Note over PWW,PG: 每 30 秒 PeriodicWriteWorker 批量唤醒
-    PWW->>PG: UPDATE openems_device SET lastmessage=now() WHERE id IN (...)
-    PWW->>PG: UPDATE openems_device SET openems_is_connected=true WHERE id IN (...)
-    PWW->>PG: UPDATE openems_device SET openems_sum_state_level=? WHERE id IN (...)
-    end
+    Note over PWW, PG: 每 30 秒 PeriodicWriteWorker 批量唤醒
+    PWW->>PG: UPDATE openems_device (lastmessage / is_connected / sum_state)
 
     %% Flow 3: User Auth & RBAC
-    rect rgb(245, 255, 245)
-    note right of UWS: 数据流 3: 用户鉴权与多租户权限校验
-    UWS->>MO: authenticateWithPassword("admin", "admin")
+    Note over UWS,Odoo: 数据流 3: 用户鉴权与多租户权限校验
+    UWS->>MO: authenticateWithPassword
     MO->>OH: authenticate(login, password)
     OH->>Odoo: POST /web/session/authenticate
-    Odoo-->>OH: 返回 HTTP Session Cookie (session_id)
-    OH->>Odoo: POST /openems_backend/info (携带 session_id)
-    Odoo-->>OH: 返回 User 资料、全局权限、语言配置
+    Odoo-->>OH: 返回 HTTP Session Cookie
+    OH->>Odoo: POST /openems_backend/info
+    Odoo-->>OH: 返回 User 资料与权限
     OH-->>MO: 创建 MyUser 缓存并返回 Token
     MO-->>UWS: 登录成功 (建立 UI 鉴权会话)
-    end
 
     %% Flow 4: Device Pagination
-    rect rgb(255, 245, 255)
-    note right of UWS: 数据流 4: 用户设备列表多租户动态穿透
-    UWS->>MO: getPageDevice(user, paginationOptions)
-    MO->>OH: getEdges(user, options)
+    Note over UWS,Odoo: 数据流 4: 用户设备列表多租户动态穿透
+    UWS->>MO: getPageDevice
+    MO->>OH: getEdges
     OH->>Odoo: POST /openems_backend/get_edges
-    Note over Odoo: Odoo 端校验 openems.device_user_role<br/>计算当前用户的派生权限 (admin/installer/owner/guest)
+    Note over Odoo: Odoo 端校验角色与派生权限
     Odoo-->>OH: 返回用户可见的 devices 列表
     OH->>EC: 关联 EdgeCache 补充实时在线状态与版本号
     OH-->>MO: 组装 EdgeMetadata 列表
     MO-->>UWS: 返回前端渲染多站监控大屏
-    end
 ```
 
 ### 1. 边缘端上线与鉴权数据流 (Edge Onboarding & Handshake)
