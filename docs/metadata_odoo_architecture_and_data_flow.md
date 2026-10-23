@@ -18,52 +18,50 @@ flowchart TD
         En["Edge N"]
     end
 
-    subgraph BackendCore["OpenEMS Backend OSGi Core"]
-        EWS["Edge.Websocket 8084 (设备接入网关)"]
-        UWS["Ui.Websocket 8082 (用户交互网关)"]
-        EAdmin["OSGi EventAdmin (事件总线)"]
-        
-        subgraph MetadataOdoo["io.openems.backend.metadata.odoo"]
-            MO["MetadataOdoo (主服务组件)"]
-            EC["EdgeCache (内存三向哈希字典)"]
-            
-            subgraph ChannelPG["通道一: PostgreSQL 直连通道 (HikariCP)"]
-                PGH["PostgresHandler"]
-                PEH["PgEdgeHandler"]
-                IEW["InitializeEdgesWorker (启动批量预热缓存)"]
-                PWW["PeriodicWriteWorker (30s 周期性批量聚合写)"]
-            end
-            
-            subgraph ChannelOdoo["通道二: Odoo 业务中枢通道 (Virtual Threads)"]
-                OH["OdooHandler"]
-                OU["OdooUtils (JSON-RPC / XML-RPC)"]
-                ReqExec["requestExecutor (Java 21 虚拟线程池)"]
-            end
-        end
+    subgraph BackendCore["OpenEMS Backend OSGi 核心层"]
+        EWS["Edge.Websocket 8084 设备接入网关"]
+        UWS["Ui.Websocket 8082 用户交互网关"]
+        EAdmin["OSGi EventAdmin 事件总线"]
+        MO["MetadataOdoo 主服务组件"]
+        EC["EdgeCache 内存三向哈希字典"]
     end
 
-    subgraph DataStorage["底层持久化与业务层"]
-        PG[("PostgreSQL 14+ (库名: odoo)")]
-        ODOO["Odoo ERP 16+ (端口: 8069)"]
+    subgraph ChannelPG["通道一: PostgreSQL 直连通道 (HikariCP)"]
+        PGH["PostgresHandler"]
+        PEH["PgEdgeHandler"]
+        IEW["InitializeEdgesWorker 启动预热"]
+        PWW["PeriodicWriteWorker 30s批量聚合写"]
     end
 
-    E0 <-->|WSS 长连接| EWS
-    E1 <-->|WSS 长连接| EWS
-    En <-->|WSS 长连接| EWS
+    subgraph ChannelOdoo["通道二: Odoo 业务中枢通道 (Virtual Threads)"]
+        OH["OdooHandler"]
+        OU["OdooUtils JSON-RPC / XML-RPC"]
+        ReqExec["requestExecutor 虚拟线程池"]
+    end
+
+    subgraph StorageLayer["底层持久化与业务层"]
+        PG["PostgreSQL 14+ 数据库 (odoo)"]
+        ODOO["Odoo ERP 16+ (端口 8069)"]
+    end
+
+    E0 -->|WSS 连接| EWS
+    E1 -->|WSS 连接| EWS
+    En -->|WSS 连接| EWS
+
     EWS -->|Apikey 快速鉴权| EC
-    EWS -->|ON_SET_ONLINE / ON_SET_CONFIG| EAdmin
+    EWS -->|发布事件| EAdmin
     EAdmin -->|handleEvent| MO
-    
-    MO -->|高频变更暂存| PWW
-    PWW -->|批量 UPDATE 每30s| PG
-    IEW -->|启动全量 SELECT| PG
-    IEW -->|写入| EC
-    PEH -->|配置与系统日志 CRUD| PG
-    
-    UWS -->|密码鉴权 / 设备列表查询| MO
-    MO -->|复杂业务 / 角色计算| OH
+
+    MO -->|设备状态暂存| PWW
+    PWW -->|每30s批量写入| PG
+    IEW -->|启动全量读取| PG
+    IEW -->|预热缓存| EC
+    PEH -->|配置与日志CRUD| PG
+
+    UWS -->|用户鉴权请求| MO
+    MO -->|调用业务接口| OH
     OH -->|JSON-RPC / XML-RPC| ODOO
-    ODOO -->|ORM 业务表管理| PG
+    ODOO -->|ORM 表维护| PG
 ```
 
 ### 通道对比与职责划分
@@ -113,18 +111,18 @@ sequenceDiagram
     participant MO as MetadataOdoo
     participant EC as EdgeCache
     participant PWW as PeriodicWriteWorker
-    participant PG as PostgreSQL (odoo)
-    participant UWS as UiWebsocket (前端/App)
+    participant PG as PostgreSQL
+    participant UWS as UiWebsocket
     participant OH as OdooHandler
-    participant Odoo as Odoo Web/ORM
+    participant Odoo as Odoo ERP
 
     %% Flow 1: Edge Connect
     Note over Edge,MO: 数据流 1: Edge 设备上线握手与配置同步
     Edge->>EWS: WebSocket 握手 (Apikey=edge0)
-    EWS->>MO: getEdgeIdForApikey("edge0")
-    MO->>EC: getEdgeForApikey("edge0")
-    EC-->>MO: 返回 MyEdge 实例 (内存命中)
-    MO-->>EWS: 鉴权通过 (EdgeId = "edge0")
+    EWS->>MO: getEdgeIdForApikey
+    MO->>EC: getEdgeForApikey
+    EC-->>MO: 返回 MyEdge 实例
+    MO-->>EWS: 鉴权通过 (EdgeId=edge0)
     EWS->>MO: 发布事件 ON_SET_ONLINE
     MO->>PWW: onSetOnline 加入等待队列
     Edge->>EWS: 发送 edgeConfigNotification
@@ -138,8 +136,8 @@ sequenceDiagram
         EWS->>MO: ON_SET_LASTMESSAGE & ON_SET_SUM_STATE
         MO->>PWW: 加入 lastMessage 队列
     end
-    Note over PWW, PG: 每 30 秒 PeriodicWriteWorker 批量唤醒
-    PWW->>PG: UPDATE openems_device (lastmessage / is_connected / sum_state)
+    Note over PWW,PG: 每 30 秒 PeriodicWriteWorker 批量唤醒
+    PWW->>PG: UPDATE openems_device
 
     %% Flow 3: User Auth & RBAC
     Note over UWS,Odoo: 数据流 3: 用户鉴权与多租户权限校验
