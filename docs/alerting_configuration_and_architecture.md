@@ -34,7 +34,7 @@ flowchart TD
     end
 
     subgraph NotificationLayer["5. 通知执行层 (Odoo Mail Service)"]
-        MAIL_CTRL["/openems_backend/mail/alerting_* 控制器"]
+        MAIL_CTRL["Odoo 邮件控制器 (alerting_offline / alerting_sum_state)"]
         QWEB["QWeb 多语言邮件模板"]
         SMTP["SMTP 邮件服务器推送"]
     end
@@ -46,9 +46,11 @@ flowchart TD
 
     UI -->|查询与修改告警延迟| JSONRPC
     JSONRPC -->|读写用户规则| TABLE
-    TABLE -.->|加载用户的离线/故障延迟配置| AlertingEngine
+    TABLE -.->|加载延迟配置| OFFLINE_H
+    TABLE -.->|加载延迟配置| SUM_H
 
-    EVT -->|事件分发| AlertingEngine
+    EVT -->|ON_SET_ONLINE 事件| OFFLINE_H
+    EVT -->|ON_SET_SUM_STATE 事件| SUM_H
     OFFLINE_H -->|5分钟重启防抖 + delay 计时| SCHED
     SUM_H -->|状态升级判定 + delay 计时| SCHED
     SCHED -->|二次确认无恢复后触发| MAIL_CTRL
@@ -136,28 +138,23 @@ sequenceDiagram
     participant Handler as OfflineEdgeHandler
     participant Sched as MessageScheduler
     participant Odoo as Odoo Mailer
+    participant User as 告警接收人 (Email)
 
     Edge->>Backend: WebSocket 连接断开
     Backend->>Handler: 发布事件 ON_SET_ONLINE (isOnline=false)
-    Note over Handler: 1. 启动现场重启防抖等待 (EDGE_REBOOT_MINUTES = 5分钟)
-    alt 设备在 5 分钟内恢复连线
-        Edge->>Backend: 重新建连握手 (isOnline=true)
-        Backend->>Handler: ON_SET_ONLINE (isOnline=true)
-        Handler->>Sched: 取消调度队列中的该电站 (tryRemoveEdge)
-        Note over Handler,Sched: 判定为现场正常重启或短暂抖动，不告警
-    else 5 分钟后设备仍然离线
-        Handler->>Handler: 查询该设备各用户的 offline_delay
-        Handler->>Sched: 加入延时调度队列 (目标触发时间 = 离线时间 + offline_delay)
-        Note over Sched: 倒计时等待到达设定延迟...
-        alt 延迟未到期前设备上线
-            Handler->>Sched: 取消告警任务 (tryRemoveEdge)
-        else 延迟到期
-            Note over Handler: 2. 邮件发送前二次检查 (pack.removeIf(!isEdgeOffline))
-            Handler->>Odoo: 发起邮件发送请求 (/mail/alerting_offline)
-            Odoo-->>Edge: 向各收件人发出离线告警邮件
-            Note over Odoo: 更新数据库 offline_last_notification 时间
-        end
-    end
+    Note over Handler: 阶段 1: 启动 5 分钟现场重启防抖等待
+
+    Note over Handler,Sched: 若设备在 5 分钟内恢复，取消任务不告警
+    Note over Handler,Sched: 若 5 分钟后依然离线，查询各用户配置的 offline_delay
+    Handler->>Sched: 加入延时调度队列 (触发时间 = 离线时间 + offline_delay)
+
+    Note over Sched,Handler: 阶段 2: 延时防抖倒计时 (如 15分钟 / 60分钟)
+    Note over Sched,Handler: 若倒计时期间设备重新上线，立即取消队列任务 (tryRemoveEdge)
+
+    Note over Handler: 阶段 3: 延时到期，发送前二次检查 (确认设备仍离线)
+    Handler->>Odoo: 调用邮件接口 (/mail/alerting_offline)
+    Odoo->>User: 渲染 QWeb 模板发送告警邮件
+    Odoo->>Odoo: 更新数据库 offline_last_notification 时间戳
 ```
 
 ### 2. 系统故障告警处理机制 (`SumStateHandler.java`)
