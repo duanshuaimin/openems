@@ -61,27 +61,159 @@ flowchart TD
 
 ---
 
-## 二、 边缘端：告警生成、聚合与硬件屏蔽机制
+## 二、 边缘端：全局状态三层级联聚合与通道上报机制 (`SumImpl.java`)
 
-### 1. 四级状态等级体系 (`Level.java`)
-OpenEMS 组件通道使用 `StateChannel` 定义其健康状态：
-- **`OK (0)`**：系统正常，无异常；
-- **`INFO (1)`**：信息提示（状态正常展示，不触发告警通知）；
-- **`WARNING (2)`**：警告等级（轻微故障，如通讯丢包、环境温度偏高、未致命降额）；
-- **`FAULT (3)`**：严重故障（停机故障，如电池单体过温过压、绝缘阻抗过低、PCS 急停）。
+在 OpenEMS 边缘端现场，上百个底层传感器、硬件驱动与控制逻辑每秒都在产生状态波动。为了确保系统既不会因为单点波动漏报故障，也不会由于瞬时毛刺频繁告警，OpenEMS 构建了 **“通道级 $\rightarrow$ 组件级 $\rightarrow$ 系统级” 的三层级联状态聚合模型**。
 
-### 2. 全局状态聚合与通道上报 (`SumImpl.java`)
-边缘端核心单例组件 [`Core.Sum`](file:///opt/openems/source/io.openems.edge.core/src/io/openems/edge/core/sum/SumImpl.java) 在每个控制周期（默认 1 秒）执行 `calculateAndSetSystemState()`：
-1. 遍历当前已启用的所有物理与逻辑组件；
-2. 提取每个组件的最大 `StateChannel` 等级（`component.getState()`）；
-3. 计算得到全站的最高等级（`highestLevel`）；
-4. 将结果写入全局只读通道 `_sum/State`；
-5. 该通道值连同时间戳遥测数据由 `EdgeWebsocket`（端口 8084）定时打包推送到云端。
+```mermaid
+flowchart TD
+    subgraph Level1["第一层: 通道级布尔告警点 (StateChannel)"]
+        C1["BMS: CELL_OVER_VOLTAGE (Level.FAULT)"]
+        C2["PCS: OVER_TEMPERATURE (Level.WARNING)"]
+        C3["Meter: COMM_TIMEOUT (Level.INFO)"]
+    end
 
-### 3. 硬件告警屏蔽过滤 (`ignoreStateComponents`)
-针对现场调试、已知非致命告警或停运维护的特定硬件组件，系统支持在 `Core.Sum` 的 OSGi 配置中配置屏蔽：
-- **配置项**：`ignoreStateComponents = ["meter1", "charger2"]`；
-- **作用机制**：当被屏蔽组件上报 `WARNING` 或 `FAULT` 时，`SumImpl` 自动将其排除在全局 `highestLevel` 裁决之外，防止单一非核心硬件故障导致整站误报停机。
+    subgraph Level2["第二层: 组件级状态收集器 (StateCollectorChannel)"]
+        COL_BMS["BMS.StateCollector (输出 bms0/State)"]
+        COL_PCS["PCS.StateCollector (输出 ess0/State)"]
+        COL_MTR["Meter.StateCollector (输出 meter0/State)"]
+    end
+
+    subgraph Level3["第三层: 系统全局聚合与屏蔽 (SumImpl.java)"]
+        FILTER["ignoreStateComponents 白名单屏蔽校验"]
+        SUM_CALC["calculateAndSetSystemState() 遍历全站最高等级"]
+        SUM_CHAN["输出全局通道: _sum/State"]
+    end
+
+    subgraph Level4["第四层: 实时流式上报 (SendChannelValuesWorker)"]
+        WORKER["SendChannelValuesWorker 周期检测通道变化"]
+        WS_OUT["打包 TimestampedDataNotification 经 WSS 8084 推送云端"]
+    end
+
+    C1 -->|onChange 触发| COL_BMS
+    C2 -->|onChange 触发| COL_PCS
+    C3 -->|onChange 触发| COL_MTR
+
+    COL_BMS -->|component.getState()| FILTER
+    COL_PCS -->|component.getState()| FILTER
+    COL_MTR -->|component.getState()| FILTER
+
+    FILTER -->|过滤屏蔽硬件后计算最高 Level| SUM_CALC
+    SUM_CALC -->|setNextValue| SUM_CHAN
+    SUM_CHAN -->|CycleWorker 驱动切图| WORKER
+    WORKER -->|变动推送| WS_OUT
+```
+
+### 1. 第一层：通道级布尔告警定义 (`StateChannel.java`)
+每个硬件组件在其驱动中，根据业务协议定义具体的告警指示通道：
+- **通道定义**：每一个告警通道均为 [`StateChannel`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/StateChannel.java)（继承自 `BooleanReadChannel`），静态绑定一个 [`Level`](file:///opt/openems/source/io.openems.common/src/io/openems/common/channel/Level.java) 枚举属性：
+  - `OK (0)`：无告警；
+  - `INFO (1)`：信息状态（如系统处于待机模式或已知软性状态）；
+  - `WARNING (2)`：警告状态（轻度越限、温升过快，设备仍可降额运转）；
+  - `FAULT (3)`：停机故障（电芯击穿、逆变器跳闸、急停保护）。
+- **触发机制**：硬件寄存器发生跳变时，驱动直接执行 `channel.setNextValue(true)`。
+
+### 2. 第二层：组件级状态自动收集器 (`StateCollectorChannel.java`)
+每个继承自 [`AbstractOpenemsComponent`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/component/AbstractOpenemsComponent.java) 的组件，都自动拥有一个预置通道 `ChannelId: STATE`（类型为 [`StateCollectorChannel`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/internal/StateCollectorChannel.java)）：
+1. **多路监听绑定**：组件内部注册的所有 `StateChannel` 都会通过 `addChannel()` 自动向该组件的 `StateCollectorChannel` 注册 `onChange` 监听器；
+2. **多值映射表**：内部维护 `Multimap<Level, ChannelId> activeStates`，记录当前处于 `true` 的所有告警通道及其级别；
+3. **组件内部择大胜出（Highest Wins）**：
+   ```java
+   var nextValue = 0;
+   for (Level level : Level.values()) {
+       if (this.activeStates.get(level).size() > 0) {
+           nextValue = Math.max(nextValue, level.getValue());
+       }
+   }
+   this.setNextValue(nextValue);
+   ```
+   任何一个具体的组件只要存在任意一个 `FAULT` 通道激活，该组件的整体状态 `component.getState()` 立即被推升至 `FAULT`。
+
+### 3. 第三层：系统级聚合与过滤 (`SumImpl.java`)
+[`Core.Sum`](file:///opt/openems/source/io.openems.edge.core/src/io/openems/edge/core/sum/SumImpl.java)（单例组件 `_sum`）负责将全站数十台设备的状态统一收敛为全站唯一的运行状态：
+
+#### （1）精准执行相位（Cycle Timing）
+Edge 的控制循环由 [`CycleWorker.java`](file:///opt/openems/source/io.openems.edge.core/src/io/openems/edge/core/cycle/CycleWorker.java#L61-L68) 严格编排调度（默认每 1000ms 循环一次）：
+- **步骤 1**：所有物理组件完成底层协议读取，各通道切入当前进程映像；
+- **步骤 2**：`CycleWorker` 显式调用 `this.parent.sumComponent.updateChannelsBeforeProcessImage()`；
+- **步骤 3**：`SumImpl` 内部依次计算电量、三相功率流动、电价，最后调用核心方法 `calculateAndSetSystemState()`；
+- **步骤 4**：`CycleWorker` 调用 `channels().forEach(channel -> channel.nextProcessImage())`，将全站计算值固化为该周期的标准映像。
+
+#### （2）状态聚合与白名单屏蔽实现细节
+```java
+private void calculateAndSetSystemState() {
+    var highestLevel = Level.OK;
+    var hasIgnoredComponentStates = false;
+
+    // 1. 遍历 Edge 当前所有启用的组件
+    for (var component : this.componentManager.getEnabledComponents()) {
+        if (component == this) {
+            continue; // 忽略 Sum 组件自身
+        }
+        var level = component.getState(); // 获取该组件汇总等级
+
+        // 2. 检查是否属于白名单忽略组件
+        if (this.ignoreStateComponents.contains(component.id()) && level != Level.OK) {
+            hasIgnoredComponentStates = true; // 记录存在被屏蔽的组件异常
+        } else {
+            setValue(this, Sum.ChannelId.HAS_IGNORED_COMPONENT_STATES, false);
+            // 3. 正常组件计入全站最高等级择大计算
+            if (level.getValue() > highestLevel.getValue()) {
+                highestLevel = level;
+            }
+        }
+    }
+
+    // 4. 若存在被屏蔽的异常，系统总状态升格至 INFO 提示，但不触发 WARNING/FAULT
+    if (hasIgnoredComponentStates) {
+        setValue(this, Sum.ChannelId.HAS_IGNORED_COMPONENT_STATES, true);
+        if (Level.INFO.getValue() > highestLevel.getValue()) {
+            highestLevel = Level.INFO;
+        }
+    }
+
+    // 5. 设置全局唯一的系统告警通道
+    this.getStateChannel().setNextValue(highestLevel);
+}
+```
+
+### 4. 第四层：端到云通道上报与数据流时序
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant HW as 现场物理设备 (BMS/PCS)
+    participant Cycle as CycleWorker (1s 循环)
+    participant Sum as Core.Sum (SumImpl)
+    participant Worker as SendChannelValuesWorker
+    participant EWS as Backend EdgeWebsocket (8084)
+    participant Mgr as Backend EdgeManager
+    participant PG as PostgreSQL (PeriodicWriteWorker)
+    participant Alert as Backend AlertingEngine
+
+    HW->>Cycle: 硬件寄存器更新 (如过温置 true)
+    Cycle->>Sum: updateChannelsBeforeProcessImage()
+    Note over Sum: 执行 calculateAndSetSystemState()<br/>聚合得到 highestLevel = FAULT
+    Sum->>Sum: 设置 _sum/State = FAULT
+    Cycle->>Cycle: nextProcessImage() 固化为周期快照
+
+    Cycle->>Worker: 周期末触发 collectData()
+    Note over Worker: 检测到 _sum/State 发生变化<br/>封装入 TimestampedDataNotification
+    Worker->>EWS: WebSocket 发送 JSON-RPC 通知
+    EWS->>Mgr: 解析参数 payload.get("_sum/State")
+    Mgr->>Mgr: edge.setSumState(FAULT)
+    Mgr->>Mgr: 发布 OSGi 事件 Edge.Events.ON_SET_SUM_STATE
+
+    par 异步批量落盘
+        Mgr->>PG: PeriodicWriteWorker 批量写入 openems_device.openems_sum_state_level
+    and 触发告警调度评估
+        Mgr->>Alert: SumStateHandler 接收事件并启动延时防抖队列
+    end
+```
+
+1. **边缘发送端**：[`SendChannelValuesWorker.java`](file:///opt/openems/source/io.openems.edge.controller.api.backend/src/io/openems/edge/controller/api/backend/SendChannelValuesWorker.java) 在每个 Cycle 收集变化通道，当检测到 `_sum/State` 发生改变时，将其以键值对 `{"_sum/State": "FAULT"}` 封装入 `TimestampedDataNotification` 报文发往云端；
+2. **云端接入端**：[`OnNotification.java`](file:///opt/openems/source/io.openems.backend.edge.manager/src/io/openems/backend/edge/manager/OnNotification.java#L228-L231) 拦截到包含 `_sum/State` 的推送时，就地提取为 `Level` 枚举，并调用 `edge.setSumState(sumState)`；
+3. **事件级联分发**：[`Edge.java`](file:///opt/openems/source/io.openems.backend.common/src/io/openems/backend/common/metadata/Edge.java#L253-L257) 派发 OSGi 事件 `Edge.Events.ON_SET_SUM_STATE`，一路由 `PeriodicWriteWorker` 每 30 秒合批写入 PostgreSQL 数据库表 `openems_device`，另一路同步唤醒 `SumStateHandler` 启动后续的延时防抖与邮件通知流程。
 
 ---
 
