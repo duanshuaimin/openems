@@ -104,14 +104,170 @@ flowchart TD
     WORKER -->|变动推送| WS_OUT
 ```
 
-### 1. 第一层：通道级布尔告警定义 (`StateChannel.java`)
-每个硬件组件在其驱动中，根据业务协议定义具体的告警指示通道：
-- **通道定义**：每一个告警通道均为 [`StateChannel`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/StateChannel.java)（继承自 `BooleanReadChannel`），静态绑定一个 [`Level`](file:///opt/openems/source/io.openems.common/src/io/openems/common/channel/Level.java) 枚举属性：
-  - `OK (0)`：无告警；
-  - `INFO (1)`：信息状态（如系统处于待机模式或已知软性状态）；
-  - `WARNING (2)`：警告状态（轻度越限、温升过快，设备仍可降额运转）；
-  - `FAULT (3)`：停机故障（电芯击穿、逆变器跳闸、急停保护）。
-- **触发机制**：硬件寄存器发生跳变时，驱动直接执行 `channel.setNextValue(true)`。
+### 1. 第一层：通道级布尔告警定义 (`StateChannel.java`) 深度解析
+
+现场设备层（BMS、PCS、电表、逆变器、IO 模块）运行过程中可能产生数十甚至数百种故障或预警。OpenEMS 采用以 [`StateChannel`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/StateChannel.java) 为核心的通道级告警模型，具有以下六大核心技术设计：
+
+#### （1）严格布尔语义（Pure Boolean Semantics）与控制面解耦
+在工业控制与数字能源系统中，最常见的误区是将模拟量（如温度 75℃、母线电压 820V）或混合状态码直接作为告警通道。OpenEMS 的通道级告警遵循**严格布尔语义（Boolean Semantics）**：
+- **二值互斥**：一个告警通道只有两种确定状态 —— `true`（告警已激活）与 `false`（告警未激活或已恢复），系统启动初始值默认严格为 `false`；
+- **模拟量门限解耦**：所有模拟量（如单体电芯过温、母线欠压）必须在硬件驱动或控制器内部完成阈值比较与判定，输出布尔量后再赋值给 `StateChannel`；
+- **单一职责**：一个 `StateChannel` 只代表一个原子级故障条件（例如 `CELL_OVER_VOLTAGE`、`CONTACTOR_OPEN_FAILED`），使得告警原因可精确定位，杜绝歧义。
+
+#### （2）声明式元数据体系与四级严重度（`Doc.of(Level)`）
+告警通道不是在代码中动态硬编码创建，而是通过组件接口中的 `ChannelId` 枚举以**声明式元数据**（Declarative Metadata）进行定义：
+
+```mermaid
+classDiagram
+    class OpenemsDoc {
+        +persistencePriority(Priority)
+        +text(String)
+    }
+    class BooleanDoc {
+        -int debounce
+        -Debounce debounceMode
+        +debounce(int, Debounce)
+    }
+    class StateChannelDoc {
+        -Level level
+        +getLevel() Level
+        +getChannelCategory() ChannelCategory
+    }
+    class Channel {
+        +value()
+        +setNextValue()
+        +onChange()
+    }
+    class BooleanReadChannel {
+        -int debounceCounter
+        +_setNextValue(Boolean)
+    }
+    class StateChannel {
+        -Level level
+        +getLevel() Level
+    }
+    OpenemsDoc <|-- BooleanDoc
+    BooleanDoc <|-- StateChannelDoc
+    Channel <|-- BooleanReadChannel
+    BooleanReadChannel <|-- StateChannel
+    StateChannelDoc ..> StateChannel : creates
+```
+
+在 [`StateChannelDoc.java`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/StateChannelDoc.java#L12-L22) 中，底层自动完成核心特性绑定：
+- **静态严重度绑定**：通道强绑定 [`Level`](file:///opt/openems/source/io.openems.common/src/io/openems/common/channel/Level.java) 枚举属性，涵盖 4 个级别：
+  - `OK (0)`：正常运行，无告警；
+  - `INFO (1)`：信息级状态（如系统处于待机模式或已知软性状态）；
+  - `WARNING (2)`：警告级异常（如环境温度偏高、滤网脏堵，设备降额运转但不停机）；
+  - `FAULT (3)`：严重故障（如直流过压、急停触发、逆变器跳闸，系统立即联锁停机保护）。
+- **分类标识**：`getChannelCategory()` 明确返回 `ChannelCategory.STATE`，在全站通道检索、监控看板和持久化归档中被区分识别；
+- **高优先级持久化（`PersistencePriority.HIGH`）**：告警通道默认配置最高持久化优先级，确保每一次由 `false` 到 `true`（触发）或 `true` 到 `false`（恢复）的跳变都会作为首要时序数据（SOE 顺序事件记录）立即归档入 InfluxDB，用于故障精准溯源。
+
+#### （3）硬件协议寄存器直接位映射（以 BMW 储能电池驱动为例）
+在硬件通信驱动实现中，现场设备（如 BMS、PCS）通常通过 Modbus 寄存器以“状态字（Bitmask / Status Words）”的形式一次性反馈数十个内部故障状态。OpenEMS 提供了 [`BitsWordElement`](file:///opt/openems/source/io.openems.edge.bridge.modbus/src/io/openems/edge/bridge/modbus/api/element/BitsWordElement.java) 机制，实现硬件寄存器比特位与 `StateChannel` 的零代码胶水映射：
+
+**定义阶段：在组件接口枚举中声明告警通道与级别**（参考 [`BatteryBmw.java`](file:///opt/openems/source/io.openems.edge.battery.bmw/src/io/openems/edge/battery/bmw/BatteryBmw.java#L53-L125)）：
+```java
+public interface BatteryBmw extends Battery, ModbusComponent, OpenemsComponent {
+    public static enum ChannelId implements io.openems.edge.common.channel.ChannelId {
+        // 停机级故障 (Level.FAULT)
+        UNSPECIFIED_ERROR(Doc.of(Level.FAULT).text("Unspecified Error - Cell-config-Error")),
+        LOW_VOLTAGE_ERROR(Doc.of(Level.FAULT).text("Low Voltage Error - Cell voltage minimal")),
+        HIGH_VOLTAGE_ERROR(Doc.of(Level.FAULT).text("High Voltage Error - Cell voltage maximal")),
+        CHARGE_CURRENT_ERROR(Doc.of(Level.FAULT).text("Charge Current Error")),
+        INSULATION_ERROR(Doc.of(Level.FAULT).text("Insulation Error - Leakage detected")),
+
+        // 警告级异常 (Level.WARNING)
+        UNSPECIFIED_WARNING(Doc.of(Level.WARNING).text("Unspecified Warning")),
+        LOW_VOLTAGE_WARNING(Doc.of(Level.WARNING).text("Low Voltage Warning")),
+        HIGH_VOLTAGE_WARNING(Doc.of(Level.WARNING).text("High Voltage Warning")),
+        // ...
+    }
+}
+```
+
+**映射阶段：在协议驱动中将 Modbus 寄存器 Bit 位与通道一对一绑定**（参考 [`BatteryBmwImpl.java`](file:///opt/openems/source/io.openems.edge.battery.bmw/src/io/openems/edge/battery/bmw/BatteryBmwImpl.java#L188-L235)）：
+```java
+// 读取 1001 寄存器 (ErrBits1: 停机故障字)
+m(new BitsWordElement(1001, this)
+    .bit(0, BatteryBmw.ChannelId.UNSPECIFIED_ERROR)
+    .bit(1, BatteryBmw.ChannelId.LOW_VOLTAGE_ERROR)
+    .bit(2, BatteryBmw.ChannelId.HIGH_VOLTAGE_ERROR)
+    .bit(3, BatteryBmw.ChannelId.CHARGE_CURRENT_ERROR)
+    .bit(4, BatteryBmw.ChannelId.DISCHARGE_CURRENT_ERROR)
+    .bit(11, BatteryBmw.ChannelId.INSULATION_ERROR)
+    .bit(12, BatteryBmw.ChannelId.CONTACTOR_ERROR)
+    .bit(15, BatteryBmw.ChannelId.COMMUNICATION_ERROR)
+),
+// 读取 1003 寄存器 (WarnBits1: 警告状态字)
+m(new BitsWordElement(1003, this)
+    .bit(0, BatteryBmw.ChannelId.UNSPECIFIED_WARNING)
+    .bit(1, BatteryBmw.ChannelId.LOW_VOLTAGE_WARNING)
+    .bit(2, BatteryBmw.ChannelId.HIGH_VOLTAGE_WARNING)
+    .bit(3, BatteryBmw.ChannelId.CHARGE_CURRENT_WARNING)
+)
+```
+当 Modbus 协议栈解析到底层二进制字后，`BitsWordElement` 自动完成位移和掩码提取，将对应 bit 的布尔值灌入对应的 `StateChannel` 中，实现完全声明式、高吞吐的硬件通道映射。
+
+#### （4）原生连续采样滤波与防抖机制（`Debounce`）
+工业现场常伴随剧烈电磁干扰、继电器触点弹跳、偶发总线 CRC 误码。如果将底层原始跳变直接作为告警输出，极易引发**瞬时误报与告警震荡**。
+
+OpenEMS 在 [`BooleanDoc`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/BooleanDoc.java#L44-L48) 与 [`BooleanReadChannel`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/BooleanReadChannel.java#L30-L94) 中原生集成了基于 Cycle 周期的连续采样计数器防抖机制，支持三种滤波模式（[`Debounce.java`](file:///opt/openems/source/io.openems.common/src/io/openems/common/channel/Debounce.java#L3-L22)）：
+
+```mermaid
+flowchart TD
+    RAW["现场原始采样输入 (setNextValue)"] --> CHECK{"防抖模式判断"}
+    
+    CHECK -->|TRUE_VALUES_IN_A_ROW| C_TRUE{"连续采样达到预设阈值"}
+    C_TRUE -->|计数达标| OUT_TRUE["通道状态置为 true 确认告警"]
+    C_TRUE -->|计数未满或遇到 false| OUT_FALSE_WAIT["通道保持 false 过滤毛刺"]
+    
+    CHECK -->|FALSE_VALUES_IN_A_ROW| C_FALSE{"连续采样达到预设阈值"}
+    C_FALSE -->|计数达标| OUT_FALSE["通道状态置为 false 确认自愈"]
+    C_FALSE -->|计数未满或遇到 true| OUT_TRUE_WAIT["通道保持 true 防止弹跳闪烁"]
+    
+    CHECK -->|SAME_VALUES_IN_A_ROW| C_SAME{"连续采样达到预设阈值"}
+    C_SAME -->|计数达标| OUT_CHANGE["通道正式发生状态翻转"]
+    C_SAME -->|计数未满| OUT_KEEP["保持原状态不变 双向滤波"]
+```
+
+1. **`TRUE_VALUES_IN_A_ROW_TO_SET_TRUE`（置位滤波）**：
+   - 只有当底层连续 $N$ 个 Cycle（例如连续 10 秒）均上报 `true` 时，通道才最终置为 `true`；期间只要有 1 个 Cycle 出现 `false`，计数器立即归零。
+   - **适用场景**：现场通信瞬断容忍、偶发温度漂移检测。
+   - **实际配置代码**（参考 [`ModbusApi.java`](file:///opt/openems/source/io.openems.edge.controller.api.modbus/src/io/openems/edge/controller/api/modbus/ModbusApi.java#L18)）：
+     ```java
+     Doc.of(Level.FAULT)
+        .debounce(10, Debounce.TRUE_VALUES_IN_A_ROW_TO_SET_TRUE)
+        .text("Modbus 连续 10 个周期通信失败才判定停机故障")
+     ```
+2. **`FALSE_VALUES_IN_A_ROW_TO_SET_FALSE`（复位滤波）**：
+   - 告警触发后，现场必须连续 $N$ 个周期全部上报 `false`，通道才判定故障清除自愈。
+   - **适用场景**：继电器触点弹跳、电弧打火抑制、间歇性接触不良（防止告警在秒级内反复告警与恢复）。
+3. **`SAME_VALUES_IN_A_ROW_TO_CHANGE`（双向滤波）**：
+   - 无论是从正常跃迁至告警，还是从告警恢复至正常，都必须在目标状态下连续稳定保持 $N$ 个周期才允许翻转。
+   - **实际配置代码**（参考 [`ModbusComponent.java`](file:///opt/openems/source/io.openems.edge.bridge.modbus/src/io/openems/edge/bridge/modbus/api/ModbusComponent.java#L29-L31)）：
+     ```java
+     MODBUS_COMMUNICATION_FAILED(Doc.of(Level.WARNING)
+        .debounce(10, Debounce.SAME_VALUES_IN_A_ROW_TO_CHANGE)
+        .text("Modbus Communication failed"))
+     ```
+
+#### （5）复合告警聚合器（`StateChannel.TriggerOnAny`）
+在复杂控制逻辑中，某些宏观状态往往由多个子告警联合触发。`StateChannel` 内置了 [`TriggerOnAny`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/StateChannel.java#L27-L66) 函数式消费监听器：
+- 接收一组源通道列表（`sourceChannelIds...`）；
+- 自动注册响应式 `onChangeCallback` 监听；
+- 只要任意一个源通道激活为 `true`，目标通道自动置为 `true`，并打印日志指示触发源；
+- 仅当所有源通道全部归零恢复后，目标通道才复位为 `false`。
+
+#### （6）向上响应式联动驱动（Reactive Cascading to Layer 2）
+`StateChannel` 在组件生命周期内完全遵循**自驱动响应式设计**，避免了组件级的轮询损耗：
+- 在 [`AbstractOpenemsComponent.java`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/component/AbstractOpenemsComponent.java#L393-L395) 的 `addChannel()` 方法中，只要检测到当前注册的通道是 `StateChannel` 实例：
+  ```java
+  if (channel instanceof StateChannel sc) {
+      this.getStateChannel().addChannel(sc);
+  }
+  ```
+- 组件框架自动将该 `StateChannel` 注册进第二层组件收集器 `StateCollectorChannel`；
+- 一旦通道经防抖后触发真实值跃迁，立即触发第二层收集器的 `activeStates` 多值映射表更新，以事件驱动方式极速完成“通道级 $\rightarrow$ 组件级”的毫秒级向上级联推导。
 
 ### 2. 第二层：组件级状态自动收集器 (`StateCollectorChannel.java`)
 每个继承自 [`AbstractOpenemsComponent`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/component/AbstractOpenemsComponent.java) 的组件，都自动拥有一个预置通道 `ChannelId: STATE`（类型为 [`StateCollectorChannel`](file:///opt/openems/source/io.openems.edge.common/src/io/openems/edge/common/channel/internal/StateCollectorChannel.java)）：
