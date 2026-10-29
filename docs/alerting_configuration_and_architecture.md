@@ -11,7 +11,7 @@ OpenEMS 告警体系采用 **“边缘端状态聚合与硬件屏蔽 $\rightarro
 ```mermaid
 flowchart TD
     subgraph EdgeLayer["1. 边缘端现场层 (OpenEMS Edge)"]
-        COMP["各物理/控制组件 (BMS / PCS / Inverter / Meter)"]
+        COMP["各物理与控制组件 (BMS / PCS / Inverter / Meter)"]
         SUM["核心状态聚合组件 (Core.Sum)"]
         IGNORE["ignoreStateComponents 告警屏蔽列表"]
     end
@@ -39,10 +39,10 @@ flowchart TD
         SMTP["SMTP 邮件服务器推送"]
     end
 
-    COMP -->|StateChannel: INFO/WARNING/FAULT| SUM
+    COMP -->|布尔告警通道| SUM
     IGNORE -.->|忽略特定硬件异常| SUM
-    SUM -->|_sum/State 遥测通道| EWS
-    EWS -->|ON_SET_ONLINE / ON_SET_SUM_STATE| EVT
+    SUM -->|系统总状态通道| EWS
+    EWS -->|在线与状态变更事件| EVT
 
     UI -->|查询与修改告警延迟| JSONRPC
     JSONRPC -->|读写用户规则| TABLE
@@ -51,8 +51,8 @@ flowchart TD
 
     EVT -->|ON_SET_ONLINE 事件| OFFLINE_H
     EVT -->|ON_SET_SUM_STATE 事件| SUM_H
-    OFFLINE_H -->|5分钟重启防抖 + delay 计时| SCHED
-    SUM_H -->|状态升级判定 + delay 计时| SCHED
+    OFFLINE_H -->|防抖与延时计时| SCHED
+    SUM_H -->|故障判定与延时计时| SCHED
     SCHED -->|二次确认无恢复后触发| MAIL_CTRL
     MAIL_CTRL -->|渲染模板| QWEB
     QWEB -->|投递邮件| SMTP
@@ -81,7 +81,7 @@ flowchart TD
 
     subgraph Level3["第三层: 系统全局聚合与屏蔽 (SumImpl.java)"]
         FILTER["ignoreStateComponents 白名单屏蔽校验"]
-        SUM_CALC["calculateAndSetSystemState() 遍历全站最高等级"]
+        SUM_CALC["calculateAndSetSystemState 遍历全站最高等级"]
         SUM_CHAN["输出全局通道: _sum/State"]
     end
 
@@ -94,13 +94,13 @@ flowchart TD
     C2 -->|onChange 触发| COL_PCS
     C3 -->|onChange 触发| COL_MTR
 
-    COL_BMS -->|component.getState()| FILTER
-    COL_PCS -->|component.getState()| FILTER
-    COL_MTR -->|component.getState()| FILTER
+    COL_BMS -->|组件状态| FILTER
+    COL_PCS -->|组件状态| FILTER
+    COL_MTR -->|组件状态| FILTER
 
-    FILTER -->|过滤屏蔽硬件后计算最高 Level| SUM_CALC
-    SUM_CALC -->|setNextValue| SUM_CHAN
-    SUM_CHAN -->|CycleWorker 驱动切图| WORKER
+    FILTER -->|过滤屏蔽硬件后计算最高等级| SUM_CALC
+    SUM_CALC -->|更新通道值| SUM_CHAN
+    SUM_CHAN -->|进程映像同步| WORKER
     WORKER -->|变动推送| WS_OUT
 ```
 
@@ -182,33 +182,30 @@ private void calculateAndSetSystemState() {
 ```mermaid
 sequenceDiagram
     autonumber
-    participant HW as 现场物理设备 (BMS/PCS)
-    participant Cycle as CycleWorker (1s 循环)
-    participant Sum as Core.Sum (SumImpl)
+    participant HW as 现场物理设备
+    participant Cycle as CycleWorker
+    participant Sum as Core.Sum
     participant Worker as SendChannelValuesWorker
-    participant EWS as Backend EdgeWebsocket (8084)
+    participant EWS as Backend EdgeWebsocket
     participant Mgr as Backend EdgeManager
-    participant PG as PostgreSQL (PeriodicWriteWorker)
+    participant PG as PostgreSQL (odoo)
     participant Alert as Backend AlertingEngine
 
     HW->>Cycle: 硬件寄存器更新 (如过温置 true)
     Cycle->>Sum: updateChannelsBeforeProcessImage()
-    Note over Sum: 执行 calculateAndSetSystemState()<br/>聚合得到 highestLevel = FAULT
-    Sum->>Sum: 设置 _sum/State = FAULT
-    Cycle->>Cycle: nextProcessImage() 固化为周期快照
+    Note over Sum: 执行 calculateAndSetSystemState 聚合得到最高等级 FAULT
+    Sum->>Sum: 写入全站状态通道 State = FAULT
+    Cycle->>Cycle: nextProcessImage 固化为周期快照
 
     Cycle->>Worker: 周期末触发 collectData()
-    Note over Worker: 检测到 _sum/State 发生变化<br/>封装入 TimestampedDataNotification
+    Note over Worker: 检测到 State 变化，封装入 TimestampedDataNotification
     Worker->>EWS: WebSocket 发送 JSON-RPC 通知
-    EWS->>Mgr: 解析参数 payload.get("_sum/State")
+    EWS->>Mgr: 解析提取系统总状态通道
     Mgr->>Mgr: edge.setSumState(FAULT)
-    Mgr->>Mgr: 发布 OSGi 事件 Edge.Events.ON_SET_SUM_STATE
+    Mgr->>Mgr: 发布事件 ON_SET_SUM_STATE
 
-    par 异步批量落盘
-        Mgr->>PG: PeriodicWriteWorker 批量写入 openems_device.openems_sum_state_level
-    and 触发告警调度评估
-        Mgr->>Alert: SumStateHandler 接收事件并启动延时防抖队列
-    end
+    Mgr->>PG: PeriodicWriteWorker 批量写入设备表
+    Mgr->>Alert: SumStateHandler 接收事件并启动延时防抖队列
 ```
 
 1. **边缘发送端**：[`SendChannelValuesWorker.java`](file:///opt/openems/source/io.openems.edge.controller.api.backend/src/io/openems/edge/controller/api/backend/SendChannelValuesWorker.java) 在每个 Cycle 收集变化通道，当检测到 `_sum/State` 发生改变时，将其以键值对 `{"_sum/State": "FAULT"}` 封装入 `TimestampedDataNotification` 报文发往云端；
