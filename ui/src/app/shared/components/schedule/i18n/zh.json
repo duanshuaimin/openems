@@ -1,0 +1,40 @@
+{
+  "JS_SCHEDULE": {
+    "PLEASE_CHOOSE": "选择时间",
+    "ROTATION": "周期轮换",
+    "REPEAT_EACH": "每隔",
+    "WEEK_DAY": "星期",
+    "NEXT_TASKS": "后续计划任务",
+    "EDIT": "编辑",
+    "ACCEPT": "保存",
+    "DELETE": "删除",
+    "START": "开始时间",
+    "END": "结束时间",
+    "DURATION": "持续时长",
+    "MODE": "工作模式",
+    "FREQUENCY": "重复频率",
+    "ADD": "添加",
+    "FREQ": {
+      "DAILY": "每天",
+      "WEEKLY": "每周",
+      "MONTHLY": "每月",
+      "YEARLY": "每年"
+    },
+    "MODE_SELECTION_PLACEHOLDER": "请选择",
+    "VALIDATION_ERROR_1": "请指定开始时间",
+    "VALIDATION_ERROR_2": "请指定结束时间",
+    "VALIDATION_ERROR_3": "请选择工作模式",
+    "VALIDATION_ERROR_4": "请以 HH:mm 格式指定开始时间，且必须为整一刻钟（00、15、30 或 45 分）",
+    "VALIDATION_ERROR_5": "请以 HH:mm 格式指定结束时间，且必须为整一刻钟（00、15、30 或 45 分）",
+    "VALIDATION_ERROR_6": "结束时间必须晚于开始时间",
+    "VALIDATION_ERROR_7": "缺少开始时间或持续时长",
+    "VALIDATION_ERROR_8": "请指定重复周期",
+    "VALIDATION_ERROR_9": "请至少设置一个重复周期",
+    "ADD_SUCCESS": "任务已成功添加到排程计划",
+    "ADD_ERROR": "未能添加任务",
+    "EDIT_SUCCESS": "任务已成功调整",
+    "EDIT_ERROR": "未能修改任务",
+    "DELETE_SUCCESS": "任务已成功删除",
+    "DELETE_ERROR": "未能删除任务"
+  }
+}

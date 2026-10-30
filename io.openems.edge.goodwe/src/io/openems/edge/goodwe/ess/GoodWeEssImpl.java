@@ -1,0 +1,195 @@
+package io.openems.edge.goodwe.ess;
+
+import static org.osgi.service.component.annotations.ReferenceCardinality.MANDATORY;
+import static org.osgi.service.component.annotations.ReferenceCardinality.OPTIONAL;
+import static org.osgi.service.component.annotations.ReferencePolicy.DYNAMIC;
+import static org.osgi.service.component.annotations.ReferencePolicy.STATIC;
+import static org.osgi.service.component.annotations.ReferencePolicyOption.GREEDY;
+
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventHandler;
+import org.osgi.service.event.propertytypes.EventTopics;
+import org.osgi.service.metatype.annotations.Designate;
+
+import io.openems.common.channel.AccessMode;
+import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
+import io.openems.common.referencetarget.GenerateTargetsFromReferences;
+import io.openems.edge.bridge.modbus.api.BridgeModbus;
+import io.openems.edge.bridge.modbus.api.ModbusComponent;
+import io.openems.edge.common.component.ComponentManager;
+import io.openems.edge.common.component.OpenemsComponent;
+import io.openems.edge.common.cycle.Cycle;
+import io.openems.edge.common.event.EdgeEventConstants;
+import io.openems.edge.common.modbusslave.ModbusSlave;
+import io.openems.edge.common.modbusslave.ModbusSlaveNatureTable;
+import io.openems.edge.common.modbusslave.ModbusSlaveTable;
+import io.openems.edge.common.sum.Sum;
+import io.openems.edge.ess.api.HybridEss;
+import io.openems.edge.ess.api.ManagedSymmetricEss;
+import io.openems.edge.ess.api.SymmetricEss;
+import io.openems.edge.ess.power.api.Power;
+import io.openems.edge.goodwe.common.AbstractGoodWe;
+import io.openems.edge.goodwe.common.GoodWe;
+import io.openems.edge.goodwe.common.enums.ControlMode;
+import io.openems.edge.timedata.api.Timedata;
+import io.openems.edge.timedata.api.TimedataProvider;
+
+@Designate(ocd = Config.class, factory = true)
+@Component(//
+		name = "GoodWe.Ess", //
+		immediate = true, //
+		configurationPolicy = ConfigurationPolicy.REQUIRE //
+) //
+@EventTopics({ //
+		EdgeEventConstants.TOPIC_CYCLE_BEFORE_PROCESS_IMAGE, //
+		EdgeEventConstants.TOPIC_CYCLE_AFTER_PROCESS_IMAGE //
+})
+@GenerateTargetsFromReferences("Modbus")
+public class GoodWeEssImpl extends AbstractGoodWe implements GoodWeEss, GoodWe, HybridEss, ManagedSymmetricEss,
+		SymmetricEss, ModbusComponent, OpenemsComponent, TimedataProvider, EventHandler, ModbusSlave {
+
+	private final AllowedChargeDischargeHandler allowedChargeDischargeHandler = new AllowedChargeDischargeHandler(this);
+
+	@Reference(policy = DYNAMIC, policyOption = GREEDY, cardinality = OPTIONAL)
+	private volatile Timedata timedata = null;
+
+	@Reference
+	private Cycle cycle;
+
+	@Reference
+	private Power power;
+
+	@Reference
+	private Sum sum;
+
+	@Reference
+	private ComponentManager componentManager;
+
+	@Override
+	@Reference(policy = STATIC, policyOption = GREEDY, cardinality = MANDATORY, //
+			target = "(&(id=${config.modbus_id})(enabled=true))")
+	protected void setModbus(BridgeModbus modbus) {
+		super.setModbus(modbus);
+	}
+
+	private Config config;
+
+	public GoodWeEssImpl() throws OpenemsNamedException {
+		super(//
+				SymmetricEss.ChannelId.ACTIVE_POWER, //
+				SymmetricEss.ChannelId.REACTIVE_POWER, //
+				HybridEss.ChannelId.DC_DISCHARGE_POWER, //
+				SymmetricEss.ChannelId.ACTIVE_CHARGE_ENERGY, //
+				SymmetricEss.ChannelId.ACTIVE_DISCHARGE_ENERGY, //
+				HybridEss.ChannelId.DC_CHARGE_ENERGY, //
+				HybridEss.ChannelId.DC_DISCHARGE_ENERGY, //
+				OpenemsComponent.ChannelId.values(), //
+				ModbusComponent.ChannelId.values(), //
+				SymmetricEss.ChannelId.values(), //
+				ManagedSymmetricEss.ChannelId.values(), //
+				HybridEss.ChannelId.values(), //
+				GoodWe.ChannelId.values(), //
+				GoodWeEss.ChannelId.values() //
+		);
+	}
+
+	@Activate
+	private void activate(ComponentContext context, Config config) throws OpenemsNamedException {
+		this.config = config;
+		super.activate(context, config.id(), config.alias(), config.enabled(), config.modbusUnitId());
+		this._setCapacity(this.config.capacity());
+	}
+
+	@Override
+	@Deactivate
+	protected void deactivate() {
+		super.deactivate();
+	}
+
+	@Override
+	public void applyPower(int activePower, int reactivePower) throws OpenemsNamedException {
+		this.handleMaxAcPower(this.getMaxApparentPower().orElse(0), this.getWbmsChargeMaxCurrent().get(),
+				this.getWbmsDischargeMaxCurrent().get(), this.getWbmsVoltage().get(), 1);
+
+		// Apply Power Set-Point
+		this.applyPowerHandler.apply(activePower, this.config.controlMode(), this.sum.getGridActivePower(),
+				this.getActivePower(), this.getMaxAcImport(), this.getMaxAcExport(), this.power.isFilterEnabled(), 1);
+	}
+
+	@Override
+	public String debugLog() {
+		return "SoC:" + this.getSoc().asString() //
+				+ "|L:" + this.getActivePower().asString() //
+				+ "|" + this.getGridModeChannel().value().asOptionString()//
+				+ "|Allowed:" + this.getAllowedChargePower().asStringWithoutUnit() + ";"
+				+ this.getAllowedDischargePower().asString();
+	}
+
+	@Override
+	public void handleEvent(Event event) {
+		if (!this.isEnabled()) {
+			return;
+		}
+
+		switch (event.getTopic()) {
+		case EdgeEventConstants.TOPIC_CYCLE_BEFORE_PROCESS_IMAGE ->
+			this.updatePowerAndEnergyChannels(this.getSoc().get());
+
+		case EdgeEventConstants.TOPIC_CYCLE_AFTER_PROCESS_IMAGE ->
+			this.allowedChargeDischargeHandler.accept(this.componentManager);
+		}
+	}
+
+	@Override
+	public Power getPower() {
+		return this.power;
+	}
+
+	@Override
+	public int getPowerPrecision() {
+		return 1;
+	}
+
+	@Override
+	public Timedata getTimedata() {
+		return this.timedata;
+	}
+
+	@Override
+	public Integer getSurplusPower() {
+		var productionPower = this.calculatePvProduction();
+		if (productionPower == null || productionPower < 100) {
+			return null;
+		}
+		// Surplus power is the PV production that cannot be fed into the battery. "+"
+		// because
+		// allowed charge power is always negative by convention
+		var surplus = productionPower + this.getAllowedChargePower().orElse(0);
+		if (surplus < 0) {
+			return null;
+		}
+		return surplus;
+	}
+
+	@Override
+	public boolean isManaged() {
+		return !this.config.controlMode().equals(ControlMode.INTERNAL);
+	}
+
+	@Override
+	public ModbusSlaveTable getModbusSlaveTable(AccessMode accessMode) {
+		return new ModbusSlaveTable(//
+				OpenemsComponent.getModbusSlaveNatureTable(accessMode), //
+				SymmetricEss.getModbusSlaveNatureTable(accessMode), //
+				ManagedSymmetricEss.getModbusSlaveNatureTable(accessMode), //
+				HybridEss.getModbusSlaveNatureTable(accessMode), //
+				ModbusSlaveNatureTable.of(GoodWeEss.class, accessMode, 100) //
+						.build());
+	}
+}

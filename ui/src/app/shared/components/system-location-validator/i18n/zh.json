@@ -1,0 +1,12 @@
+{
+  "SYSTEM_LOCATION_VALIDATOR": {
+    "ADDRESS_LIST_NOTE_INSTALLATION": "列表中未包含正确地址？请修改上方信息后重新执行验证。",
+    "ADDRESS_LIST_NOTE_PROFILE": "列表中未包含正确地址？如有必要，请修改上方填写的详细信息后重新验证。",
+    "ADDRESS_LIST_TITLE": "{{ edgeShortName }}{{ id }} 的电站安装地址对应哪一条？",
+    "APPLY_BUTTON_LABEL": "应用地址",
+    "BUTTON_LABEL_INSTALLATION": "执行地址验证",
+    "BUTTON_LABEL_PROFILE": "验证电站地址",
+    "GEO_CODE_RESULT_LABEL": "请选择匹配的地址：",
+    "UNKNOWN_ADDRESS": "后续也可在系统设置中手动输入地理经纬度坐标，以获得完整功能支持。"
+  }
+}

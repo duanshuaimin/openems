@@ -1,0 +1,36 @@
+{
+  "HEAT": {
+    "HOME": {
+      "CHOSEN_MODE": "当前选定模式"
+    },
+    "READ_ONLY": {
+      "NOT_AVAILABLE": "只读模式下不可用。"
+    },
+    "SCHEDULE": {
+      "SCHEDULE": "排程计划",
+      "MODE": "加热模式",
+      "MODE_SELECTION_PLACEHOLDER": "请选择",
+      "MANUAL_EVENTS": "手动事件",
+      "SMART_EVENTS": "智能事件",
+      "SMART_EVENT": "智能事件",
+      "SMART_EVENT_END": "明天 07:00",
+      "END_TEMPERATURE": "目标终止温度"
+    },
+    "SETTINGS": {
+      "NO_SETTINGS_AVAILABLE": "暂无可配置参数。",
+      "MODE": {
+        "FAST_HEAT": {
+          "TITLE": "快速加热",
+          "DESCRIPTION": "加热棒自动调节到对应档位全力加热。\n最长持续加热时间为 10 小时。\n随后将强制暂停 1 小时。"
+        },
+        "SURPLUS": {
+          "TITLE": "光伏余电消纳",
+          "DESCRIPTION": "支持对多个蓄能水箱均衡加热。系统根据光伏富余发电量自动匹配启动加热功率。"
+        },
+        "OFF": {
+          "TITLE": "停止加热"
+        }
+      }
+    }
+  }
+}

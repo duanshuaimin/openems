@@ -1,0 +1,24 @@
+{
+  "PROFILE": {
+    "SYSTEM_LOCATION_VALIDATOR": {
+      "TITLE": "电站地理位置",
+      "SUCCESS_MESSAGE": "电站地理位置更新成功。"
+    },
+    "SYSTEM_PROTOCOL": {
+      "LABEL": "系统诊断日志",
+      "DOWNLOAD": "下载",
+      "TITLE": "当前生成"
+    }
+  },
+  "EDGE": {
+    "CONFIG": {
+      "APP": {
+        "STATUS_INSTALLED": "已安装",
+        "STATUS_AVAILABLE": "可安装",
+        "STATUS_INCOMPATIBLE": "不兼容",
+        "STATUS_FILTER": "安装状态",
+        "CATEGORY_FILTER": "应用分类"
+      }
+    }
+  }
+}

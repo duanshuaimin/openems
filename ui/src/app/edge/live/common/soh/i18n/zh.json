@@ -1,0 +1,23 @@
+{
+  "STORAGE": {
+    "ADMIN_MODAL": {
+      "SOH": {
+        "TITLE": "电池容量测定 (SoH)",
+        "TITLE_TIP": "仅管理员可见",
+        "ENABLED_INFO": "储能系统 SoH 循环测试控制器已启用",
+        "INFO": "通过执行一次标准充放电测试循环测定电池实际容量，进而计算健康状态（SoH）。该测试过程根据电池类型和容量不同可能耗时数小时。建议仅在电池空闲不用时执行测试。",
+        "STATE_MACHINE_LABEL": "测试状态",
+        "CAPACITY_MEASURING": "正在测定容量",
+        "RESTART_WARNING": "重新启动 SoH 循环测试将重置当前的测量数据并开始新循环。您确定要重新测试吗？",
+        "ERROR": "SoH 循环测试过程中发生异常，详情请查看系统日志。",
+        "MEASURED_CAPACITY": "实测可用容量",
+        "SOH_PERCENT": "电池健康度 (SoH)",
+        "RESTART_CONFIRMATION_TITLE": "确认重新执行"
+      },
+      "BUTTONS": {
+        "START": "执行测定",
+        "RESTART": "重新执行"
+      }
+    }
+  }
+}

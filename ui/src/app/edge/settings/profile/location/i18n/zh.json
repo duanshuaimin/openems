@@ -1,0 +1,17 @@
+{
+  "SETTINGS_PROFILE_LOCATION": {
+    "LOCATION": "电站位置",
+    "SYSTEM_LOCATION": "电站安装地址",
+    "VALIDATED": "已通过验证",
+    "NOT_VALIDATED": "请验证您的电站安装地理位置。",
+    "TO_VALIDATION": "前往验证",
+    "EDIT": "编辑",
+    "EDIT_CARD_TITLE": "验证电站地理位置",
+    "EDIT_CARD_SUBTITLE": "验证位置数据用于运维服务和质保凭据。",
+    "EDIT_CARD_INFO": "系统仅保存经度和纬度信息以用于电站位置校验。",
+    "LONGITUDE": "经度",
+    "LATITUDE": "纬度",
+    "ADRESS_IS_VALIDATED": "地址已验证",
+    "SUCCESSFULL_VALIDATION": "位置验证成功！"
+  }
+}

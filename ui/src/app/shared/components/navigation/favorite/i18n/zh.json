@@ -1,0 +1,9 @@
+{
+  "FAVORITES": {
+    "ADDED_FAVORITE": "已添加到收藏",
+    "DESCRIPTION_OWNER": "点击心形图标收藏关键监控项，便于后续快速访问。您收藏的内容将显示在此处。",
+    "DESCRIPTION_OTHERS": "业主可点击心形图标将内容加入收藏夹，便于后续在此快速查看。",
+    "INFO": "快速跟踪重要监控指标",
+    "REMOVED_FAVORITE": "已从收藏中移除"
+  }
+}

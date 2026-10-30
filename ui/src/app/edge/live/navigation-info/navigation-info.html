@@ -1,0 +1,39 @@
+@if (isInitialized) {
+  <oe-navigation-view>
+    <div class="ion-padding ion-text-wrap ion-font">
+      @if (docs !== null) {
+        <ion-grid class="ion-no-padding-left-right">
+          <ion-row class="ion-no-padding-left-right">
+            <ion-col class="ion-no-padding-left-right">
+              <ion-button [href]="docs.link" target="_blank" fill="outline">
+                @if (docs.icon !== null){
+                  <ion-icon slot="start" [name]="docs.icon.name"></ion-icon>
+                }
+                <ion-label>{{ docs.displayName }}</ion-label>
+              </ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+
+
+        <oe-flat-widget-horizontal-line></oe-flat-widget-horizontal-line>
+      }
+      <!-- Text -->
+      <p class="ion-margin-bottom" translate>
+        GENERAL.NAVIGATION_INFO
+      </p>
+
+      <p class="ion-margin-bottom" translate>
+        GENERAL.NAVIGATION_DETAILS
+      </p>
+
+      <p>
+        <strong translate>GENERAL.LINK</strong><br>
+        <a href="{{link}}" translate>
+          GENERAL.LINK_TEXT
+        </a>
+      </p>
+
+    </div>
+  </oe-navigation-view>
+}

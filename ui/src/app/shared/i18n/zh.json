@@ -1,0 +1,6 @@
+{
+  "SHARED_MODULE": {
+    "PERSON_NAME_PROHIBITED_CHARACTERS": "{{formControlValue}} 包含至少一个非法字符：{{invalidCharacters}}。",
+    "CHECKBOX_REQUIRED_TO_BE_CHECKED": "必须勾选此复选框。"
+  }
+}

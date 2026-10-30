@@ -1,0 +1,8 @@
+{
+  "SYSTEM_STATUS_MESSAGE": {
+    "OK": "系统运行正常",
+    "INFO": "系统运行正常",
+    "FAULT": "存在故障",
+    "WARNING": "存在告警"
+  }
+}

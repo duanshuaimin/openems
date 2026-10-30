@@ -1,0 +1,188 @@
+package io.openems.edge.simulator.pvinverter;
+
+import static org.osgi.service.component.annotations.ReferenceCardinality.MANDATORY;
+import static org.osgi.service.component.annotations.ReferenceCardinality.OPTIONAL;
+import static org.osgi.service.component.annotations.ReferencePolicy.DYNAMIC;
+import static org.osgi.service.component.annotations.ReferencePolicy.STATIC;
+import static org.osgi.service.component.annotations.ReferencePolicyOption.GREEDY;
+
+import java.io.IOException;
+
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventHandler;
+import org.osgi.service.event.propertytypes.EventTopics;
+import org.osgi.service.metatype.annotations.Designate;
+
+import io.openems.common.referencetarget.GenerateTargetsFromReferences;
+import io.openems.common.types.ChannelAddress;
+import io.openems.common.types.MeterType;
+import io.openems.common.types.OpenemsType;
+import io.openems.edge.common.component.AbstractOpenemsComponent;
+import io.openems.edge.common.component.OpenemsComponent;
+import io.openems.edge.common.event.EdgeEventConstants;
+import io.openems.edge.meter.api.ElectricityMeter;
+import io.openems.edge.pvinverter.api.ManagedSymmetricPvInverter;
+import io.openems.edge.simulator.datasource.api.SimulatorDatasource;
+import io.openems.edge.timedata.api.Timedata;
+import io.openems.edge.timedata.api.TimedataProvider;
+import io.openems.edge.timedata.api.utils.CalculateEnergyFromPower;
+
+@Designate(ocd = Config.class, factory = true)
+@Component(//
+		name = "Simulator.PvInverter", //
+		immediate = true, configurationPolicy = ConfigurationPolicy.REQUIRE, //
+		property = { //
+				"type=PRODUCTION" //
+		})
+@EventTopics({ //
+		EdgeEventConstants.TOPIC_CYCLE_BEFORE_PROCESS_IMAGE, //
+		EdgeEventConstants.TOPIC_CYCLE_AFTER_PROCESS_IMAGE //
+})
+@GenerateTargetsFromReferences("datasource")
+public class SimulatorPvInverterImpl extends AbstractOpenemsComponent implements SimulatorPvInverter,
+		ManagedSymmetricPvInverter, ElectricityMeter, OpenemsComponent, TimedataProvider, EventHandler {
+
+	private final CalculateEnergyFromPower calculateProductionEnergy = new CalculateEnergyFromPower(this,
+			ElectricityMeter.ChannelId.ACTIVE_PRODUCTION_ENERGY);
+	private final CalculateEnergyFromPower calculateConsumptionEnergy = new CalculateEnergyFromPower(this,
+			ElectricityMeter.ChannelId.ACTIVE_CONSUMPTION_ENERGY);
+
+	@Reference(policy = STATIC, policyOption = GREEDY, cardinality = MANDATORY, //
+			target = "(&(id=${config.datasource_id})(enabled=true))")
+	private SimulatorDatasource datasource;
+
+	@Reference(policy = DYNAMIC, policyOption = GREEDY, cardinality = OPTIONAL)
+	private volatile Timedata timedata = null;
+
+	public SimulatorPvInverterImpl() {
+		super(//
+				OpenemsComponent.ChannelId.values(), //
+				ElectricityMeter.ChannelId.values(), //
+				ManagedSymmetricPvInverter.ChannelId.values(), //
+				SimulatorPvInverter.ChannelId.values() //
+		);
+	}
+
+	@Activate
+	private void activate(ComponentContext context, Config config) throws IOException {
+		super.activate(context, config.id(), config.alias(), config.enabled());
+		this.calculateProductionEnergy.setBaseEnergyManually(3_251_140L);
+		this.calculateConsumptionEnergy.setBaseEnergyManually(0L);
+	}
+
+	@Override
+	@Deactivate
+	protected void deactivate() {
+		super.deactivate();
+	}
+
+	@Override
+	public void handleEvent(Event event) {
+		if (!this.isEnabled()) {
+			return;
+		}
+		switch (event.getTopic()) {
+		case EdgeEventConstants.TOPIC_CYCLE_BEFORE_PROCESS_IMAGE:
+			this.updateChannels();
+			break;
+		case EdgeEventConstants.TOPIC_CYCLE_AFTER_PROCESS_IMAGE:
+			this.calculateEnergy();
+			break;
+		}
+	}
+
+	private void updateChannels() {
+		// copy write value to read value
+		this._setActivePowerLimit(this.getActivePowerLimitChannel().getNextWriteValueAndReset().orElse(null));
+
+		/*
+		 * get and store Simulated Active Power
+		 */
+		Integer simulatedActivePower = this.datasource.getValue(OpenemsType.INTEGER,
+				new ChannelAddress(this.id(), "ActivePower"));
+		this.channel(SimulatorPvInverter.ChannelId.SIMULATED_ACTIVE_POWER).setNextValue(simulatedActivePower);
+
+		// Apply Active Power Limit
+		var activePowerLimitOpt = this.getActivePowerLimit();
+		if (simulatedActivePower != null && activePowerLimitOpt.isDefined()) {
+			int activePowerLimit = activePowerLimitOpt.get();
+			simulatedActivePower = Math.min(simulatedActivePower, activePowerLimit);
+		}
+
+		this._setActivePower(simulatedActivePower);
+
+		if (simulatedActivePower != null) {
+			int pPhase = simulatedActivePower / 3;
+			this._setActivePowerL1(pPhase);
+			this._setActivePowerL2(pPhase);
+			this._setActivePowerL3(simulatedActivePower - pPhase * 2);
+
+			this._setVoltageL1(230000);
+			this._setVoltageL2(230000);
+			this._setVoltageL3(230000);
+			this._setVoltage(230000);
+			this._setFrequency(50000);
+
+			int iPhase = (int) Math.round((Math.abs((double) pPhase) / 230.0) * 1000.0);
+			this._setCurrentL1(iPhase);
+			this._setCurrentL2(iPhase);
+			this._setCurrentL3(iPhase);
+			this._setCurrent(iPhase * 3);
+		} else {
+			this._setActivePowerL1(null);
+			this._setActivePowerL2(null);
+			this._setActivePowerL3(null);
+			this._setCurrentL1(null);
+			this._setCurrentL2(null);
+			this._setCurrentL3(null);
+			this._setCurrent(null);
+			this._setVoltageL1(null);
+			this._setVoltageL2(null);
+			this._setVoltageL3(null);
+			this._setVoltage(null);
+			this._setFrequency(null);
+		}
+	}
+
+	@Override
+	public String debugLog() {
+		return this.getActivePower().asString();
+	}
+
+	@Override
+	public MeterType getMeterType() {
+		return MeterType.PRODUCTION;
+	}
+
+	/**
+	 * Calculate the Energy values from ActivePower.
+	 */
+	private void calculateEnergy() {
+		// Calculate Energy
+		var activePower = this.getActivePower().get();
+		if (activePower == null) {
+			// Not available
+			this.calculateProductionEnergy.update(null);
+			this.calculateConsumptionEnergy.update(null);
+		} else if (activePower > 0) {
+			// Production
+			this.calculateProductionEnergy.update(activePower);
+			this.calculateConsumptionEnergy.update(0);
+		} else {
+			// Consumption (or in this context: "Negative Production")
+			this.calculateProductionEnergy.update(0);
+			this.calculateConsumptionEnergy.update(activePower * -1);
+		}
+	}
+
+	@Override
+	public Timedata getTimedata() {
+		return this.timedata;
+	}
+}

@@ -1,0 +1,15 @@
+{
+  "BRAIINS_SINGLE": {
+    "SCHEDULE": {
+      "MODE": "运行模式",
+      "MODE_SELECTION_PLACEHOLDER": "请选择模式"
+    },
+    "MODE": {
+      "ACTIVE_MODE": "当前模式",
+      "LABEL": "基础模式",
+      "OFF": "关机",
+      "ON": "开机",
+      "SELECT_PROMPT": "矿机应采用哪种运行模式？"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "ALERTING": {
+    "DELAY": "告警延迟",
+    "CHECKBOX_HELP": "当触发告警事件时，系统将在设定的延迟时间过后发送通知邮件。",
+    "FAULT": "故障告警",
+    "ONLINE_STATUS": "在线状态",
+    "OTHER_USERS": "其他用户"
+  }
+}

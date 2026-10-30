@@ -1,0 +1,3058 @@
+{
+    "ABOUT": {
+        "BUILD": "构建版本",
+        "CONTACT": "如需提问或反馈，请访问 <a target=\"_blank\" href=\"https://community.openems.io/\">OpenEMS 社区论坛</a>。",
+        "CURRENT_DEVELOPMENTS": "最新进展",
+        "DESCRIPTION": "本能源管理系统基于 OpenEMS &ndash; 开源能源管理系统构建。OpenEMS 是一个用于监控和控制能源设备的模块化平台，由 OpenEMS 协会（OpenEMS Association e.V.）统筹开发。",
+        "DEVELOPED": "该用户界面作为开源软件开发。",
+        "ENERGY_MANAGEMENT": "能源管理系统",
+        "FAQ": "常见问题解答 (FAQ)",
+        "LANGUAGE": "选择语言：",
+        "THEME": "主题模式",
+        "NEW_UI": "新版界面",
+        "OPEN_EMS": "了解更多 OpenEMS 信息",
+        "PATCHNOTES": "当前构建版本的更新说明"
+    },
+    "APP": {
+        "FUNCTIONALITY_TEMPORARILY_NOT_AVAILABLE": "该功能在移动端暂不可用，请使用 Web 端。"
+    },
+    "CHANNELS": {
+        "ADD": "添加",
+        "ADD_CHANNEL": "添加通道",
+        "CHANNEL": "通道",
+        "COMPONENT": "组件",
+        "MORE_CHANNELS": "添加更多通道",
+        "SAVE": "保存配置",
+        "SAVE_DESCRIPTION": "保存配置将覆盖此 {{edgeShortName}} 的现有配置，并在刷新页面后生效。",
+        "SET_VALUE": "设定值",
+        "VALUE": "数值"
+    },
+    "EDGE": {
+        "CONFIG": {
+            "ALERTING": {
+                "ACTIVATE": "启用告警",
+                "DEACTIVATED": "已停用告警",
+                "DELAY": "告警延时",
+                "FAULT": "故障通知",
+                "OFFLINE": "离线通知",
+                "TOAST": {
+                    "ERROR": "加载告警设置失败",
+                    "SUCCESS": "告警设置已保存并生效"
+                },
+                "WARNING": "警告级别通知"
+            },
+            "BRIDGE": {
+                "NEW_CONNECTION": "新建通信连接...",
+                "NEW_DEVICE": "新建设备..."
+            },
+            "CONTROLLER": {
+                "APP": "所属应用：",
+                "INTERNALLY_ID": "内部标识 ID：",
+                "PRIORITY": "运行优先级："
+            },
+            "INDEX": {
+                "ADD_COMPONENTS": "安装组件",
+                "ADJUST_COMPONENTS": "配置组件参数",
+                "ALERTING": "告警通知中心",
+                "BRIDGE": "通信桥接与连接设备",
+                "COMMENT": "备注说明",
+                "CONFIGURATION": "系统配置",
+                "CONTROLLER": "应用与控制器",
+                "DATA_STORAGE": "时序数据存储",
+                "EXECUTE_SIMULATOR": "执行仿真模拟",
+                "EXPORT": "数据导出",
+                "EXPORT_CHANNELS": "导出通道数据",
+                "GENERAL_DATA": "基本信息",
+                "LIVE_LOG": "实时系统日志",
+                "LOG": "系统日志",
+                "MANUAL_CONTROL": "手动调试控制",
+                "NETWORK_CONFIGURATION": "网络参数配置",
+                "PRODUCT_TYPE": "产品型号",
+                "RENAME_COMPONENTS": "组件重命名",
+                "ROLE": "系统角色",
+                "SCHEDULER": "任务调度计划器",
+                "SIMULATOR": "模拟器引擎",
+                "SYSTEM": "系统管理",
+                "SYSTEM_EXECUTE": "执行系统管理命令",
+                "SYSTEM_PROFILE": "系统配置档案"
+            },
+            "LOG": {
+                "AUTOMATIC_UPDATING": "自动刷新日志",
+                "CONDENSED_OUTPUT": "紧凑输出模式",
+                "LEVEL": "日志级别",
+                "MESSAGE": "日志内容",
+                "SOURCE": "组件来源",
+                "TIMESTAMP": "时间戳"
+            },
+            "MORE": {
+                "MANUAL_COMMAND": "手动控制指令",
+                "MANUALPQ_POWER_SPECIFICATION": "功率规格定义",
+                "MANUALPQ_RESET": "参数复位",
+                "MANUALPQ_SUBMIT": "提交设定",
+                "REFU_INVERTER": "REFU 逆变器",
+                "REFU_START": "开机启动",
+                "REFU_START_STOP": "逆变器启停控制",
+                "REFU_STOP": "关机停止",
+                "SEND": "发送指令"
+            },
+            "PROFILE": {
+                "ERROR_DOWNLOADING_MODBUS_PROTOCOL": "下载 Modbus 通信协议点表失败"
+            },
+            "SCHEDULER": {
+                "ALWAYS": "始终执行",
+                "CLASS": "实现类：",
+                "CONTACT": "发生异常。请联系客服：<a href=\"mailto:{{ value }}\">{{ value }}</a>。",
+                "NEW_SCHEDULER": "新建调度器...",
+                "NOT_IMPLEMENTED": "尚未实现对应表单："
+            },
+            "APP": {
+                "APP_DETAILS": "应用详情",
+                "AVAILABLE": "可用应用",
+                "BUY_APP": "购买许可证密钥",
+                "CARDINALITY": "实例化基数",
+                "CATEGORY": "应用分类",
+                "CREATE_APP": "安装应用",
+                "DELETE_APP": "卸载应用",
+                "DELETE_CONFIRM": "确认卸载",
+                "DELETE_CONFIRM_DESCRIPTION": "卸载该应用将移除其创建的所有组件并清除全部相关配置参数。",
+                "DELETE_CONFIRM_HEADLINE": "您确定要卸载此应用吗？",
+                "ERROR_COMPATIBLE": "兼容性错误",
+                "ERROR_INSTALLABLE": "安装前置校验错误",
+                "FAIL_DELETE": "卸载应用失败：{{error}}",
+                "FAIL_INSTALL": "安装应用失败：{{error}}",
+                "FAIL_UPDATE": "更新应用失败：{{error}}",
+                "HEADER": "应用中心（App Center）当前处于预览版本。",
+                "INCOMPATIBLE": "不兼容应用",
+                "INSTALLED": "已安装应用",
+                "KEY": {
+                    "ALREADY_REGISTERED_DIFFERENT_APP": "该密钥已在当前系统用于其他应用！如果继续，原应用的注册将被移除。",
+                    "ALREADY_REGISTERED_DIFFERENT_SYSTEM": "该密钥已在其他系统上注册！如果继续，原系统注册将被移除。",
+                    "ENTER_KEY": "请输入您在订购该应用时收到的许可证密钥",
+                    "FAILED_LOADING_REGISTER_KEY": "获取已注册许可证密钥失败",
+                    "FAILED_REGISTER_KEY": "注册许可证密钥失败",
+                    "INVALID": "许可证密钥无效",
+                    "INVALID_PATTERN": "输入格式不正确",
+                    "KEY": "许可证密钥",
+                    "KEY_TYPO_MESSAGE_HINT": "<br><span class=\"warning\">注意</span>：输入许可证密钥时请注意易混淆字符：<ul><li>小写字母“l”与大写字母“I”</li><li>数字“0”与大写字母“O”</li></ul>建议直接从送货单复制密钥并粘贴到上方输入框，避免手动输入错误。<br>",
+                    "MASTER_KEY_HINT": "<br><span class=\"warning\">注意</span>：Master Key 在后台运行，不显示具体密钥。如果已有许可证密钥，建议优先使用。<br>",
+                    "REGISTER_KEY": "注册许可证密钥",
+                    "REGISTERED_KEY": "已注册许可证密钥",
+                    "SUCCESS_REGISTER_KEY": "许可证密钥注册成功",
+                    "USE_KEY": "兑换许可证密钥",
+                    "USE_MASTER_KEY": "使用 Master Key",
+                    "USE_REGISTERED_KEY": "兑换已注册的许可证密钥？",
+                    "VALID": "许可证密钥有效",
+                    "VALIDATE_KEY": "验证许可证密钥"
+                },
+                "MODIFY_APP": "修改应用",
+                "NAME": "应用中心",
+                "NAME_WITH_EDGE_NAME": "{{ edgeShortName }} 应用中心",
+                "NOT_AVAILABLE": "暂不可用",
+                "OAUTH": {
+                    "BROWSER_ONLY": "登录 {{ oauthName }} 需要在 Web 浏览器中完成，无法直接在 {{ edgeLongName }} 客户端中进行。",
+                    "CONNECT": "连接 {{ oauthName }}",
+                    "LOG_IN": "登录 {{ oauthName }}",
+                    "LOG_OUT": "退出登录",
+                    "STATES_MISMATCH": "登录过程中发生状态校验错误，请重试。",
+                    "SWITCH_TO_BROWSER": "前往浏览器",
+                    "UNABLE_TO_CONNECT_CODE": "无法连接授权码，请重试：{{ error }}"
+                },
+                "SUCCESS_DELETE": "应用卸载成功",
+                "SUCCESS_INSTALL": "应用安装成功",
+                "SUCCESS_UPDATE": "应用设置更新成功",
+                "TECHNICAL_NAME": "技术标识名",
+                "UNKNOWN_INSTALLATION_STEP": "未知的安装步骤：{{ step }}",
+                "UNUSED_REGISTERED_KEY_AVAILABLE": "当前仍有可安装应用许可证！点击“兑换许可证密钥”即可进行安装。",
+                "UPDATE_APP": "保存更新",
+                "UPDATE_AVAILABLE": "有新的 {{ edgeShortName }} 版本可用！请升级 {{ edgeShortName }}，以便在应用中心显示最新的 {{ edgeShortName }} 应用。"
+            }
+        },
+        "FOOTER": {
+            "REFRESHED_LAST": "更新于 {{period}} 前"
+        },
+        "HISTORY": {
+            "ACTIVE_DURATION": "有效持续时长",
+            "ACTIVE_DURATION_WITH_LEVEL": "等级 {{level}} 持续时长",
+            "APR": "4月",
+            "AUG": "8月",
+            "BEGIN_DATE": "选择开始日期",
+            "CURRENT": "电流",
+            "CURRENT_AND_VOLTAGE": "电流与电压",
+            "DAY": "日",
+            "DEC": "12月",
+            "END_DATE": "选择结束日期",
+            "EXPORT": "导出为 Excel 文件",
+            "EXPORT_LOADING": "正在生成报表，请稍候...",
+            "EXTERNAL_LIMITATION": "外部功率限制",
+            "FEB": "2月",
+            "FRI": "周五",
+            "GO": "查询",
+            "JAN": "1月",
+            "JUL": "7月",
+            "JUN": "6月",
+            "LAST_MONTH": "上月",
+            "LAST_WEEK": "上周",
+            "LAST_YEAR": "去年",
+            "MAR": "3月",
+            "MAY": "5月",
+            "MON": "周一",
+            "MONTH": "月",
+            "NO_DATA": "暂无历史数据",
+            "NOV": "11月",
+            "OCT": "10月",
+            "OTHER_PERIOD": "自定义周期",
+            "PERIOD": "时间段",
+            "PHASE_ACCURATE": "逐相精准数据",
+            "SAT": "周六",
+            "SELECTED_DAY": "{{ value }}",
+            "SELECTED_PERIOD": "已选时间范围：",
+            "SEP": "9月",
+            "SUN": "周日",
+            "THU": "周四",
+            "TODAY": "今天",
+            "TOMORROW": "明天",
+            "TOTAL": "总计",
+            "TRY_AGAIN": "请稍后重试...",
+            "TUE": "周二",
+            "VOLTAGE": "电压",
+            "WED": "周三",
+            "WEEK": "周",
+            "YEAR": "年",
+            "YESTERDAY": "昨天",
+            "NO_LOCAL_DATA_INFO": "本地暂无历史数据缓存",
+            "NO_LOCAL_DATA_NOTICE": "请登录云端在线监控系统查阅完整报表：<a class=\"ion-link\" href=\"http://www.fenecon.de\" target=\"_blank\">www.fenecon.de</a>。"
+        },
+        "INDEX": {
+            "EMERGENCY_RESERVE": {
+                "EMERGENCY_RESERVE": "应急备电储备",
+                "INFO_FOR_EMERGENCY_RESERVE_SLIDER": "启用应急备用电量后，可自由设定 5% 至 100% 之间的保护阈值。"
+            },
+            "ENERGYMONITOR": {
+                "ACTIVE_POWER": "有功功率",
+                "CONSUMPTION_WARNING": "用电负荷与未知发电设备",
+                "ERROR_TEMPORARY": "获取数据时出错，请稍后重试。",
+                "ERROR_TOO_LONG": "由于服务器维护，部分时段数据展示暂时受阻。在此期间您的数据完整保存在本地，并未丢失。您也可以通过<a href='https://docs.fenecon.de/de/_/latest/fems/ui/introduction.html#_offlinelokal' target='_blank'>本地监控</a>查看历史报表，敬请谅解。",
+                "GRID_METER": "电网关口表",
+                "PRODUCTION_METER": "发电计量表",
+                "REACTIVE_POWER": "无功功率",
+                "STORAGE": "储能系统",
+                "STORAGE_CHARGE": "储能充电",
+                "STORAGE_DISCHARGE": "储能放电",
+                "TITLE": "能量流向监控 (Energy Monitor)"
+            },
+            "RETROFITTING": {
+                "INFORMATION_FOR_INSTANT_START": "电池将以最大功率充放电，以便尽快达到扩容所需的目标荷电状态 {{targetSoc}} %。这可能会产生电网取电或上网馈电。该电量将保持 {{targetTimeBuffer}} 分钟；扩容完成或时间结束后，系统将恢复正常运行。",
+                "INFORMATION_FOR_PLANNED_EXPANSION": "电池预计将于 {{targetDate}} 的 {{targetTime}} 开始充放电，以在计划扩容时达到 {{targetSoc}} % 的目标 SoC。此过程可能引起电网取电或上网。该状态将维持 {{targetTimeBuffer}} 分钟；完成扩容后储能系统将恢复正常工作模式。",
+                "INFORMATION_FOR_PLANNED_EXPANSION_INVALID_TARGET_DATE": "电池将执行充放电以达到扩容所需的 {{targetSoc}} % 目标 SoC。",
+                "INSTANT_START": "立即启动",
+                "ON_DATE_AT_TIME": "于 {{date}} {{time}}",
+                "OPTIMAL": "电池容量扩容",
+                "PLANNED_EXPANSION": "计划扩容",
+                "IN_REFERENCE_CYCLE": "基准循环进行中 - 正在准备电池以进行容量扩充。",
+                "PREPARING": "准备电池扩容",
+                "REACHED_TARGET_SOC": "已就绪，可进行扩容作业",
+                "REFERENCING_OF_STORAGE": {
+                    "CONTENT": "在进行容量扩展前几天，必须对电池进行基准标定校准。这意味着电池需完全放电（SOC: 0%）然后再完全充满（SOC: 100%）。",
+                    "HEADER": "注意：扩容前必须先对电池进行循环校准",
+                    "TO_INSTRUCTIONS": "查阅扩容操作指南"
+                },
+                "SELECT_A_DATE": "请选择日期",
+                "TARGET_TIME_SPECIFIED": "容量扩容将于 {{targetDate}} {{targetTime}} 执行",
+                "UPDATE_TO_NEW_VERSION": "请升级至最新软件版本以使用电池扩容辅助功能。"
+            },
+            "SYSTEMUPDATE": "系统升级",
+            "WIDGETS": {
+                "AUTARCHY_INFO": "自给率表示当前用电需求中由自发光伏电和储能电池放电所满足的百分比。",
+                "CHANNELTRESHOLD": {
+                    "ACTIVE_TIME_OVER_PERIOD": "累计动作时长",
+                    "OUTPUT": "继电器输出",
+                    "TITLE": "通道阈值控制器"
+                },
+                "CHP": {
+                    "HIGH_THRESHOLD": "开机高功率阈值",
+                    "LOW_THRESHOLD": "关机低功率阈值"
+                },
+                "DELAYED_SELL_TO_GRID": {
+                    "CONTINUOUS_SELL_TO_GRID_POWER": "放电起始阈值",
+                    "RELATION_ERROR": "充电限制阈值必须大于放电限制阈值",
+                    "SELL_TO_GRID_POWER_LIMIT": "充电起始阈值"
+                },
+                "ENERIX_CONTROL": {
+                    "CHARGE_CONSUMPTION": "<b>注意：</b>在必要的技术维护充电之外主动从电网充电，需取得储能系统的合规报备。如有疑问，请咨询您的安装商。点击蓝色“保存”按钮即表示您已确认完成此项核验。<br/><br/><b>请注意：</b>获得德国可再生能源法 (EEG 2023) 补贴的前提是电池仅存储来自可再生能源或沼气的电力。启用此功能后将充入电网常规电力，无法保证 100% 为绿电。",
+                    "CONNECTED": "已连接",
+                    "DISCONNECTED": "未连接",
+                    "NO_DISCHARGE": "禁止放电",
+                    "NO_INPUT": "无输入",
+                    "NO_OVERWRITE": "无外部覆盖",
+                    "NOTE": "注意事项：",
+                    "OVERWRITE": "外部覆盖控制生效中",
+                    "OVERWRITE_INFO": "激活该功能后，储能系统的默认充放电设置将被来自 enerix Franchise GmbH & Co. KG 的外部调度指令接管。这可能会导致与常规运行策略存在偏差（例如即使电池电量充足也可能从电网取电）。",
+                    "OVERWRITE_MODE": "覆盖控制模式",
+                    "READ_ONLY": "只读模式",
+                    "DISCHARGE_TO_GRID_ACTIVATE": "允许主动向电网放电售电",
+                    "DISCHARGE_TO_GRID_DESCRIPTION": "<b>注意：</b>在技术运行必需之外主动向电网放电售电，需具备相应的储能并网许可。点击“保存”即确认已知晓并符合当地规定。",
+                    "CHARGE_FROM_GRID_ALLOWED": "允许主动从电网充电"
+                },
+                "EVCS": {
+                    "ACTIVATE_CHARGING": "启动充电桩",
+                    "ADMINISTRATION": {
+                        "CAR_ADMINISTRATION": "电动汽车车型管理",
+                        "CUSTOM_CAR_INFO": "如果您的爱车只能在达到特定输出功率阈值后才开始高效充电，开启该选项可将该限制纳入自动充电功率计算中。",
+                        "RENAULT_ZOE": "该充电桩主要为雷诺 Zoe (Renault Zoe) 充电吗？"
+                    },
+                    "AMOUNT_OF_CHARGING_STATIONS": "充电终端数量",
+                    "AUTOMATIC_SWITCHING": "自动单/三相相序切换",
+                    "AUTOMATIC_SWITCHING_DESCRIPTION": "自动相序切换要求电动车辆与充电桩硬件均支持此功能。切换过程可能需要数分钟，在此期间车辆会短暂暂停充电。",
+                    "CABLE": "充电线缆",
+                    "CABLE_NOT_CONNECTED": "线缆未插入车辆",
+                    "CAR_FULL": "动力电池已充满",
+                    "CHARGE_LIMIT_REACHED": "已达到设定的充电上限",
+                    "CHARGE_MODE": "充电模式选择",
+                    "CHARGE_TARGET": "充电目标值",
+                    "CHARGING": "充电中",
+                    "CHARGING_LIMIT": "单次充电限额",
+                    "CHARGING_POWER": "实时充电功率",
+                    "CHARGING_STATION": "充电桩",
+                    "CHARGING_STATION_CLUSTER": "充电桩集群调度",
+                    "CHARGING_STATION_DEACTIVATED": "充电桩已停用",
+                    "CHARGING_STATION_PLUGGED_IN": "插枪已插入",
+                    "CHARGING_STATION_PLUGGED_IN_EV": "枪头已插入车辆",
+                    "CHARGING_STATION_PLUGGED_IN_EVLOCKED": "充电枪已连接车辆并电子锁止",
+                    "CHARGING_STATION_PLUGGED_IN_LOCKED": "充电桩插头已锁止",
+                    "CLUSTER_CONFIG_ERROR": "充电桩集群参数配置发生错误",
+                    "CURRENT_CHARGE": "当前充入电量",
+                    "ENERGY_LIMIT": "充电电量上限",
+                    "ENERGY_SINCE_BEGINNING": "自启动充电以来的累计电量",
+                    "ENFORCE_CHARGING": "强制执行充电",
+                    "ERROR": "充电桩报警故障",
+                    "KEBA_WARNING": "提示：在 FEMS 与 KEBA P40 配合使用时，使用该模式可能偶尔出现异常。建议临时选择“自动模式（附带保底充电）”或“快速充电”。技术团队正在协同排查优化。",
+                    "LINK_TO_DOCUMENTATION": "查看详细文档",
+                    "FORCE_CHARGE_MODE": {
+                        "INFO": "在该模式下将强制为车辆充电，无论现场光伏余量如何，均以电网和光伏协同确保车辆持续充电。",
+                        "MAX_CHARGING": "最高允许充电功率",
+                        "MAX_CHARGING_DETAILS": "若车载 OBC 充电机不支持设定的大功率，系统会自动匹配至车辆的最大接收能力。",
+                        "NAME": "强制充电模式",
+                        "SHORT_NAME": "手动"
+                    },
+                    "FORCE_SINGLE_PHASE": "单相模式",
+                    "FORCE_THREE_PHASE": "三相模式",
+                    "HYSTERESIS": "充电桩防频起最短保持时间生效中",
+                    "HYSTERESIS_INFO": "为避免因光照波动导致频繁启停伤害电池，当前选定的充电模式将至少持续运行数分钟。",
+                    "MAX_ENERGY_RESTRICTION": "限制每次充电的最大能耗",
+                    "NO_CONNECTION": {
+                        "DESCRIPTION": "无法连接至充电桩。",
+                        "HELP1": "请检查充电桩是否已通电开机，且在局域网内可正常通信。",
+                        "HELP1_1": "重新开机时充电桩屏幕通常会显示其 IP 地址"
+                    },
+                    "NOT_AUTHORIZED": "未授权",
+                    "NOT_CHARGING": "未充电",
+                    "NOT_READY_FOR_CHARGING": "尚未就绪",
+                    "OPTIMIZED_CHARGE_MODE": {
+                        "CHARGING_PRIORITY": {
+                            "CAR": "优先充电动汽车",
+                            "INFO": "根据设定优先级，高优先级设备将率先获得充沛光伏绿电",
+                            "STORAGE": "优先充储能电池"
+                        },
+                        "INFO": "在该模式下，车辆充电速率会根据实时光伏发电量与家庭用电负荷动态自适应调节。",
+                        "MIN_CHARGE_POWER": "最低充电功率速率",
+                        "MIN_CHARGING": "保底最低充电保证",
+                        "MIN_INFO": "若您希望确保爱车在夜间也能充入基础电量，可设定最低保底充电额度。",
+                        "NAME": "智能优化充电",
+                        "SHORT_NAME": "自动"
+                    },
+                    "OVERVIEW_CHARGING_STATIONS": "充电桩总览",
+                    "PHASE_SWITCHING": "相位切换",
+                    "PHASE_SWITCHING_INFO": "应为车辆接入几相进行充电？",
+                    "PRIORITIZATION": "充电分配优先级",
+                    "READY_FOR_CHARGING": "具备充电条件",
+                    "STARTING": "正在启动充电...",
+                    "STATUS": "桩体工作状态",
+                    "TOTAL_CHARGE": "累计总充电量",
+                    "TOTAL_CHARGING_POWER": "总充电负荷功率",
+                    "UNCONTROLLABLE": "该型号充电桩当前不支持远程调节控制。",
+                    "UNKNOWN": "未知状态",
+                    "UNPLUGGED": "插头已拔下",
+                    "ZERO": "停止充电",
+                    "MINIMUM": "光伏余电协同（含保底充电）",
+                    "SURPLUS": "100% 纯光伏模式 (Surplus)",
+                    "FORCE_CHARGE": "强制立即充电",
+                    "TASKS": "定时充电任务"
+                },
+                "FIX_DIGITAL_OUTPUT": "固定数字量输出设定（直接通断）",
+                "GRID_OPTIMIZED_CHARGE": {
+                    "CHARGING_DELAYED": "智能延缓充电中",
+                    "CONSIDER_GRID_FEED_IN_LIMIT": "考虑电网最大上网功率红线",
+                    "END_TIME": "智能限充结束时间",
+                    "END_TIME_DESCRIPTION": "不以最大功率短时间强行充满，而是在更长的时间跨度内平缓吸收多余光伏电力。",
+                    "END_TIME_DETAILED_DESCRIPTION": "电池不会在几小时内以最大倍率冲满，而是在 {{ endTime }} 前以不超过 {{ maxChargingPowerW }} 的功率恒定柔性充电。",
+                    "END_TIME_LONG": "受控限速充电结束时间",
+                    "EXPECTED_SOC": "预计电池电量 (SoC)",
+                    "EXPECTED_SOC_WITHOUT_SELL_TO_GRID_LIMIT": "未启用防弃光优化策略",
+                    "GRID_FEED_IN_LIMITATION_AVOIDED": "已成功规避上网限电弃光",
+                    "GRID_OPTIMIZED_CHARGE_DISABLED": "电网优化充电已停用",
+                    "HIGH": "高风险倾向",
+                    "HISTORY": {
+                        "BATTERY_CHARGE_GRID_LIMIT_DESCRIPTION": "当上网功率超过安全线前主动提升电池充电速率，以避免光伏被迫下调输出造成弃光。",
+                        "PRIORITY_DESCRIPTION": "最低保底充电具有高于最大充电限制的优先权"
+                    },
+                    "LOW": "保守稳健",
+                    "MAXIMUM_CHARGE": "最大充电限制",
+                    "MAXIMUM_GRID_FEED_IN": "最大允许上网功率红线",
+                    "MAXIMUM_GRIDSELL_WITH_CHARGE": "充电协同下的最大上网功率",
+                    "MEDIUM": "中等平衡",
+                    "MINIMUM_CHARGE": "最小保底充电",
+                    "RISK_DESCRIPTION": {
+                        "HIGH": {
+                            "FUNCTION_DESCRIPTION": "较晚开始为电池充电，把电池容量尽量留给中午日照最强时段",
+                            "PV_CURTAIL": "最大概率完全规避光伏限电弃光",
+                            "STORAGE_DESCRIPTION": "遇突发阴天时，电池可能无法完全充满"
+                        },
+                        "LOW": {
+                            "FUNCTION_DESCRIPTION": "较早开始为电池充电，优先保证电池在傍晚前充满",
+                            "PV_CURTAIL": "中午超发时规避弃光的概率相对较低",
+                            "STORAGE_DESCRIPTION": "最高概率确保电池充满 100%"
+                        },
+                        "MEDIUM": {
+                            "FUNCTION_DESCRIPTION": "全天均衡平缓地为电池补充电量",
+                            "PV_CURTAIL": "较高概率规避光伏限电弃光",
+                            "STORAGE_DESCRIPTION": "较高概率确保电池在傍晚前充满"
+                        }
+                    },
+                    "RISK_PROPENSITY": "策略风险偏好",
+                    "SETTING_ONLY_VISABLE_FOR_INSTALLER": "此设置仅对安装工程师可见",
+                    "STATE": {
+                        "AVOID_LOW_CHARGING": "已抑制小倍率涓流充电",
+                        "CHARGE_LIMIT_ACTIVE": "充电功率限额生效中",
+                        "END_TIME_NOT_CALCULATED": "截止时刻尚未计算就绪",
+                        "GRID_FEED_IN_LIMITATION_IS_AVOIDED": "已成功规避上网限电弃光",
+                        "NO_LIMIT_ACTIVE": "未激活充电限制",
+                        "NO_LIMIT_POSSIBLE": "无法实施限值（受到更高优先级控制器的约束）",
+                        "NOT_DEFINED": "未定义",
+                        "PASSED_END_TIME": "已超过限制充电截止时间",
+                        "STORAGE_ALREADY_FULL": "电池储能已充满",
+                        "ALLOWED_FEED_IN_LIMIT_TOO_LOW_DESCRIPTION": "无法进行限制或延缓充电，因为当前不允许或仅允许微量电网馈电。"
+                    },
+                    "LIMITED_FUNCTIONALITY": "功能受限",
+                    "STORAGE_CAPACITY": "电池可用容量（仅管理员可见）",
+                    "INFO_DISABLED_BY_TIME_OF_USE": "提示：并网优化充电现已整合至“分时电价 (Time-of-Use Tariff)”应用中。在此配置的设定将持续保持有效。",
+                    "EEG_2025_APP_NAME": "EEG 2025 绿电结算应用",
+                    "EEG_2025_DESCRIPTION_NOT_INSTALLED": "您的系统是否受到 EEG 2025 政策规管？<br/><br/>使用 EEG 2025 应用，在电力市场出现负电价时将自动尽可能压低上网功率。若仍有富余电量，将继续馈入电网而不会被浪费丢弃。",
+                    "EEG_2025_DESCRIPTION_INSTALLED": "EEG 2025 应用正在运行。<br/><br/>在电力现货市场负电价期间，系统会自动最大程度降低上网电量。若有多余电量仍将正常上网，不会损失。",
+                    "EEG_2025_APP_LINK": "前往应用配置"
+                },
+                "HEAT": {
+                    "CHANGES_MY_PV_INFO": "您可以在 MyPV 官方 App 中对 AC-Thor 加热元件的参数进行配置更改。",
+                    "CONTROL_NOT_ALLOWED": "当前不允许执行控制",
+                    "ERROR": "加热故障错误",
+                    "HEATING": "正在加热运行",
+                    "HEATING_ENERGY": "加热累计耗电量",
+                    "HEATING_OUTPUT": "当前加热输出功率",
+                    "NO_HEATING": "未在加热",
+                    "TARGET_TEMPERATURE_REACHED": "已达到目标温度",
+                    "TEMPERATURE": "当前实际水温",
+                    "TEMPERATURE_UNIT": "温度单位 (°C)"
+                },
+                "HEAT_PUMP": {
+                    "ABOVE_SOC": "且储能 SoC 超过",
+                    "BELOW_SOC": "且储能 SoC 低于",
+                    "GRID_BUY": "从电网购电达到",
+                    "GRID_SELL": "光伏上网余电达到",
+                    "HEAT_PUMP": "热泵",
+                    "LOCK": "封锁停止",
+                    "MORE_THAN_HP_POWER": "该设定值不能低于热泵的最大输入功率",
+                    "NORMAL_OPERATION": "常规运行",
+                    "NORMAL_OPERATION_SHORT": "常规",
+                    "RELATION_ERROR": "强制开机阈值必须大于推荐开机阈值",
+                    "SWITCH_ON_COM": "强制开机指令 (State 4)",
+                    "SWITCH_ON_COM_SHORT": "强制开机",
+                    "SWITCH_ON_REC": "建议开机指令 (State 3)",
+                    "SWITCH_ON_REC_SHORT": "建议开机",
+                    "UNDEFINED": "未定义",
+                    "OPERATING_STATUS": "运行工况状态",
+                    "AUTOMATIC_DESCRIPTION": "配置光伏余电联锁加热模式的功率与 SoC 门限",
+                    "BASE_MODE_DESCRIPTIONS": {
+                        "SWITCH_ON_COM": "当光伏上网余量超过输入值且电池 SoC 高于设定阈值时，向热泵下发强制高负荷开机指令。",
+                        "SWITCH_ON_REC": "激活后，热泵提升运行频率，更高效利用现场富余光伏能量进行蓄热制热。",
+                        "NORMAL_OPERATION": "热泵按照建筑实际温控需求在标准常规功率区间自主按需工作。",
+                        "AUTOMATIC": "依据设定的电网取电与余电上网功率门限，自动在各个工作模式之间自适应切换。（可在“设置”中修改门限）",
+                        "LOCK": "该运行状态依据热泵预设将热泵功率输入封锁为 0 kW 或限制在 4.2 kW 以下。"
+                    }
+                },
+                "HEATINGELEMENT": {
+                    "ACTIVE_FORCED": "强制加热运行中（满足最低时长）",
+                    "ACTIVE_LEVEL": "当前激活档位",
+                    "LEVEL_ONE": "1 档",
+                    "LEVEL_TWO": "2 档",
+                    "LEVEL_THREE": "3 档",
+                    "ACTIVED_FORCED_LIMIT": "强制补充加热运行中",
+                    "CALIBRATION": "功率档位标定校准",
+                    "CALIBRATION_DESCRIPTION": "正在标定各加热档位对应的电表实际功率",
+                    "DONE": "校准完成",
+                    "ENDTIME": "结束截止时间",
+                    "SET_ENDTIME": "设置截止时刻",
+                    "ENERGY": "累计加热耗电量",
+                    "ENERGY_SINCE_BEGINNING": "本次加热累计耗电量",
+                    "GUARANTEE_MODE": "保底加热策略",
+                    "GUARANTEE_HEATING": "保证最低加热能耗",
+                    "GUARANTEE_MINIMUM_HEATING": "保证最低加热时长",
+                    "MINIMUM_ENERGY": "保底最小电量",
+                    "MINIMUM_DURATION": "保底最小时长",
+                    "GUARANTEE_NONE": "不启用保底",
+                    "HEATING_POWER": "实时加热功率",
+                    "HEATINGELEMENT": "电加热棒",
+                    "MESSAGE_UNREACHABLE": "在设定截止时间前无法达到目标电量",
+                    "MINIMAL_ENERGY_AMOUNT": "最小加热电量",
+                    "MINIMAL_ENERGY_LIMIT": "最小能耗下限",
+                    "MINIMUM_RUN_TIME": "单次最短加热时长",
+                    "PRIORITY": "加热优先级",
+                    "TIME": "时间",
+                    "TIME_COUNTDOWN": "距离启动倒计时",
+                    "UNREACHABLE": "无法达成目标"
+                },
+                "INFO_STORAGE_FOR_CHARGE": "电池正在从光伏余电或设定电网策略中补充电量。",
+                "INFO_STORAGE_FOR_DISCHARGE": "储能系统正在向本地负载供电以降低电网购电，或按策略向电网放电。",
+                "PEAKSHAVING": {
+                    "ASYMMETRIC_INFO": "输入的功率限值对应于单相功率。系统将按负载最重的一相进行精准调节。",
+                    "END_DATE": "截止日期",
+                    "END_TIME": "截止时间",
+                    "HYSTERESIS_SO_C": "迟滞回差 SoC",
+                    "MOST_STRESSED_PHASE": "负荷最重单相",
+                    "PEAKSHAVING": "削峰填谷",
+                    "PEAKSHAVING_POWER": "放电起始阈值",
+                    "RECHARGE": "反向补电功率设定",
+                    "RECHARGE_POWER": "低负荷补充充电功率",
+                    "RELATION_ERROR": "放电阈值必须大于或等于充电恢复阈值",
+                    "START_DATE": "启用日期",
+                    "START_TIME": "削峰执行起始时间",
+                    "START_TIME_CHARGE": "补电起始时间"
+                },
+                "PHASES_INFO": "因计量精度与技术原因，各单相功率之和可能与三相总和存在微小差值。",
+                "SCHEDULE": {
+                    "CHART_TITLE_ADMIN": "系统计划调度表（仅管理员可见）"
+                },
+                "SELFCONSUMPTION_INFO": "自发自用率指光伏当前总发电量中，被就地消纳以及充入电池的比例。",
+                "SINGLETHRESHOLD": {
+                    "ABOVE": "高于阈值",
+                    "BEHAVIOUR": "控制动作行为",
+                    "BELOW": "低于阈值",
+                    "CURRENT_VALUE": "当前监测值",
+                    "DEPENDEND_ON": "关联判定通道",
+                    "MIN_SWITCHING_TIME": "最短动作保持时间",
+                    "MORE_THAN_HP_POWER": "设定值不得低于被控受电设备的最大功率",
+                    "OTHER": "其他选项",
+                    "RELATION_ERROR": "开关触发阈值必须大于被控制负载的功率",
+                    "SWITCH_OFF_ABOVE": "高于该值时断开",
+                    "SWITCH_OFF_BELOW": "低于该值时断开",
+                    "SWITCH_ON_ABOVE": "高于该值时吸合导通",
+                    "SWITCH_ON_BELOW": "低于该值时吸合导通",
+                    "SWITCHED_LOAD_POWER": "被控负载功率",
+                    "THRESHOLD": "动作触发阈值",
+                    "SWITCH_ON_ABOVE_THRESHOLD": "高于阈值吸合开通",
+                    "SWITCH_ON_BELOW_THRESHOLD": "低于阈值吸合开通"
+                },
+                "STORAGE": {
+                    "AMBIENT_TEMPERATURE": "机柜环温",
+                    "BATTERY_DC": "电池组直流端 (DC)",
+                    "GRID_CHARGE": "允许从电网为应急备用电储备补充充电",
+                    "GRID_CHARGE_WARNING": "当长期无光伏发电产生时，储能系统可主动从电网取电补充，以维系设定的应急备用电容量，抵消待机自耗电损失。<br/><br/>注意：在必要的技术维护充电之外主动从电网充电，需取得电网公司的相应报备合规许可。如有疑问，请咨询您的安装商。点击蓝色“保存”按钮即代表您已确认并完成此项报备。<br/><br/>特此说明：符合德国《可再生能源法 (EEG)》补贴资质的前提是电池仅存储来自可再生能源或沼气的绿电。开启此项后，电池可能充入常规市电（包含化石能源或核电），系统将无法保证电池中纯粹为绿电。",
+                    "INVERTER": "储能变流器 (PCS)",
+                    "TOTAL_AC": "交流总功率 (AC)",
+                    "TOTAL_DC": "直流总功率 (DC)"
+                },
+                "SYSTEM": {
+                    "INDUSTRIAL": {
+                        "NOTE": "启停整套工商业储能系统，包含储能变流器与所有电池簇",
+                        "RESET": "整机硬件复位",
+                        "BMS_HARD_RESET": "BMS 电池管理系统硬复位",
+                        "SYSTEM_ERROR_ACKNOWLEDGE_HEADER": "系统故障复归确认：",
+                        "SYSTEM_ERROR_ACKNOWLEDGE_TEXT": "包含全站组件、电池组、逆变器及主储能单元",
+                        "MAINTENANCE_WINDOW": "检修维护时间窗口",
+                        "CLEAR_COOLING_UNIT_ERRORS_HEADER": "温控空调机组复位：",
+                        "CLEAR_COOLING_UNIT_ERRORS_TEXT": "用于清除液冷/空调报警故障"
+                    },
+                    "RPC_SUCCESS": "指令下发并执行成功",
+                    "RPC_FAILED": "指令下发执行失败",
+                    "OVERALL_SYSTEM": "系统总控"
+                },
+                "TIME_OF_USE_TARIFF": {
+                    "CHARGE_FROM_GRID_ACTIVATE": "启用电网分时套利充电",
+                    "CHART_TITLE": "分时充放调度曲线",
+                    "CHART_WARNING_NOTE": "图表显示了过去 3 小时的历史数据，以及在已知动态电价时段内的未来运行规划。请注意，系统会实时根据最新预测动态刷新全天排程计划。",
+                    "CONTROL_MODE_DESCRIPTION": {
+                        "CHARGE_CONSUMPTION": "在电价谷段主动从电网为电池充入廉价电，以在高峰电价时段放电供负荷消纳，从而大幅节省用电开销。<br/><br/>注意：主动从电网取电套利可能涉及当地分时电价结算与电网报备规范。点击“保存”即确认已知晓并符合当地规定。"
+                    },
+                    "POWER_SOC_CHART_TITLE": "电价与负荷预测",
+                    "PRICE": "当前实施电价",
+                    "STATE": {
+                        "BALANCING": "光伏自发自用平衡",
+                        "CHARGE_GRID": "电网低谷充电",
+                        "DELAY_DISCHARGE": "推迟放电等待峰段",
+                        "PEAK_SHAVING": "尖峰削峰",
+                        "DELAY_CHARGE": "推迟充电留出光伏消纳空间",
+                        "LIMIT_CHARGE": "限流充电保护",
+                        "AVOID_GRID_SELL_LIMIT": "规避上网功率限值",
+                        "DISCHARGE_CONSUMPTION": "供本地负荷放电",
+                        "DISCHARGE_GRID": "高价期向电网放电售电"
+                    },
+                    "EEG_2025_HEADER": "EEG 2025 绿电结算预测",
+                    "EEG_2025_DESCRIPTION": "该曲线图描绘了预期的未来上网电量以及根据 EEG 2025 政策计算的上网电价。系统将在无补贴或负电价时段自动抑制无收益的电网馈电。"
+                },
+                "TWO_WAY_INFO_GRID": "负数代表向电网馈电（售电），正数代表从电网取电（买电）。",
+                "EVSE": {
+                    "SCHEDULE": {
+                        "SCHEDULE": "充电计划日程",
+                        "ADD_TASK": "添加充电任务"
+                    },
+                    "CHARGE_MODE": "基础模式",
+                    "VEHICLE_ID_ERROR": "未找到匹配的车辆 ID。请核查设备配置。此处将显示所有已注册的车辆。",
+                    "KEBA_WARNING": "提示：在 FEMS 与 KEBA P40 配合使用时，使用该模式可能偶尔出现异常。建议临时选择“光伏余电保底模式”或“极速快充”。技术团队正在协同排查优化。"
+                }
+            }
+        },
+        "NETWORK": {
+            "ADD_IP": "添加静态 IP 地址",
+            "ADVANCED_MODE": "高级模式",
+            "DHCP": {
+                "ADDRESS": "DHCP 地址",
+                "INFO": "当前显示的 IP 地址是由 DHCP（动态主机配置协议）自动分配的动态地址。该地址不是固定永久的，设备或路由器重启后可能会发生变化。"
+            },
+            "ERROR_READING": "读取当前网络配置失败：",
+            "ERROR_UPDATING": "更新网络配置失败",
+            "IP_ADDRESS": "IP 地址",
+            "MANDATORY_FIELDS": "请填写所有必填字段",
+            "SUBMIT": "提交应用",
+            "SUBNETMASK": "子网掩码",
+            "SUCCESS_UPDATE": "网络配置更新成功：",
+            "VALID_ADDRESS_WARNING": "在“添加静态 IP 地址”中，请输入带有子网掩码前缀的有效 IP，例如：10.4.1.6/24"
+        },
+        "SERVICE": {
+            "CELL": {
+                "INSULATION": "绝缘阻抗",
+                "TEMPERATURES": "单体电池温度",
+                "VOLTAGES": "单体电池电压"
+            },
+            "ENTIRE_SYSTEM": "整套系统"
+        },
+        "TITLE": "{{ edgeShortName }}"
+    },
+    "FORMLY_FORM": {
+        "TARIFF_TABLE": {
+            "ADD_TIME_SLOT": "添加时段",
+            "ADD_YEAR": "添加 {{ year }} 年度",
+            "ERROR_MESSAGES": {
+                "INVALID_TIME_INPUT": "结束时间不能早于或等于开始时间"
+            },
+            "GROSS_PREIS_TITLE": "{{ year }} 年度含税价格*",
+            "PRICE_ITEMS": "价格明细项",
+            "REMOVE_YEAR": "移除 {{ year }} 年度",
+            "TARIFFS": {
+                "HIGH": "高峰电价",
+                "LOW": "低谷电价",
+                "STANDARD": "平段电价"
+            },
+            "TITLE": "{{ year }} 年辅助服务费用"
+        }
+    },
+    "GENERAL": {
+        "ACTIVE": "运行中",
+        "ACTUAL_POWER": "充电功率",
+        "ALL": "全部",
+        "APPLY": "应用",
+        "AUTARCHY": "能源自给率",
+        "AUTOMATIC": "自动模式",
+        "BACK": "返回",
+        "BASE_MODE": "基础模式",
+        "CANCEL": "取消",
+        "CAPACITY": "电池容量",
+        "CHANGE_ACCEPTED": "修改已生效",
+        "CHANGE_FAILED": "修改失败",
+        "CHARGE": "充电",
+        "CHARGE_DISCHARGE": "充放电",
+        "COMPONENT_COUNT": "组件数量",
+        "COMPONENT_INACTIVE": "组件未处于激活状态！",
+        "CONNECTION_LOST": "网络连接中断，正在尝试重新连接...",
+        "CONSUMPTION": "用电负荷",
+        "COUNTRY": {
+            "AUSTRIA": "奥地利",
+            "CZECH": "捷克",
+            "GERMANY": "德国",
+            "GREECE": "希腊",
+            "LITHUANIA": "立陶宛",
+            "NETHERLANDS": "荷兰",
+            "SWEDEN": "瑞典",
+            "SWITZERLAND": "瑞士"
+        },
+        "CUMULATIVE": "累计数据",
+        "CURRENT_NAME": "当前名称",
+        "CURRENT_STATUS": "当前运行状态",
+        "CURRENT_VALUE": "当前数值",
+        "DARK": "深色模式",
+        "DATE_FORMAT": "yyyy-MM-dd",
+        "DETAILS": "详细信息",
+        "DIGITAL_INPUTS": "数字量输入",
+        "DIRECT_CONSUMPTION": "直接自用电量",
+        "DISCHARGE": "放电",
+        "EDIT": "编辑",
+        "ENERGY_LIMIT": "电量限额",
+        "FAILED": "操作失败",
+        "FAULT": "故障",
+        "FOR": "用于",
+        "FORECAST": "负荷/发电预测",
+        "FORMLY": {
+            "INITIALIZING_ERROR": "初始化组件出错",
+            "LINK_TO_DOCS": "查看帮助文档",
+            "REQUIRED": "此项必填"
+        },
+        "FROM": "从",
+        "GRID": "公共电网",
+        "GRID_BUY": "从电网购电",
+        "GRID_BUY_ADVANCED": "购电",
+        "GRID_BUY_PRICE": "实时购电电价",
+        "GRID_SELL": "向电网售电",
+        "GRID_SELL_ADVANCED": "售电",
+        "GRID_SELL_PRICE": "上网补偿电价",
+        "HEAT_PUMP": "热泵",
+        "HISTORY": "历史报表",
+        "INACTIVE": "未激活 / 闲置",
+        "INFO": "信息",
+        "INPUT_NOT_VALID": "输入内容无效",
+        "INSTALL": "安装",
+        "INSUFFICIENT_RIGHTS": "操作权限不足",
+        "LIGHT": "浅色模式",
+        "LIVE": "实时监控",
+        "LOAD": "负荷",
+        "MANAGED_CONSUMPTION": "可控受管用电负荷",
+        "MANUAL": "手动控制",
+        "MANUALLY": "手动模式",
+        "MEASURED_VALUE": "测量读数",
+        "MODE": "模式",
+        "MONTH": {
+            "APRIL": "四月",
+            "AUGUST": "八月",
+            "DECEMBER": "十二月",
+            "FEBRUARY": "二月",
+            "JANUARY": "一月",
+            "JULY": "七月",
+            "JUNE": "六月",
+            "MARCH": "三月",
+            "MAY": "五月",
+            "NOVEMBER": "十一月",
+            "OCTOBER": "十月",
+            "SEPTEMBER": "九月"
+        },
+        "MORE": "更多...",
+        "NO": "否",
+        "NO_VALUE": "暂无数据",
+        "NUMBER_OF_COMPONENTS": "组件总数",
+        "OFF": "关",
+        "OFF_GRID": "无电网连接（离网）！",
+        "GENERATOR_SUPPLY": "发电机供电",
+        "GENERATOR_ON": "发电机运行中",
+        "OK": "正常 / 确定",
+        "ON": "开",
+        "OPEN": "打开",
+        "OTHER_CONSUMPTION": "其他用电负荷",
+        "PERCENTAGE": "百分比",
+        "PERIOD_FROM_TO": "从 {{ value1 }} 至 {{ value2 }}",
+        "PHASE": "相位",
+        "PHASES": "三相相位",
+        "POWER": "功率",
+        "PRODUCTION": "光伏发电",
+        "RENAME": "重命名",
+        "REPORT": "生成报告",
+        "REPORT_VALUE": "上报异常数据",
+        "RESET": "复位",
+        "RESTART": "重启",
+        "SAVE": "保存",
+        "SEARCH": "搜索",
+        "SELF_CONSUMPTION": "自发自用率",
+        "SOC": "荷电状态 (SoC)",
+        "STATE": "状态",
+        "STATE_MACHINE": {
+            "ERROR": "故障错误",
+            "GO_RUNNING": "正在启动...",
+            "GO_STOPPED": "正在停止...",
+            "RUNNING": "已启动运行",
+            "STOPPED": "已停止",
+            "UNDEFINED": "未定义状态"
+        },
+        "STATUS": "运行状态",
+        "STORAGE_SYSTEM": "储能系统",
+        "SUM_STATE": "综合状态",
+        "SYSTEM": "系统",
+        "SYSTEM_OUTAGE": "因系统维护，在线监控暂时不可用。请稍后重试。详情请查阅",
+        "SYSTEM_STATE": "系统综合状态",
+        "SYSTEM_THEME": "跟随系统",
+        "THEME_SELECTION": {
+            "DESCRIPTION": "我们的能源监控现已支持<b>深色模式</b>。<hr>轻触切换，畅享舒适视觉体验！",
+            "TITLE": "熄灯护眼，舒适尽享！"
+        },
+        "TIME": {
+            "DAY": "天",
+            "DAYS": "天",
+            "HOUR": "小时",
+            "HOURS": "小时",
+            "MINUTE": "分钟",
+            "MINUTES": "分钟"
+        },
+        "TIME_SCHEDULE": "时间排程",
+        "TO": "至",
+        "TOTAL": "总计",
+        "TOTAL_CHARGE": "总充电电量",
+        "TOTAL_DISCHARGE": "总放电电量",
+        "TOTAL_STATE": "总体健康状态",
+        "VALUE": "数值",
+        "VISIBLE_FOR_ADMINS_ONLY": "仅系统管理员与服务人员可见",
+        "WARNING": "警告",
+        "WEEK": {
+            "FRIDAY": "星期五",
+            "MONDAY": "星期一",
+            "SATURDAY": "星期六",
+            "SUNDAY": "星期日",
+            "THURSDAY": "星期四",
+            "TUESDAY": "星期二",
+            "WEDNESDAY": "星期三"
+        },
+        "WILL_BE_EXECUTED": "即将执行",
+        "YES": "是",
+        "NAVIGATION_INFO": "我们正在全面重构与优化监控系统和 App 的导航结构与交互功能。",
+        "NAVIGATION_DETAILS": "本帮助提示可为您提供引导。了解最新特性、交互说明以及 KEBA P40 充电桩的扩展高级功能。",
+        "LINK": "点击此链接阅读更多信息（德文）：",
+        "LINK_TEXT": "查看公测版本更新说明",
+        "SURVEY": "欢迎在此向我们提交您的公测体验反馈：",
+        "SURVEY_LINK": "参与测试满意度问卷调查",
+        "HELP": "帮助",
+        "CHARGE_ONCE": "单次强制充电",
+        "DISCHARGE_ONCE": "单次强制放电",
+        "TARGET_SOC": "目标荷电状态 (SoC)"
+    },
+    "GRID_STATES": {
+        "CONSUMPTION_LIMITATION": "电网取电限制",
+        "FEED_IN_DESCRIPITON": "储能系统充电限制",
+        "FEED_IN_LIMITATION": "上网功率限制",
+        "GRID_LIMITATION": "电网限制",
+        "NO_EXTERNAL_LIMITATION": "无外部限制",
+        "OFF_GRID": "电网停电 / 离网运行",
+        "RIPPLE_CONTROL_RECEIVER": "音频纹波控制接收器限制",
+        "SECTION_14A": "根据 EnWG §14a 条款的功率限制"
+    },
+    "INDEX": {
+        "ADD_EDGE": "添加新的 {{ edgeShortName }}",
+        "ALL_CONNECTED": "所有连接已建立。",
+        "CONNECTION_FAILED": "连接到 {{ value }} 失败。",
+        "CONNECTION_IN_PROGRESS": "正在建立连接...",
+        "CONNECTION_SUCCESSFUL": "已成功连接到 {{ value }}。",
+        "DEVICE_OFFLINE": "该设备目前离线。",
+        "FIRST_SETUP_PROTOCOL": "初次现场开机调试向导",
+        "IS_OFFLINE": "OpenEMS 目前处于离线状态！",
+        "LOGGED_IN_AS": "当前登录身份为",
+        "NO_EDGE_AVAILABLE": "您尚未添加任何 {{edgeShortName}} 设备。",
+        "NO_EDGE_FOR_USER": "抱歉，您的账户下尚未绑定任何 {{value}} 设备。",
+        "OFFLINE_SINCE": "自此时起离线：",
+        "TO_ENERGYMONITOR": "前往能量流向监控...",
+        "TYPE": "设备类型",
+        "VISIBLE_HERE_AFTER_INSTALLATION": "在安装工程师完成 {{value}} 的调试交接后，设备将显示在此处。"
+    },
+    "LIVE": {
+        "PULL_TO_REFRESH": "下拉以刷新数据"
+    },
+    "LOADING_SCREEN": {
+        "LOADING": "加载中",
+        "SERVER_NOT_ACCESSIBLE": "无法访问服务器",
+        "SERVER_NOT_ACCESSIBLE_ACCESS_LOCALLY": "本地访问",
+        "SERVER_NOT_ACCESSIBLE_DESCRIPTION": "当前无法在线查看储能系统。数据已在本地安全存储，不会丢失。",
+        "SERVER_NOT_ACCESSIBLE_TRY_RELOADING": "请在 10 分钟后尝试刷新浏览器页面。"
+    },
+    "LOGIN": {
+        "AUTHENTICATION_FAILED": "身份验证失败",
+        "DEMO_ACCESS": "演示系统访问",
+        "ENERGY_JOURNEY_SLOGAN": "您正在参与绿色能源转型之旅",
+        "PASSWORD_LABEL": "密码",
+        "PASSWORD_PLACEHOLDER": "请输入密码",
+        "PASSWORD_RESET": "重置密码",
+        "PREAMBLE": "请输入您的密码。",
+        "REQUEST_TIMEOUT": "请求已超时，请稍后重试。",
+        "SIGN_IN": "立即登录",
+        "TITLE": "登录",
+        "USER": "登录用户",
+        "EMPLOYEE_LOGIN": "员工内部登录"
+    },
+    "MENU": {
+        "ACCESS_LEVEL": "访问权限级别",
+        "CHANGELOG": "更新日志",
+        "COCKPIT": "驾驶舱概览",
+        "FAVORITES": "收藏夹",
+        "DEFAULT_EDGE_LONG_NAME": "OpenEMS 能源管理系统",
+        "EDGE_SETTINGS": "设置",
+        "EDGE_SYSTEM_SETTINGS": "系统设置",
+        "FENECON_ENERGY_MANAGEMENT_SYSTEM": "FENECON 能源管理系统",
+        "GENERAL_SETTINGS": "通用设置",
+        "GROUPS": {
+            "FIX_DIGITAL_OUTPUT": "手动继电器控制",
+            "CHANNEL_SINGLE_THRESHOLD": "阈值控制",
+            "HEATING_ROOM": "暖通供热",
+            "BRAIINS": "算力设备控制"
+        },
+        "HECKERT_ENERGY_MANAGEMENT_SYSTEM": "Heckert Solar Symphon-E 能源管理系统",
+        "INDEX": "主页",
+        "LOGOUT": "退出登录",
+        "MENU": "菜单",
+        "NAME": "姓名",
+        "OPENEMS_ENERGY_MANAGEMENT_SYSTEM": "OpenEMS 开源能源管理系统",
+        "OTHER_USER": "其他用户",
+        "OVERVIEW": "所有系统",
+        "SYSTEMS": "系统列表",
+        "SETTINGS": "设置",
+        "USER": "个人中心",
+        "PROFILE": "用户资料"
+    },
+    "MODBUS_TCP_API_READ_WRITE": {
+        "ACTIVE_POWER_LIMITATIONS": "有功功率限制",
+        "ACTUAL_VALUE": "实际值",
+        "CUMULATED_ACTIVE_TIME": "已采纳外部指令时间",
+        "CUMULATED_INACTIVE_TIME": "当前无外部控制指令",
+        "CURRENT_STATE": "当前运行状态",
+        "DOWNLOAD_PROTOCOL": "下载通信协议",
+        "INFO_TEXT": "实际值可能会略微偏离设定目标。负值代表储能充电，正值代表储能放电。详细说明请参考使用手册。",
+        "LAST_COMMAND": "最近覆盖指令",
+        "LIMITATION": "功率限制",
+        "NO_OVERRIDDEN_CHANNELS": "当前未覆盖任何通道。",
+        "NOT_OVERRIDING": "无外部指令生效",
+        "OVERRIDING": "正在执行外部控制指令",
+        "REGISTER": "寄存器",
+        "ERROR": "通信错误",
+        "SET_ACTIVE_POWER_EQUALS": "目标有功功率设定值",
+        "SET_ACTIVE_POWER_GREATER_OR_EQUALS": "最小有功功率设定值",
+        "SET_ACTIVE_POWER_LESS_OR_EQUALS": "最大有功功率设定值",
+        "SET_REACTIVE_POWER_EQUALS": "目标无功功率设定值",
+        "SET_REACTIVE_POWER_GREATER_OR_EQUALS": "最小无功功率设定值",
+        "SET_REACTIVE_POWER_LESS_OR_EQUALS": "最大无功功率设定值"
+    },
+    "NOTIFICATIONS": {
+        "AUTHENTICATION_FAILED": "连接失败：身份验证未通过。",
+        "CLOSED": "连接已关闭。",
+        "FAILED": "连接失败。",
+        "LOGGED_IN": "已成功登录。",
+        "LOGGED_IN_AS": "已以 '{{ value }}' 身份登录。"
+    },
+    "OFFLINE": {
+        "DEFAULT": {
+            "STEP_CONTACT_INSTALLER": {
+                "DESCRIPTION": "如果您已核查上述所有步骤，而在线监控仍然没有显示数据，请联系您的<b>电气工程师 / 安装服务商</b>。",
+                "HEADER": "联系安装服务商"
+            },
+            "STEP_EMS_RESTART": {
+                "HEADER": "重启 {{edgeShortName}} 并检查局域网连接"
+            },
+            "STEP_FIREWALL": {
+                "DESCRIPTION": "防火墙规则可能会阻断 {{edgeShortName}} 的互联网连接。首次调试上线系统时尤为常见。请参考<a href={{link}} target=\"_blank\">操作指引</a>检查 {{edgeShortName}} 开放的端口与服务。",
+                "HEADER": "检查端口转发与防火墙设置"
+            },
+            "STEP_SERVICE": {
+                "DESCRIPTION": "如果您已检查上述所有步骤，在线监控仍然未恢复，请联系我们的技术支持团队：<br>邮箱：<a href=\"mailto:service@fenecon.de\">service@fenecon.de</a> 或电话：+49 9903 6280-0（周一至周四：08:00-12:00 | 13:00-17:00 | 周五：08:00-12:00 | 13:00-17:00）",
+                "HEADER": "联系服务支持"
+            },
+            "STEP_TEST_WIFI_CONNECTION": {
+                "DESCRIPTION": "<p><b>a)</b> 从 Home-{{edgeShortName}} 箱体拔下网线（'LAN' 接口）并连接到笔记本电脑（请确保关闭电脑的 Wi-Fi）。如果电脑能正常上网，请前往步骤 3；否则请按 b 检查。</p><p><b>b)</b> 如果电脑无法连接互联网，请将设备用网线直接连接至路由器，以确保路由器工作正常（不通过额外的长距离线缆或中间交换设备）。</p><p>→ 若路由器正常，则可能是网线、Wi-Fi 中继器或电力线适配器信号转发异常。详见相应厂商的产品手册。</p>",
+                "HEADER": "使用笔记本测试路由器连接"
+            }
+        },
+        "EDGE": {
+            "DESCRIPTION": "如果 {{edgeShortName}} 刚刚重启，请稍候片刻等待系统完成自检与引导。",
+            "LOCAL_ACCESS_CURRENTLY_NOT_POSSIBLE": "当前无法进行本地访问"
+        },
+        "GENERAL": {
+            "AVAILABILITY": "当前无法在线访问储能系统。<br>历史数据已在本地保存，不会丢失。",
+            "EMS_OFFLINE": "{{edgeShortName}} 处于离线状态",
+            "MORE_INFO": "更多信息",
+            "STEP_TEST_WIFI_CONNECTION": {
+                "CHILD_1": {
+                    "DESCRIPTION": "通过网线将电脑直连至路由器。请确保中间无多余线缆或网络设备（如无线中继器或交换机），以核实路由器本身是否正常工作。如仍然无法联网，请参考网络设备制造商的产品说明书获取进一步排错指导。",
+                    "HEADER": "-> 仍无法连接互联网"
+                },
+                "CHILD_2": {
+                    "DESCRIPTION": "请继续进入步骤 3）检查端口转发/防火墙设置。",
+                    "HEADER": "-> 电脑已正常联网"
+                },
+                "DESCRIPTION": "接下来，拔下 {{edgeShortName}} 连接箱上的网线插头并接到笔记本或台式电脑上测试路由器功能。注意：请关闭该电脑上的 Wi-Fi 无线网卡。",
+                "HEADER": "检查互联网连接"
+            },
+            "SUB_HEADER": "您的系统<b>已离线超过 10 分钟？</b>可以在现场排查以下项目：",
+            "TIME_OUT": "目标系统已离线 <b>{{timeSinceOffline}}</b>。",
+            "TRY": "请在 10 分钟后尝试刷新浏览器页面。"
+        },
+        "HOME_10": {
+            "STEP_EMS_RESTART": {
+                "DESCRIPTION": "在储能机柜顶部箱体上有一个黑蓝相间的电源插头。将其拔下并等待 15 秒，然后重新插好电源插头并等待 <b>5 到 10 分钟</b>（系统正在重启）。同时请确认网线已正确插入 {{edgeShortName}} 接口箱。完成后刷新在线监控页面：若操作成功，离线提示将解除并显示正常监控界面。",
+                "HEADER": "{{edgeShortName}} 重启"
+            }
+        },
+        "HOME_20_30": {
+            "STEP_EMS_RESTART": {
+                "DESCRIPTION": "按住储能塔顶部箱体正面的按钮 10 秒钟以重启 {{edgeShortName}}。等待 <b>5 - 10 分钟</b>（系统正在重新启动）。同时确认网线已正确插入 {{edgeShortName}} 连接箱。然后刷新在线监控浏览器窗口：若成功，错误信息将消失并恢复正常监控界面。"
+            }
+        },
+        "STEP_EMS_RESTART": {
+            "DESCRIPTION": "在电池储能机柜顶部正面有一个按键。长按 10 秒钟后松开，请等待 5 至 10 分钟（系统重启）。同时确保网线已稳固插入 {{edgeShortName}} 连接盒。随后刷新在线监控浏览器：若重启成功，离线提示将自动清除。"
+        }
+    },
+    "ORDER": {
+        "A_TO_Z": "名称 A - Z",
+        "ASCENDING": "{{edgeShortName}} 编号升序",
+        "DESCENDING": "{{edgeShortName}} 编号降序",
+        "FAULT_TO_OK": "系统状态：故障 - 正常",
+        "OK_TO_FAULT": "系统状态：正常 - 故障",
+        "SORTING": "排序",
+        "Z_TO_A": "名称 Z - A"
+    },
+    "PAGE_HEADERS": {
+        "ENERGY_JOURNEY": "分析电池扩容",
+        "WRAP_UP_2025": "您的 2025 年度总结"
+    },
+    "REGISTER": {
+        "BUTTON": "创建",
+        "CREATE_USER": "创建新账号",
+        "CREATING_USER": "正在创建账号...",
+        "ERRORS": {
+            "EMAIL_NOT_EQUAL": "两次输入的邮箱地址不一致",
+            "PASSWORD_NOT_EQUAL": "两次输入的密码不一致",
+            "REQUIRED_FIELDS": "请填写所有必填字段"
+        },
+        "FORM": {
+            "ACCEPT_AGB": "我确认并同意 <a target=\"_blank\" href=\"https://fenecon.de/page/gtc/\">通用条款与细则 (AGB)</a>。*",
+            "CITY": "城市",
+            "COMPANY": "公司",
+            "COMPANY_NAME": "公司名称",
+            "CONFIRM_EMAIL": "确认邮箱",
+            "CONFIRM_PASSWORD": "确认密码",
+            "CONTACT_DETAILS": "联系方式",
+            "COUNTRY": "国家/地区",
+            "EMAIL": "电子邮箱",
+            "FIRSTNAME": "名",
+            "INSTALLER": {
+                "ACCEPT_PRIVACY_POLICY": "创建安装商账户即表示我已阅读并同意 <a target=\"_blank\" href={{link}}>隐私政策</a> 与使用条款。*"
+            },
+            "IS_ELECTRICIAN": "我确认我的企业已取得相关电工资质，具备储能系统的接线安装与调试权限。",
+            "LASTNAME": "姓氏",
+            "PASSWORD": "密码",
+            "PHONE": "电话号码",
+            "PRIVATE": "个人用户",
+            "STREET": "街道与门牌号",
+            "SUBSCRIBE_NEWSLETTER": "在此您可以订阅定期发布的 <a href='https://erp.fenecon.de/fenmail' target='_blank'>电子新闻简报</a>。",
+            "USER": {
+                "ACCEPT_PRIVACY_POLICY": "创建用户账号即表示我已阅读并同意 <a target=\"_blank\" href={{link}}>隐私政策</a> 与使用条款。*"
+            },
+            "ZIP": "邮政编码"
+        },
+        "SEGMENT": {
+            "INSTALLER": "安装商",
+            "USER": "终端用户"
+        },
+        "SUCCESS": "注册成功",
+        "TITLE": "创建账号"
+    },
+    "ROLE": {
+        "ADMIN": "系统管理员 (Admin)",
+        "GUEST": "访客 (Guest)",
+        "INSTALLER": "安装工程师 (Installer)",
+        "OWNER": "系统所有者 (Owner)"
+    },
+    "SETTINGS": {
+        "CATEGORY": {
+            "TITLE": {
+                "CLOUD_INTERFACES": "云平台接口",
+                "DEDICATED_CONTROLLERS": "专用控制器",
+                "DEVICE_INTERFACES": "设备接口",
+                "EV_CHARGING_STATION": "充电桩",
+                "EV_CHARGING_STATION_CONTROL": "充电桩控制",
+                "EXTERNAL_INTERFACES": "外部通信接口",
+                "IO_CONTROL": "I/O 控制",
+                "IOS": "I/O 模块",
+                "METER": "电表",
+                "OTHERS": "更多选项",
+                "SIMULATORS": "模拟器组件",
+                "STANDARD_COMPONENTS": "标准组件",
+                "STORAGE_SYSTEM_CONTROL": "储能系统控制",
+                "STORAGE_SYSTEMS": "储能系统",
+                "TEMPERATURE_SENSORS": "温度传感器"
+            }
+        },
+        "ENERGY_JOURNEY": {
+            "TO_THE_ANALYSIS": "查看分析",
+            "YOUR_ENERYJOURNEY": "OpenEMS 探索之旅"
+        },
+        "POWER_ASSISTANT": {
+            "INFO": "“功率助手”显示所有储能系统（ess0, ess1,...）对应的控制器及其关键数据点。顺序与调度器中的执行顺序一致。"
+        },
+        "SYSTEM_UPDATE": {
+            "CONFIRMATION_INFO": "您是否要更新您的 {{edgeShortName}}？",
+            "CREATE_COMPONENT": "创建组件",
+            "DELETE_COMPONENT": "删除组件",
+            "EDGE_RESTARTING": "{{ edge }} 正在重启...",
+            "EMS_RESTARTING": "重启 {{edgeShortName}}",
+            "INSTALLED_VERSION": "当前安装版本：",
+            "LATEST_VERISON": "系统软件已是最新版本",
+            "NEW_VERSION": "最新可用版本：",
+            "NEW_VERSION_INSTALLING": "安装最新版本",
+            "OFFLINE": "{{ edgeShortName }} 处于离线状态。",
+            "RESTART_CONFIRMATION": "您确定要重启 {{system}} 吗？",
+            "RESTART_FAILED": "重启 {{system}} 失败。",
+            "RESTART_WARNING": "{{system}} 重启期间通信将中断。在此期间不会记录数据，也不会控制任何组件。请确保整个系统处于安全状态。",
+            "RESTARTED": "{{system}} 重启成功。",
+            "RESTARTING": "正在重启 {{system}}。（此过程可能需要长达 {{minutes}} 分钟）",
+            "SUB_HEADER": "您确定要执行系统更新吗？",
+            "UPDATE_COMPONENT": "更新组件",
+            "UPDATE_EXECUTE": "执行系统更新",
+            "UPDATE_NOT_POSSIBLE": "无法更新系统！",
+            "UPDATE_PROGRESS": "更新正在进行中。",
+            "UPDATE_SEARCH": "正在检查系统更新...",
+            "UPDATE_TIME": "（此过程可能需要长达 {{minutes}} 分钟）",
+            "WARNING": "系统更新后软件将自动重启。在此期间不会记录数据，也不会控制任何组件。请确保整个系统处于安全状态。"
+        },
+        "FACTORIES": {
+            "ESS_GENERIC_MANAGED_SYMMETRIC": {
+                "NAME": "通用受控对称储能系统 (ESS Generic)",
+                "DESCRIPTION": "ESS Generic Managed Symmetric (Ess.Generic.ManagedSymmetric) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_GENERIC_OFFGRID": {
+                "NAME": "通用离网储能系统 (ESS Off-Grid)",
+                "DESCRIPTION": "支持孤岛离网自主建立交流微网电压与频率的标准离网储能系统"
+            },
+            "ESS_CLUSTER": {
+                "NAME": "储能系统集群 (ESS Cluster)",
+                "DESCRIPTION": "将多个物理储能子系统聚合为虚拟单一储能系统，实现统一协调功率分配"
+            },
+            "ESS_FENECON_COMMERCIAL40": {
+                "NAME": "FENECON Commercial 40 工商业储能系统",
+                "DESCRIPTION": "FENECON Commercial 40 工商业储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_ADSTEC_STORAXE": {
+                "NAME": "ADS-TEC StoraXe 储能系统",
+                "DESCRIPTION": "ADS-TEC StoraXe 储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SAXPOWER": {
+                "NAME": "SAX Power 壁挂储能系统",
+                "DESCRIPTION": "SAX Power 壁挂储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SAXPOWER_GRID_METER": {
+                "NAME": "SAX Power 储能电表",
+                "DESCRIPTION": "SAX Power 储能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SUNGROW": {
+                "NAME": "阳光电源 (Sungrow) 混合储能逆变系统",
+                "DESCRIPTION": "阳光电源 SH10RT 系列三相光储一体化混合逆变系统驱动"
+            },
+            "GOODWE_ESS": {
+                "NAME": "固德威 (GoodWe) ET 混合储能系统",
+                "DESCRIPTION": "固德威 ET 系列高压双向光伏储能一体机驱动"
+            },
+            "SAMSUNG_ESS": {
+                "NAME": "三星 (Samsung) SDI 储能系统",
+                "DESCRIPTION": "三星 SDI 一体化高压锂电池储能系统驱动"
+            },
+            "KACO_BLUEPLANETHYBRID10_ESS": {
+                "NAME": "KACO blueplanet hybrid 10.0 TL3 储能系统",
+                "DESCRIPTION": "KACO blueplanet hybrid 10.0 TL3 储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KOSTAL_PIKO_ESS": {
+                "NAME": "KOSTAL PIKO 储能系统",
+                "DESCRIPTION": "KOSTAL PIKO 储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KOSTAL_PLENTICORE_ESS": {
+                "NAME": "KOSTAL Plenticore 储能系统",
+                "DESCRIPTION": "KOSTAL Plenticore 储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SMA_SUNNYBOYSTORAGE": {
+                "NAME": "SMA Sunny Boy Storage 储能系统",
+                "DESCRIPTION": "SMA Sunny Boy Storage 储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SMA_SUNNYISLAND": {
+                "NAME": "SMA Sunny Island 离网/并网储能系统",
+                "DESCRIPTION": "SMA Sunny Island 离网/并网储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SMA_STPSE_INVERTER": {
+                "NAME": "SMA Sunny Tripower Smart Energy 储能逆变器",
+                "DESCRIPTION": "德国 SMA STP SE 三相混合光储逆变器系统驱动"
+            },
+            "ESS_FRONIUS_GEN24_INVERTER": {
+                "NAME": "Fronius Symo GEN24 Plus 储能逆变器",
+                "DESCRIPTION": "Fronius Symo GEN24 Plus 储能逆变器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "VICTRON_ESS": {
+                "NAME": "Victron MultiPlus-II 储能系统",
+                "DESCRIPTION": "Victron MultiPlus-II 储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EDGE2EDGE_ESS": {
+                "NAME": "跨边缘 Modbus 级联储能系统 (Edge-to-Edge)",
+                "DESCRIPTION": "跨边缘 Modbus 级联储能系统 (Edge-to-Edge) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EDGE2EDGE_WEBSOCKET_ESS": {
+                "NAME": "跨边缘 WebSocket 级联储能系统",
+                "DESCRIPTION": "跨边缘 WebSocket 级联储能系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BATTERY_INVERTER_SINEXCEL": {
+                "NAME": "盛弘 (Sinexcel) 储能变流器 (PCS)",
+                "DESCRIPTION": "盛弘 (Sinexcel) 储能变流器 (PCS) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BATTERYINVERTER_SINEXCEL": {
+                "NAME": "盛弘 (Sinexcel) 储能变流器 (PCS)",
+                "DESCRIPTION": "盛弘 (Sinexcel) 储能变流器 (PCS) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BATTERY_INVERTER_KACO_BLUEPLANETGRIDSAVE": {
+                "NAME": "KACO blueplanet gridsave 储能逆变器",
+                "DESCRIPTION": "KACO blueplanet gridsave 储能逆变器 设备驱动组件，提供实时运行监控与参数配置管理",
+                "PROPERTY": {
+                    "ID": {
+                        "NAME": "组件 ID",
+                        "DESCRIPTION": "变流器在系统中的唯一标识符（默认为 batteryInverter0）"
+                    },
+                    "ALIAS": {
+                        "NAME": "设备别名",
+                        "DESCRIPTION": "运维管理可读标识名称"
+                    },
+                    "ENABLED": {
+                        "NAME": "是否启用",
+                        "DESCRIPTION": "开启或关闭该变流器组件"
+                    },
+                    "STARTSTOP": {
+                        "NAME": "启停控制行为",
+                        "DESCRIPTION": "设置变流器的运行启停模式（AUTO 自动、START 强制开启、STOP 强制停机）"
+                    },
+                    "ACTIVATEWATCHDOG": {
+                        "NAME": "启用通信看门狗",
+                        "DESCRIPTION": "开启后，若与 OpenEMS 通信中断超过时限，变流器将自动停机保护"
+                    },
+                    "GRIDCODE": {
+                        "NAME": "电网法规标准 (Grid Code)",
+                        "DESCRIPTION": "变流器并网所遵守的国家或地区电网标准（例如 VDE-AR-N 4105 等）"
+                    },
+                    "DCMINVOLTAGE": {
+                        "NAME": "直流侧最低工作电压 (V)",
+                        "DESCRIPTION": "直流电池侧输入允许的最低母线电压门限（V）"
+                    },
+                    "ERRORBEHAVIOUR": {
+                        "NAME": "故障恢复处理策略",
+                        "DESCRIPTION": "发生报警故障清除后的恢复行为（NO_RESTART 不自动重启、ALWAYS_RESTART 自动复位重启）"
+                    },
+                    "MODBUS_ID": {
+                        "NAME": "Modbus 通信桥 ID",
+                        "DESCRIPTION": "物理连接该变流器所在的 Modbus 通信桥组件 ID（如 modbus0）"
+                    }
+                }
+            },
+            "BATTERY_INVERTER_REFU": {
+                "NAME": "REFU 储能变流器 (SunSpec)",
+                "DESCRIPTION": "REFU 储能变流器 (SunSpec) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BATTERY_INVERTER_REFU_REFUSTORE88K": {
+                "NAME": "REFUstore 88K 储能变流器",
+                "DESCRIPTION": "REFUstore 88K 储能变流器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "GOODWE_BATTERYINVERTER": {
+                "NAME": "固德威 (GoodWe) 储能逆变器",
+                "DESCRIPTION": "固德威双向储能逆变器通信与控制驱动"
+            },
+            "BATTERY_BMW": {
+                "NAME": "宝马 (BMW) 高压电池系统",
+                "DESCRIPTION": "宝马 (BMW) 汽车级高压储能动力电池架/电池管理系统驱动"
+            },
+            "BATTERY_PYLONTECH": {
+                "NAME": "派能 (Pylontech) Powercube M2 电池",
+                "DESCRIPTION": "派能 (Pylontech) Powercube M2 电池 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BATTERY_SOLTARO_CLUSTER_VERSIONC": {
+                "NAME": "Soltaro 多簇电池集群 (Version C)",
+                "DESCRIPTION": "Soltaro 多簇电池集群 (Version C) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BYD_BATTERYBOX_COMMERCIAL_C130": {
+                "NAME": "比亚迪 (BYD) Battery-Box Commercial C130",
+                "DESCRIPTION": "比亚迪工商业 C130 储能高压电池柜与 BMS 系统驱动"
+            },
+            "BATTERY_FENECON_HOME": {
+                "NAME": "FENECON Home 户用电池系统",
+                "DESCRIPTION": "FENECON Home 户用电池系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BATTERY_FENECON_COMMERCIAL": {
+                "NAME": "FENECON Commercial 工商业电池系统",
+                "DESCRIPTION": "FENECON Commercial 工商业电池系统 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TESLA_POWERWALL2_BATTERY": {
+                "NAME": "特斯拉 (Tesla) Powerwall 2 电池",
+                "DESCRIPTION": "特斯拉 (Tesla) Powerwall 2 电池 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "VICTRON_BATTERY": {
+                "NAME": "Victron CAN-Bus 电池",
+                "DESCRIPTION": "Victron CAN-Bus 电池 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_BATTERY": {
+                "NAME": "模拟电池组件 (Simulator Battery)",
+                "DESCRIPTION": "用于离线仿真与控制逻辑调试的虚拟储能电池模拟器"
+            },
+            "SIMULATOR_ESSSYMMETRIC_REACTING": {
+                "NAME": "模拟对称储能系统 (Simulator ESS Symmetric)",
+                "DESCRIPTION": "用于控制算法闭环验证的实时响应型对称储能系统模拟器"
+            },
+            "SIMULATOR_ESSASYMMETRIC_REACTING": {
+                "NAME": "模拟不对称储能系统 (Simulator ESS Asymmetric)",
+                "DESCRIPTION": "用于分相不平衡控制算法验证的实时响应型三相不对称储能模拟器"
+            },
+            "CONTROLLER_SYMMETRIC_BALANCING": {
+                "NAME": "储能自发自用与需量平衡控制器 (Symmetric Balancing)",
+                "DESCRIPTION": "通过调度储能充放电使并网点电表功率趋近于零，实现光伏自发自用最大化"
+            },
+            "CONTROLLER_ESS_BALANCING": {
+                "NAME": "储能自发自用与需量平衡控制器 (Symmetric Balancing)",
+                "DESCRIPTION": "通过调度储能充放电使并网点电表功率趋近于零，实现光伏自发自用最大化"
+            },
+            "CONTROLLER_SYMMETRIC_PEAKSHAVING": {
+                "NAME": "储能对称削峰填谷控制器 (Peak-Shaving)",
+                "DESCRIPTION": "在用电高峰期放电以压降变压器负荷尖峰，并在用电低谷期自动补电"
+            },
+            "CONTROLLER_SYMMETRIC_TIMESLOTPEAKSHAVING": {
+                "NAME": "多时段阶梯削峰填谷控制器",
+                "DESCRIPTION": "针对峰谷分时电价时段设置不同削峰门限的阶梯削峰控制器"
+            },
+            "CONTROLLER_ASYMMETRIC_PEAKSHAVING": {
+                "NAME": "储能不对称分相削峰填谷控制器 (Asymmetric Peak-Shaving)",
+                "DESCRIPTION": "分别监测电表 L1、L2、L3 各相负荷，按单相独立执行不对称精准削峰填谷"
+            },
+            "CONTROLLER_ESS_FIXACTIVEPOWER": {
+                "NAME": "储能定有功功率控制器 (Fix Active Power)",
+                "DESCRIPTION": "将储能系统的充放电有功功率强制锁定为恒定的目标功率设定值 (W)"
+            },
+            "CONTROLLER_ESS_FIXSTATEOFCHARGE": {
+                "NAME": "储能定 SOC 控制器 (Fix State of Charge)",
+                "DESCRIPTION": "调度储能充放电，强制将电池电量 (SOC) 维持在指定的目标百分比"
+            },
+            "CONTROLLER_ESS_TIME_OF_USE_TARIFF": {
+                "NAME": "储能分时电价智能套利控制器 (Time-of-Use Tariff)",
+                "DESCRIPTION": "结合实时动态分时电价与日前电价预测，低谷低价充电、高峰高价放电实现电费套利"
+            },
+            "CONTROLLER_ESS_EMERGENCYCAPACITYRESERVE": {
+                "NAME": "储能备用容量锁定控制器 (Emergency Capacity Reserve)",
+                "DESCRIPTION": "在日常运行中限制电池放电，始终为离网或应急备电预留设定的最低安全备用容量"
+            },
+            "CONTROLLER_ESS_GRIDOPTIMIZEDCHARGE": {
+                "NAME": "储能电网优化充电控制器 (Grid-Optimized Charge)",
+                "DESCRIPTION": "结合光伏发电预测与负荷预测推迟充电至正午，缓解电网倒送过载并提升消纳"
+            },
+            "CONTROLLER_ESS_DELAYCHARGE": {
+                "NAME": "储能延时充电控制器 (Delay Charge)",
+                "DESCRIPTION": "限制上午过早充饱，将电池充满 100% SoC 的时点延迟到设定的目标时间"
+            },
+            "CONTROLLER_ESS_DELAYEDSELLTOGRID": {
+                "NAME": "储能延时上网售电控制器 (Delayed Sell-to-Grid)",
+                "DESCRIPTION": "在光伏高发期延缓向电网馈送电力，利用储能错峰平滑上网功率"
+            },
+            "CONTROLLER_ESS_SELLTOGRIDLIMIT": {
+                "NAME": "储能防逆流/馈网功率限制控制器 (Sell-to-Grid Limit)",
+                "DESCRIPTION": "当并网点上网功率达到设定门限时，自动强制储能充电消纳，防止倒送电网超标"
+            },
+            "CONTROLLER_ESS_CYCLE": {
+                "NAME": "储能充放电循环测试控制器 (ESS Cycle)",
+                "DESCRIPTION": "按序自动执行完整的 0-100% 充放电循环，用于电量标定与电池性能测试"
+            },
+            "CONTROLLER_ESS_SOH_CYCLE": {
+                "NAME": "储能电池健康度 (SoH) 循环校准控制器",
+                "DESCRIPTION": "执行专门的深充深放测试循环，精确测算并校准储能系统的当前健康状态 (SoH)"
+            },
+            "CONTROLLER_ESS_STANDBY": {
+                "NAME": "储能待机节能与巡检控制器 (Standby)",
+                "DESCRIPTION": "在系统无调度任务时指令 PCS 进入超低功耗休眠待机，并每周定期唤醒自检"
+            },
+            "CONTROLLER_ESS_STEPSOC": {
+                "NAME": "储能阶梯 SOC 充放电控制器 (Step SoC)",
+                "DESCRIPTION": "根据电池当前处于的不同 SOC 阶梯区间，动态分段施加不同的充放电功率限制"
+            },
+            "CONTROLLER_ESS_LIMITER14A": {
+                "NAME": "储能 §14a 调网限功率控制器 (EnWG §14a Limiter)",
+                "DESCRIPTION": "响应电网运营商依据法规下发的远程限电指令，迅速将并网功率调降至安全红线"
+            },
+            "CONTROLLER_ESS_LINEARPOWERBAND": {
+                "NAME": "储能线性功率带控制器 (Linear Power Band)",
+                "DESCRIPTION": "为储能系统定义连续平滑的动态上下限有功功率运行包络带"
+            },
+            "CONTROLLER_ESS_MINIMUMDISCHARGEPOWER": {
+                "NAME": "储能最小放电时长保护控制器 (Min Discharge Period)",
+                "DESCRIPTION": "确保储能系统一旦触发放电，至少维持预设的最小放电功率与运行持续时间"
+            },
+            "CONTROLLER_ESS_LIMITTOTALDISCHARGE": {
+                "NAME": "储能总放电量限制控制器 (Limit Total Discharge)",
+                "DESCRIPTION": "累计统计当月或周期内总放电量，达到预设额度上限后锁定禁止继续放电"
+            },
+            "CONTROLLER_ESS_ACTIVEPOWERVOLTAGECHARACTERISTIC": {
+                "NAME": "储能 P(U) 有功-电压下垂特性控制器",
+                "DESCRIPTION": "根据并网点交流电压实时波动，依据预设的 P(U) 特性曲线动态调整充放电功率"
+            },
+            "CONTROLLER_ESS_REACTIVEPOWERVOLTAGECHARACTERISTIC": {
+                "NAME": "储能 Q(U) 无功-电压下垂特性控制器",
+                "DESCRIPTION": "根据电网电压偏离基准值的程度，按照 Q(U) 特性曲线输出感性或容性无功电压支撑"
+            },
+            "CONTROLLER_ESS_RIPPLECONTROLRECEIVER": {
+                "NAME": "储能音频电力线载波限额控制器 (Ripple Control Receiver)",
+                "DESCRIPTION": "接收电力载波控制接收器信号，根据 0%、30%、60%、100% 挡位限制逆变器输出"
+            },
+            "CONTROLLER_ESS_HYBRID_SURPLUS_FEED_TO_GRID": {
+                "NAME": "混合光储多余电量防弃光上网控制器 (Surplus Feed-to-Grid)",
+                "DESCRIPTION": "当混合逆变器直流侧光伏超发且电池已满时，最大化协调逆变送入电网防止弃光"
+            },
+            "CONTROLLER_ESS_ACISLAND": {
+                "NAME": "储能微电网离网孤岛运行控制器 (AC-Island)",
+                "DESCRIPTION": "电网失电断开时联锁控制交流微电网接触器，无缝切换进入离网孤岛供电模式"
+            },
+            "CONTROLLER_ESS_FASTFREQUENCYRESERVE": {
+                "NAME": "储能快速频率响应控制器 (FFR / FCR)",
+                "DESCRIPTION": "毫秒级监测电网频率偏差，迅速吞吐有功功率参与电网快速一次调频"
+            },
+            "CONTROLLER_ESS_PREPAREBATTERYEXTENSION": {
+                "NAME": "储能电池扩容容量配平控制器 (Battery Extension)",
+                "DESCRIPTION": "在新增电池机架/电池簇扩展前，辅助将现有电池组精准充放电至扩容平衡电压"
+            },
+            "CONTROLLER_ASYMMETRIC_PHASERECTIFICATION": {
+                "NAME": "三相不平衡动态补偿控制器 (Phase-Rectification)",
+                "DESCRIPTION": "监测电表三相负荷偏差，利用储能分相不对称充放电将三相电流实时调整至平衡"
+            },
+            "CONTROLLER_ASYMMETRIC_BALANCINGCOSPHI": {
+                "NAME": "不对称功率因数 (Cos-Phi) 补偿控制器",
+                "DESCRIPTION": "动态调节储能各相无功输出，将并网点各相功率因数稳定在预设的目标 Cos-Phi 值"
+            },
+            "CONTROLLER_ASYMMETRIC_FIXREACTIVEPOWER": {
+                "NAME": "不对称定无功功率控制器 (Fix Reactive Power Asymmetric)",
+                "DESCRIPTION": "为各相独立设定固定的感性或容性无功功率，提供分相无功潮流调节"
+            },
+            "CONTROLLER_SYMMETRIC_LIMITACTIVEPOWER": {
+                "NAME": "储能充放电上下限幅控制器 (Limit Active Power)",
+                "DESCRIPTION": "为对称储能系统设置强制的最大允许充电功率与最大允许放电功率安全边界"
+            },
+            "CONTROLLER_SYMMETRIC_FIXREACTIVEPOWER": {
+                "NAME": "储能定无功功率控制器 (Fix Reactive Power Symmetric)",
+                "DESCRIPTION": "为对称储能系统输出固定设定的目标无功功率 (Var)"
+            },
+            "CONTROLLER_SYMMETRIC_BALANCINGSCHEDULE": {
+                "NAME": "储能定时排程功率平衡控制器 (Balancing Schedule)",
+                "DESCRIPTION": "储能定时排程功率平衡控制器 (Balancing Schedule) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_SYMMETRIC_RANDOMPOWER": {
+                "NAME": "储能随机功率波动模拟控制器 (Random Power)",
+                "DESCRIPTION": "在设定的上下限功率区间内随机生成波动功率，用于系统耐受性测试"
+            },
+            "BMS_SOLTARO_CLUSTER_VERSIONB": {
+                "NAME": "Soltaro 多机架高压电池簇管理系统 (版本 B)",
+                "DESCRIPTION": "实现 Soltaro 多机架高压电池系统的集群监控与通信管理"
+            },
+            "BMS_SOLTARO_SINGLERACK_VERSIONA": {
+                "NAME": "Soltaro 单机架高压电池柜 (版本 A)",
+                "DESCRIPTION": "实现 Soltaro 单机架电池系统的电池状态监控与保护通信"
+            },
+            "BMS_SOLTARO_SINGLERACK_VERSIONB": {
+                "NAME": "Soltaro 单机架高压电池柜 (版本 B)",
+                "DESCRIPTION": "实现 Soltaro 单机架电池系统的电池状态监控与保护通信"
+            },
+            "BMS_SOLTARO_SINGLERACK_VERSIONC": {
+                "NAME": "Soltaro 单机架高压电池柜 (版本 C)",
+                "DESCRIPTION": "实现 Soltaro 单机架电池系统的电池状态监控与保护通信"
+            },
+            "BOSCH_BPTS5HYBRID_CORE": {
+                "NAME": "博世 (Bosch) BPT-S 5 混合光储核心机",
+                "DESCRIPTION": "Bosch BPT-S 5 Core (Bosch.BPTS5Hybrid.Core) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BOSCH_BPTS5HYBRID_ESS": {
+                "NAME": "博世 (Bosch) BPT-S 5 储能系统",
+                "DESCRIPTION": "Bosch BPT-S 5 ESS (Bosch.BPTS5Hybrid.Ess) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BOSCH_BPTS5HYBRID_METER": {
+                "NAME": "博世 (Bosch) BPT-S 5 配套电表",
+                "DESCRIPTION": "Bosch BPT-S 5 Meter (Bosch.BPTS5Hybrid.Meter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BOSCH_BPTS5HYBRID_PV": {
+                "NAME": "博世 (Bosch) BPT-S 5 光伏组件",
+                "DESCRIPTION": "Bosch BPT-S 5 PV (Bosch.BPTS5Hybrid.Pv) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BRIDGE_EDGE2EDGE_WEBSOCKET": {
+                "NAME": "Edge-2-Edge 跨边缘节点互联桥",
+                "DESCRIPTION": "Edge-2-Edge 跨边缘节点互联桥 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BRIDGE_MBUS": {
+                "NAME": "M-Bus 仪表总线通信桥",
+                "DESCRIPTION": "M-Bus 仪表总线通信桥 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BRIDGE_MODBUS_SERIAL": {
+                "NAME": "Modbus/RTU 串口通信桥 (RS-485)",
+                "DESCRIPTION": "Modbus/RTU 串口通信桥 (RS-485) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BRIDGE_MODBUS_TCP": {
+                "NAME": "Modbus/TCP 以太网通信桥",
+                "DESCRIPTION": "Modbus/TCP 以太网通信桥 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BRIDGE_MQTT": {
+                "NAME": "MQTT 物联网消息客户端通信桥",
+                "DESCRIPTION": "MQTT 物联网消息客户端通信桥 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "BRIDGE_ONEWIRE": {
+                "NAME": "1-Wire 单总线传感器网络桥",
+                "DESCRIPTION": "1-Wire 单总线传感器网络桥 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_BACKEND": {
+                "NAME": "后端云平台连接控制器 (Backend API)",
+                "DESCRIPTION": "后端云平台连接控制器 (Backend API) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_MQTT": {
+                "NAME": "MQTT 数据推送与订阅控制器",
+                "DESCRIPTION": "MQTT 数据推送与订阅控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_MODBUSRTU_READONLY": {
+                "NAME": "Modbus/RTU 串口从机控制器 (只读)",
+                "DESCRIPTION": "Modbus/RTU 串口从机控制器 (只读) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_MODBUSRTU_READWRITE": {
+                "NAME": "Modbus/RTU 串口从机控制器 (读写)",
+                "DESCRIPTION": "Modbus/RTU 串口从机控制器 (读写) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_MODBUSTCP_READONLY": {
+                "NAME": "Modbus/TCP 从机服务端控制器 (只读)",
+                "DESCRIPTION": "Modbus/TCP 从机服务端控制器 (只读) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_MODBUSTCP_READWRITE": {
+                "NAME": "Modbus/TCP 从机服务端控制器 (读写)",
+                "DESCRIPTION": "Modbus/TCP 从机服务端控制器 (读写) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_REST_READONLY": {
+                "NAME": "REST/JSON 只读 API 服务控制器",
+                "DESCRIPTION": "REST/JSON 只读 API 服务控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_REST_READWRITE": {
+                "NAME": "REST/JSON 读写 API 服务控制器",
+                "DESCRIPTION": "REST/JSON 读写 API 服务控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_API_WEBSOCKET": {
+                "NAME": "本地 WebSocket API 服务端控制器",
+                "DESCRIPTION": "本地 WebSocket API 服务端控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_BRAIINSOS_SINGLE": {
+                "NAME": "Braiins OS 智能负载能效控制器",
+                "DESCRIPTION": "Braiins OS 智能负载能效控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_CHP_SOC": {
+                "NAME": "热电联产 (CHP) 电池电量联动控制器",
+                "DESCRIPTION": "热电联产 (CHP) 电池电量联动控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_CHANNELTHRESHOLD": {
+                "NAME": "通道多阶阈值智能控制器",
+                "DESCRIPTION": "基于通道数值区间设定触发条件的通用输出控制逻辑"
+            },
+            "CONTROLLER_CLEVER_PV": {
+                "NAME": "Clever-PV 能源管理平台云对接控制器",
+                "DESCRIPTION": "Clever-PV 能源管理平台云对接控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_DEBUG_DETAILEDLOG": {
+                "NAME": "控制台高精度详细日志调试组件",
+                "DESCRIPTION": "在控制台中输出所有配置组件的逐通道高精度详细诊断数据"
+            },
+            "CONTROLLER_DEBUG_LOG": {
+                "NAME": "控制台标准运行日志调试组件",
+                "DESCRIPTION": "在控制台或系统日志中定期打印当前系统所有活跃组件的核心数据"
+            },
+            "CONTROLLER_EVCS": {
+                "NAME": "充电桩智能自适应充电控制器",
+                "DESCRIPTION": "根据光伏余电、家庭负荷与电网容量动态调节充电桩充电电流，防过载并优先绿电"
+            },
+            "CONTROLLER_EVCS_FIXACTIVEPOWER": {
+                "NAME": "充电桩定功率充电控制器",
+                "DESCRIPTION": "为电动汽车充电桩设定固定的充放电功率"
+            },
+            "CONTROLLER_GENERIC_JSONLOGIC": {
+                "NAME": "JsonLogic 可编程通用规则逻辑控制器",
+                "DESCRIPTION": "JsonLogic 可编程通用规则逻辑控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_HIGHLOADTIMESLOT": {
+                "NAME": "高负荷时段定额充放电调度控制器",
+                "DESCRIPTION": "在指定高负荷时限内按设定负荷放电，其余时间补充充电"
+            },
+            "CONTROLLER_IO_ALARM": {
+                "NAME": "数字量报警继电器联动控制器",
+                "DESCRIPTION": "当系统产生指定通道故障或告警状态时，自动触发吸合物理继电器报警输出"
+            },
+            "CONTROLLER_IO_ANALOG": {
+                "NAME": "模拟量输出联动控制器",
+                "DESCRIPTION": "根据系统输入变量实时调节模拟量电压/电流输出 (如 0-10V, 4-20mA)"
+            },
+            "CONTROLLER_IO_CHANNELSINGLETHRESHOLD": {
+                "NAME": "单通道阈值继电器开关控制器",
+                "DESCRIPTION": "当监控通道采样值高于设定阈值时自动闭合继电器输出，支持反转逻辑"
+            },
+            "CONTROLLER_IO_HEATING_ROOM": {
+                "NAME": "房间电采暖与红外温控器",
+                "DESCRIPTION": "针对房间电地暖与红外辐射加热板的智能温控调节控制器"
+            },
+            "CONTROLLER_IO_HEATINGELEMENT": {
+                "NAME": "多级电加热棒阶梯消纳控制器",
+                "DESCRIPTION": "通过多路继电器阶梯投切三相加热棒，充分消纳电网余电"
+            },
+            "CONTROLLER_IO_FIXDIGITALOUTPUT": {
+                "NAME": "继电器固定开关状态控制器",
+                "DESCRIPTION": "将指定数字量输出通道永久锁定在设定开启或关闭状态"
+            },
+            "CONTROLLER_IO_HEATPUMP_SGREADY": {
+                "NAME": "SG-Ready 热泵智能光伏联动控制器",
+                "DESCRIPTION": "SG-Ready 热泵智能光伏联动控制器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CONTROLLER_PVINVERTER_FIXPOWERLIMIT": {
+                "NAME": "光伏逆变器固定功率限制控制器",
+                "DESCRIPTION": "为光伏逆变器下发固定的最大有功功率限制值"
+            },
+            "CONTROLLER_PVINVERTER_SELLTOGRIDLIMIT": {
+                "NAME": "光伏防逆流与上网功率限制控制器",
+                "DESCRIPTION": "动态下调逆变器输出功率，严格保证向电网送电不超过法定或合同配额"
+            },
+            "CONTROLLER_TIMESLOTPEAKSHAVING": {
+                "NAME": "多时段阶梯削峰填谷控制器",
+                "DESCRIPTION": "针对峰谷分时电价时段设置不同削峰门限的阶梯削峰控制器"
+            },
+            "CORE_APPMANAGER": {
+                "NAME": "应用中心管理器 (App Manager)",
+                "DESCRIPTION": "应用中心管理器 (App Manager) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CORE_COMPONENTMANAGER": {
+                "NAME": "核心组件管理器 (Component Manager)",
+                "DESCRIPTION": "Core Component-Manager (Core.ComponentManager) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CORE_CYCLE": {
+                "NAME": "核心执行周期引擎 (Core Cycle)",
+                "DESCRIPTION": "核心执行周期引擎 (Core Cycle) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CORE_ENERGY": {
+                "NAME": "核心能源调度计划引擎 (Energy Scheduler)",
+                "DESCRIPTION": "Core Energy Scheduler (Core.Energy) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CORE_HOST": {
+                "NAME": "核心主机运行环境 (Core Host)",
+                "DESCRIPTION": "Core Host (Core.Host) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CORE_LOGGER": {
+                "NAME": "核心系统日志组件 (Core Logger)",
+                "DESCRIPTION": "Core Logger (Core.Logger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CORE_META": {
+                "NAME": "核心元数据服务 (Core Meta)",
+                "DESCRIPTION": "Core Meta (Core.Meta) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CORE_PREDICTORMANAGER": {
+                "NAME": "核心预测算法管理器 (Predictor Manager)",
+                "DESCRIPTION": "聚合负荷、光伏与电价预测源，为储能系统优化调度提供统一预测基准"
+            },
+            "CORE_SERIALNUMBER": {
+                "NAME": "核心序列号管理服务",
+                "DESCRIPTION": "Core Serial Numbers (Core.SerialNumber) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "CORE_SUM": {
+                "NAME": "全局汇总聚合组件 (Core Sum)",
+                "DESCRIPTION": "实时汇总全系统电网并网点、储能充放电、光伏发电与负载消耗的全局总功率与电量"
+            },
+            "CORE_USER": {
+                "NAME": "核心用户认证与权限管理 (Core User)",
+                "DESCRIPTION": "Core User (Core.User) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EDGE2EDGE_METER": {
+                "NAME": "Edge-2-Edge 跨边缘节点虚拟电表",
+                "DESCRIPTION": "通过 WebSocket 安全链路将下级从属 OpenEMS Edge 节点的储能与数据无缝集成"
+            },
+            "EDGE2EDGE_WEBSOCKET_GENERICREADCOMPONENT": {
+                "NAME": "Edge-2-Edge 通用数据读取组件",
+                "DESCRIPTION": "通过 WebSocket 安全链路将下级从属 OpenEMS Edge 节点的储能与数据无缝集成"
+            },
+            "ESS_FENECON_COMMERCIAL40_PV1": {
+                "NAME": "FENECON Commercial 40 直流充电控制器 PV1",
+                "DESCRIPTION": "ESS FENECON Commercial 40 DC Charger PV1 (Ess.Fenecon.Commercial40.PV1) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_FENECON_COMMERCIAL40_PV2": {
+                "NAME": "FENECON Commercial 40 直流充电控制器 PV2",
+                "DESCRIPTION": "ESS FENECON Commercial 40 DC Charger PV2 (Ess.Fenecon.Commercial40.PV2) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_FRONIUS_GEN24_BATTERY": {
+                "NAME": "伏能士 (Fronius) Symo GEN24 储能电池",
+                "DESCRIPTION": "ESS Fronius Gen24 Battery (Ess.Fronius.Gen24.Battery) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_FRONIUS_GEN24_DCCHARGER": {
+                "NAME": "伏能士 (Fronius) Symo GEN24 直流光伏充电器",
+                "DESCRIPTION": "ESS Fronius Gen24 DC Charger PV (Ess.Fronius.Gen24.DcCharger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_GENERIC_MANAGEDSYMMETRIC": {
+                "NAME": "通用受控对称储能系统 (ESS Generic)",
+                "DESCRIPTION": "ESS Generic Managed Symmetric (Ess.Generic.ManagedSymmetric) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_POWER": {
+                "NAME": "储能功率分配计算核心 (ESS Power)",
+                "DESCRIPTION": "ESS Power (Ess.Power) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SMA_STPSE_BATTERY": {
+                "NAME": "SMA Sunny Tripower SE 储能电池",
+                "DESCRIPTION": "ESS SMA Sunny Tripower SE Battery (Ess.SMA.StpSe.Battery) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SMA_STPSE_DCCHARGER": {
+                "NAME": "SMA Sunny Tripower SE 直流光伏充电器",
+                "DESCRIPTION": "实现 SMA 逆变器/储能系统的运行监控与有功无功调度控制"
+            },
+            "ESS_SUNGROW_DCCHARGER": {
+                "NAME": "阳光电源 (Sungrow) 直流光伏充电器",
+                "DESCRIPTION": "ESS Sungrow DC charger (Ess.Sungrow.DcCharger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ESS_SUNGROW_GRIDMETER": {
+                "NAME": "阳光电源 (Sungrow) 并网专用电表",
+                "DESCRIPTION": "ESS Sungrow Grid Meter (Ess.Sungrow.Gridmeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_ABL": {
+                "NAME": "Abl  智能交流/直流充电桩",
+                "DESCRIPTION": "Abl  智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_ALPITRONICHYPERCHARGER": {
+                "NAME": "AlpitronicHypercharger  智能交流/直流充电桩",
+                "DESCRIPTION": "实现艾倍特 (Alpitronic) Hypercharger 大功率快充桩的通信监控"
+            },
+            "EVCS_CLUSTER_PEAKSHAVING": {
+                "NAME": "Cluster PeakShaving 智能交流/直流充电桩",
+                "DESCRIPTION": "Cluster PeakShaving 智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_GOE_CHARGERHOME": {
+                "NAME": "Go-e ChargerHome 智能交流/直流充电桩",
+                "DESCRIPTION": "实现 Go-e 移动/壁挂式交流智能充电桩的通信对接与功率调节"
+            },
+            "EVCS_GOE_HTTP": {
+                "NAME": "Go-e Http 智能交流/直流充电桩",
+                "DESCRIPTION": "Go-e Http 智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_GOE_MODBUS": {
+                "NAME": "Go-e Modbus 智能交流/直流充电桩",
+                "DESCRIPTION": "Go-e Modbus 智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_HARDYBARTH": {
+                "NAME": "Hardy Barth  智能交流/直流充电桩",
+                "DESCRIPTION": "实现 Hardy Barth 智能充电桩的实时状态交互与充电功率控制"
+            },
+            "EVCS_HEIDELBERG_ENERGY": {
+                "NAME": "海德堡 (Heidelberg) Energy 智能交流/直流充电桩",
+                "DESCRIPTION": "海德堡 (Heidelberg) Energy 智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_KEBA_KECONTACT": {
+                "NAME": "开宝 (KEBA) KeContact 智能交流/直流充电桩",
+                "DESCRIPTION": "开宝 (KEBA) KeContact 智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_KEBA_P40": {
+                "NAME": "开宝 (KEBA) P40 智能交流/直流充电桩",
+                "DESCRIPTION": "实现开宝 (KEBA) KeContact P40 系列新型智能电动汽车充电桩的监控与功率调节"
+            },
+            "EVCS_MENNEKES": {
+                "NAME": "曼奈柯斯 (Mennekes)  智能交流/直流充电桩",
+                "DESCRIPTION": "实现曼奈柯斯 (Mennekes) AMTRON 系列充电桩的通信交互与负荷调节"
+            },
+            "EVCS_OCPP_ABL": {
+                "NAME": "OCPP 标准网关 Abl 智能交流/直流充电桩",
+                "DESCRIPTION": "OCPP 标准网关 Abl 智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_OCPP_IESKEYWATTSINGLE": {
+                "NAME": "OCPP 标准网关 IesKeywattSingle 智能交流/直流充电桩",
+                "DESCRIPTION": "OCPP 标准网关 IesKeywattSingle 智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_OCPP_SERVER": {
+                "NAME": "OCPP 标准网关 Server 智能交流/直流充电桩",
+                "DESCRIPTION": "OCPP 标准网关 Server 智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_OPENWB": {
+                "NAME": "openWB  智能交流/直流充电桩",
+                "DESCRIPTION": "openWB  智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_SLOWPOWERINCREASEFILTER": {
+                "NAME": "SlowPowerIncreaseFilter  智能交流/直流充电桩",
+                "DESCRIPTION": "SlowPowerIncreaseFilter  智能交流/直流充电桩 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVCS_SPELSBERG_SMART": {
+                "NAME": "斯贝伯格 (Spelsberg) SMART 智能交流/直流充电桩",
+                "DESCRIPTION": "实现斯贝伯格 (Spelsberg) Smart Pro 智能充电桩的连接与控制"
+            },
+            "EVCS_WEBASTO_NEXT": {
+                "NAME": "伟巴斯特 (Webasto) Next 智能交流/直流充电桩",
+                "DESCRIPTION": "实现伟巴斯特 (Webasto) 智能联网充电桩的状态监控与功率调控"
+            },
+            "EVCS_WEBASTO_UNITE": {
+                "NAME": "伟巴斯特 (Webasto) Unite 智能交流/直流充电桩",
+                "DESCRIPTION": "实现伟巴斯特 (Webasto) 智能联网充电桩的状态监控与功率调控"
+            },
+            "EVSE_CHARGEPOINT_ALFEN": {
+                "NAME": "欧芬 (Alfen) EVSE 智能充电接口",
+                "DESCRIPTION": "EVSE Charge-Point Alfen (Evse.ChargePoint.Alfen) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVSE_CHARGEPOINT_ALPITRONIC": {
+                "NAME": "艾倍特 (Alpitronic) EVSE 大功率直流快充接口",
+                "DESCRIPTION": "实现艾倍特 (Alpitronic) Hypercharger 大功率快充桩的通信监控"
+            },
+            "EVSE_CHARGEPOINT_AMBIBOX": {
+                "NAME": "Ambibox EVSE 双向直流充放电接口",
+                "DESCRIPTION": "EVSE Charge-Point Ambibox (Evse.ChargePoint.Ambibox) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVSE_CHARGEPOINT_HARDYBARTH": {
+                "NAME": "Hardy Barth cPH2 EVSE 充电接口",
+                "DESCRIPTION": "EVSE Charge-Point Hardy Barth cPH2 (Evse.ChargePoint.HardyBarth) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVSE_CHARGEPOINT_HARDYBARTH_CPH1": {
+                "NAME": "Hardy Barth cPH1 EVSE 充电接口",
+                "DESCRIPTION": "实现 Hardy Barth 智能充电桩的实时状态交互与充电功率控制"
+            },
+            "EVSE_CHARGEPOINT_HEIDELBERG_CONNECT": {
+                "NAME": "海德堡 (Heidelberg) Connect 充电接口",
+                "DESCRIPTION": "EVSE Charge-Point Heidelberg Connect (Evse.ChargePoint.Heidelberg.Connect) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVSE_CHARGEPOINT_KEBA_MODBUS": {
+                "NAME": "开宝 (KEBA) P40 Modbus/TCP 充电接口",
+                "DESCRIPTION": "EVSE Charge-Point KEBA P40 (via Modbus/TCP) (Evse.ChargePoint.Keba.Modbus) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVSE_CHARGEPOINT_KEBA_UDP": {
+                "NAME": "开宝 (KEBA) P30 UDP 充电接口",
+                "DESCRIPTION": "EVSE Charge-Point KEBA P30 (via UDP) (Evse.ChargePoint.Keba.UDP) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVSE_CHARGEPOINT_MENNEKES": {
+                "NAME": "曼奈柯斯 (Mennekes) EVSE 充电接口",
+                "DESCRIPTION": "EVSE Charge-Point MENNEKES (Evse.ChargePoint.Mennekes) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVSE_CHARGEPOINT_VOLTIE": {
+                "NAME": "Voltie EVSE 智能充电接口",
+                "DESCRIPTION": "EVSE Charge-Point Voltie (Evse.ChargePoint.Voltie) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "EVSE_CONTROLLER_CLUSTER": {
+                "NAME": "EVSE 充电站集群总控管理器",
+                "DESCRIPTION": "聚合管理充电站多台充电桩的动态负荷分配与变压器容量限制"
+            },
+            "EVSE_CONTROLLER_SINGLE": {
+                "NAME": "EVSE 单车机充电协同控制器",
+                "DESCRIPTION": "协调单台电动车充电桩的通信交互、认证与充电会话管理"
+            },
+            "EVSE_ELECTRICVEHICLE_GENERIC": {
+                "NAME": "通用电动汽车通信与状态交互模型",
+                "DESCRIPTION": "EVSE Electric-Vehicle Generic (Evse.ElectricVehicle.Generic) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_DESS_CHARGER1": {
+                "NAME": "FENECON DESS 储能充电器 1",
+                "DESCRIPTION": "FENECON DESS Charger 1 (Fenecon.Dess.Charger1) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_DESS_CHARGER2": {
+                "NAME": "FENECON DESS 储能充电器 2",
+                "DESCRIPTION": "FENECON DESS Charger 2 (Fenecon.Dess.Charger2) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_DESS_ESS": {
+                "NAME": "FENECON DESS 储能系统",
+                "DESCRIPTION": "FENECON DESS ESS (Fenecon.Dess.Ess) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_DESS_GRIDMETER": {
+                "NAME": "FENECON DESS 并网电表",
+                "DESCRIPTION": "FENECON DESS Grid-Meter (Fenecon.Dess.GridMeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_DESS_PVMETER": {
+                "NAME": "FENECON DESS 光伏发电电表",
+                "DESCRIPTION": "FENECON DESS PV-Meter (Fenecon.Dess.PvMeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_MASTERBOX2V0_METER": {
+                "NAME": "FENECON MasterBox 2.0 专用电表",
+                "DESCRIPTION": "Fenecon MasterBox2V0 Meter (Fenecon.MasterBox2V0.Meter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_MINI_ESS": {
+                "NAME": "FENECON Mini ESS 设备驱动",
+                "DESCRIPTION": "FENECON Mini ESS (Fenecon.Mini.Ess) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_MINI_GRIDMETER": {
+                "NAME": "FENECON Mini Grid-电表 设备驱动",
+                "DESCRIPTION": "FENECON Mini Grid-Meter (Fenecon.Mini.GridMeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_MINI_PVMETER": {
+                "NAME": "FENECON Mini PV-电表 设备驱动",
+                "DESCRIPTION": "FENECON Mini PV-Meter (Fenecon.Mini.PvMeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_PRO_ESS": {
+                "NAME": "FENECON Pro 9-12 Ess 设备驱动",
+                "DESCRIPTION": "FENECON Pro 9-12 Ess (Fenecon.Pro.Ess) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FENECON_PRO_PVMETER": {
+                "NAME": "FENECON Pro 9-12 PV 电表 设备驱动",
+                "DESCRIPTION": "FENECON Pro 9-12 PV Meter (Fenecon.Pro.PvMeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FIREALARM_HEKATRON_B2X2": {
+                "NAME": "Fire Alarm Hekatron B9-X2 设备驱动",
+                "DESCRIPTION": "Fire Alarm Hekatron B9-X2 (Firealarm.Hekatron.B2X2) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "FLUIDCOOLING_HYDAC": {
+                "NAME": "Cooling Unit Hydac 设备驱动",
+                "DESCRIPTION": "Cooling Unit Hydac (FluidCooling.Hydac) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "GOODWE_BATTERYCLUSTER_FENECONHOME": {
+                "NAME": "GoodWe Battery Cluster FENECON Home 设备驱动",
+                "DESCRIPTION": "GoodWe Battery Cluster FENECON Home (GoodWe.BatteryCluster.FeneconHome) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "GOODWE_CHARGER_PV1": {
+                "NAME": "GoodWe 充电器 PV1 设备驱动",
+                "DESCRIPTION": "实现固德威 (GoodWe) 储能逆变器/混合光储一体机的双向充放电调度与监控"
+            },
+            "GOODWE_CHARGER_PV2": {
+                "NAME": "GoodWe 充电器 PV2 设备驱动",
+                "DESCRIPTION": "实现固德威 (GoodWe) 储能逆变器/混合光储一体机的双向充放电调度与监控"
+            },
+            "GOODWE_CHARGER_PV3": {
+                "NAME": "GoodWe 充电器 PV3 设备驱动",
+                "DESCRIPTION": "实现固德威 (GoodWe) 储能逆变器/混合光储一体机的双向充放电调度与监控"
+            },
+            "GOODWE_CHARGER_MPPT_TWO_STRING": {
+                "NAME": "GoodWe 充电器 MPPT Two-String 设备驱动",
+                "DESCRIPTION": "实现固德威 (GoodWe) 储能逆变器/混合光储一体机的双向充放电调度与监控"
+            },
+            "GOODWE_CHARGER_TWO_STRING": {
+                "NAME": "GoodWe 充电器 Two-String 设备驱动",
+                "DESCRIPTION": "GoodWe Charger Two-String (GoodWe.Charger.Two-String) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "GOODWE_EMERGENCYPOWERMETER": {
+                "NAME": "GoodWe EmergencyPower电表 设备驱动",
+                "DESCRIPTION": "GoodWe EmergencyPowerMeter (GoodWe.EmergencyPowerMeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "GOODWE_GENSET": {
+                "NAME": "GoodWe Genset 设备驱动",
+                "DESCRIPTION": "GoodWe Genset (GoodWe.Genset) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "GOODWE_GRID_METER": {
+                "NAME": "GoodWe Grid-电表 设备驱动",
+                "DESCRIPTION": "GoodWe Grid-Meter (GoodWe.Grid-Meter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "GOODWE_STSBOX": {
+                "NAME": "GoodWe STS Box 设备驱动",
+                "DESCRIPTION": "GoodWe STS Box (GoodWe.StsBox) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "HEAT_ASKOMA": {
+                "NAME": "Heat Askoma 设备驱动",
+                "DESCRIPTION": "Heat Askoma (Heat.Askoma) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "HEAT_MYPV": {
+                "NAME": "Heat my-PV 设备驱动",
+                "DESCRIPTION": "Heat my-PV (Heat.MyPv) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "HEAT_MYPV_ACTHOR9S": {
+                "NAME": "my-PV AC•THOR 9s 光伏无级电采暖/热水调节器",
+                "DESCRIPTION": "Heat MyPv AC-THOR 9s (Heat.MyPv.AcThor9s) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_FENECON_MASTERBOX2V0_AO": {
+                "NAME": "Fenecon MasterBox2V0.AO 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "Fenecon MasterBox2V0.AO 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_FENECON_MASTERBOX2V0_RELAY": {
+                "NAME": "Fenecon MasterBox2V0.Relay 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "Fenecon MasterBox2V0.Relay 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_FLIPOWSKI_MR_AO_1": {
+                "NAME": "Flipowski MR-AO-1 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "Flipowski MR-AO-1 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_GPIO": {
+                "NAME": "Gpio  数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "Gpio  数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_KMTRONIC": {
+                "NAME": "KMtronic  数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "KMtronic  数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_KMTRONIC_4PORT": {
+                "NAME": "KMtronic 4Port 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "KMtronic 4Port 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_REVOLUTIONPI_DIGITALIO": {
+                "NAME": "Revolution Pi 工业树莓派 DigitalIO 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "Revolution Pi 工业树莓派 DigitalIO 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_25": {
+                "NAME": "雪莉 (Shelly) 25 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) 25 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_3EM": {
+                "NAME": "雪莉 (Shelly) 3EM 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) 3EM 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_3EMG3": {
+                "NAME": "雪莉 (Shelly) 3EMG3 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) 3EMG3 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_OUTDOORPLUGSG3": {
+                "NAME": "雪莉 (Shelly) OutdoorPlugSG3 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) OutdoorPlugSG3 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PLUG": {
+                "NAME": "雪莉 (Shelly) Plug 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Plug 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PLUGSG3": {
+                "NAME": "雪莉 (Shelly) PlugSG3 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) PlugSG3 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PLUS_PLUGS": {
+                "NAME": "雪莉 (Shelly) Plus.PlugS 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Plus.PlugS 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PLUS1PM": {
+                "NAME": "雪莉 (Shelly) Plus1PM 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Plus1PM 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PLUSPMMINI": {
+                "NAME": "雪莉 (Shelly) PlusPMMini 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) PlusPMMini 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PRO1PM": {
+                "NAME": "雪莉 (Shelly) Pro1PM 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Pro1PM 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PRO2PM": {
+                "NAME": "雪莉 (Shelly) Pro2PM 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Pro2PM 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PRO2PM_TERMINAL": {
+                "NAME": "雪莉 (Shelly) Pro2PM.Terminal 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Pro2PM.Terminal 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PRO3": {
+                "NAME": "雪莉 (Shelly) Pro3 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Pro3 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PRO3EM": {
+                "NAME": "雪莉 (Shelly) Pro3EM 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Pro3EM 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY_PRO4PM": {
+                "NAME": "雪莉 (Shelly) Pro4PM 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "实现雪莉 (Shelly) Pro 4PM 导轨式四路带计量智能继电器模块的控制与能耗监测"
+            },
+            "IO_SHELLY_PRO4PM_TERMINAL": {
+                "NAME": "雪莉 (Shelly) Pro4PM.Terminal 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "雪莉 (Shelly) Pro4PM.Terminal 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SHELLY1": {
+                "NAME": "Shelly1  数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "Shelly1  数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_SIEMENS_LOGO": {
+                "NAME": "西门子 (Siemens) LOGO 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "西门子 (Siemens) LOGO 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_WAGO": {
+                "NAME": "万可 (WAGO)  数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "万可 (WAGO)  数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_WEIDMUELLER_UR20": {
+                "NAME": "魏德米勒 (Weidmüller) UR20 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "魏德米勒 (Weidmüller) UR20 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IOC_FENECON_MASTERBOX2V0": {
+                "NAME": "FENECON MasterBox 2.0 主控箱驱动",
+                "DESCRIPTION": "IOC Fenecon MasterBox2V0 (IOC.Fenecon.MasterBox2V0) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "IO_OFF_GRID_SWITCH": {
+                "NAME": "Off Grid.Switch 数字量/模拟量 I/O 控制模块",
+                "DESCRIPTION": "Off Grid.Switch 数字量/模拟量 I/O 控制模块 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KACO_BLUEPLANETHYBRID10_CHARGER": {
+                "NAME": "KACO blueplanet hybrid 10.0 TL3 直流充电器",
+                "DESCRIPTION": "KACO blueplanet hybrid 10.0 TL3 DC Charger (Kaco.BlueplanetHybrid10.Charger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KACO_BLUEPLANETHYBRID10_CORE": {
+                "NAME": "KACO blueplanet hybrid 10.0 TL3 核心控制器",
+                "DESCRIPTION": "KACO blueplanet hybrid 10.0 TL3 Core (Kaco.BlueplanetHybrid10.Core) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KACO_BLUEPLANETHYBRID10_GRIDMETER": {
+                "NAME": "KACO blueplanet hybrid 10.0 TL3 并网电表",
+                "DESCRIPTION": "KACO blueplanet hybrid 10.0 TL3 Grid Meter (Kaco.BlueplanetHybrid10.GridMeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KACO_BLUEPLANETHYBRID10_PVINVERTER": {
+                "NAME": "KACO blueplanet hybrid 10.0 TL3 光伏逆变器",
+                "DESCRIPTION": "KACO blueplanet hybrid 10.0 TL3 PV-Inverter (Kaco.BlueplanetHybrid10.PvInverter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KOSTAL_PIKO_CHARGER": {
+                "NAME": "科士达 (Kostal) PIKO 光伏充电器",
+                "DESCRIPTION": "KOSTAL PIKO PV-Charger (Kostal.Piko.Charger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KOSTAL_PIKO_CORE": {
+                "NAME": "科士达 (Kostal) PIKO 核心控制器",
+                "DESCRIPTION": "KOSTAL PIKO Core (Kostal.Piko.Core) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KOSTAL_PIKO_GRIDMETER": {
+                "NAME": "科士达 (Kostal) PIKO 并网电表",
+                "DESCRIPTION": "KOSTAL PIKO Grid-Meter (Kostal.Piko.GridMeter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "KOSTAL_PLENTICORE_KSEM": {
+                "NAME": "科士达 (Kostal) 智能电能表 (KSEM)",
+                "DESCRIPTION": "实现科士达 (Kostal) 系列逆变器的数据监测与电网并网控制"
+            },
+            "KOSTAL_PLENTICORE_PV_INVERTER": {
+                "NAME": "科士达 (Kostal) PLENTICORE 光伏逆变器",
+                "DESCRIPTION": "实现科士达 (Kostal) 系列逆变器的数据监测与电网并网控制"
+            },
+            "METER_ABB_B23": {
+                "NAME": "ABB B23 智能多功能电表",
+                "DESCRIPTION": "实现 ABB 系列电力测量仪表的数据采集与状态读取"
+            },
+            "METER_ARTEMES_AM2": {
+                "NAME": "Artemes AM2 智能多功能电表",
+                "DESCRIPTION": "Artemes AM2 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_BCONTROL_EM300": {
+                "NAME": "B-control EM300 智能多功能电表",
+                "DESCRIPTION": "B-control EM300 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_BGE_TECH_DRT428M2": {
+                "NAME": "BGE-TECH DRT428M2 智能多功能电表",
+                "DESCRIPTION": "BGE-TECH DRT428M2 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_CAMILLEBAUER_APLUS": {
+                "NAME": "Camillebauer Aplus 智能多功能电表",
+                "DESCRIPTION": "Camillebauer Aplus 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_CARLOGAVAZZI_EM100": {
+                "NAME": "佳乐 (Carlo Gavazzi) EM100 智能多功能电表",
+                "DESCRIPTION": "实现佳乐 (Carlo Gavazzi) 系列多功能智能电表的 Modbus 数据采集"
+            },
+            "METER_CARLOGAVAZZI_EM300": {
+                "NAME": "佳乐 (Carlo Gavazzi) EM300 智能多功能电表",
+                "DESCRIPTION": "实现佳乐 (Carlo Gavazzi) 系列多功能智能电表的 Modbus 数据采集"
+            },
+            "METER_CHINT_DDSU666": {
+                "NAME": "正泰 (Chint) DDSU666 智能多功能电表",
+                "DESCRIPTION": "正泰 (Chint) DDSU666 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_CHINT_DTSU666": {
+                "NAME": "正泰 (Chint) DTSU666 智能多功能电表",
+                "DESCRIPTION": "实现通过 Modbus/RTU 或 Modbus/TCP 通信采集正泰 DTSU666 三相四线双向智能电表数据"
+            },
+            "METER_DISCOVERGY": {
+                "NAME": "Discovergy  智能多功能电表",
+                "DESCRIPTION": "Discovergy  智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_EASTRON_SDM120": {
+                "NAME": "达斯特 (Eastron) SDM120 智能多功能电表",
+                "DESCRIPTION": "实现达斯特 (Eastron) SDM 系列智能电表的电能计量数据采集与状态监测"
+            },
+            "METER_FRONIUS": {
+                "NAME": "伏能士 (Fronius)  智能多功能电表",
+                "DESCRIPTION": "实现伏能士 (Fronius) 逆变器或智能电表的实时数据采集与通信驱动"
+            },
+            "METER_HAGER_ECR380D": {
+                "NAME": "海格 (Hager) ECR380D 智能多功能电表",
+                "DESCRIPTION": "海格 (Hager) ECR380D 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_JANITZA_UMG104": {
+                "NAME": "纳卡 (Janitza) UMG104 智能多功能电表",
+                "DESCRIPTION": "实现纳卡 (Janitza) UMG 系列高精度电能质量分析仪的数据读取与监控"
+            },
+            "METER_JANITZA_UMG511": {
+                "NAME": "纳卡 (Janitza) UMG511 智能多功能电表",
+                "DESCRIPTION": "实现纳卡 (Janitza) UMG 系列高精度电能质量分析仪的数据读取与监控"
+            },
+            "METER_JANITZA_UMG604": {
+                "NAME": "纳卡 (Janitza) UMG604 智能多功能电表",
+                "DESCRIPTION": "实现纳卡 (Janitza) UMG 系列高精度电能质量分析仪的数据读取与监控"
+            },
+            "METER_JANITZA_UMG801": {
+                "NAME": "纳卡 (Janitza) UMG801 智能多功能电表",
+                "DESCRIPTION": "实现纳卡 (Janitza) UMG 系列高精度电能质量分析仪的数据读取与监控"
+            },
+            "METER_JANITZA_UMG806": {
+                "NAME": "纳卡 (Janitza) UMG806 智能多功能电表",
+                "DESCRIPTION": "实现纳卡 (Janitza) UMG 系列高精度电能质量分析仪的数据读取与监控"
+            },
+            "METER_JANITZA_UMG96PQL": {
+                "NAME": "纳卡 (Janitza) UMG96PQL 智能多功能电表",
+                "DESCRIPTION": "实现纳卡 (Janitza) UMG 系列高精度电能质量分析仪的数据读取与监控"
+            },
+            "METER_JANITZA_UMG96RME": {
+                "NAME": "纳卡 (Janitza) UMG96RME 智能多功能电表",
+                "DESCRIPTION": "实现纳卡 (Janitza) UMG 系列高精度电能质量分析仪的数据读取与监控"
+            },
+            "METER_KDK_2PUCT": {
+                "NAME": "KDK 2PUCT 智能多功能电表",
+                "DESCRIPTION": "KDK 2PUCT 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_MICROCARE_SDM630": {
+                "NAME": "Microcare SDM630 智能多功能电表",
+                "DESCRIPTION": "实现达斯特 (Eastron) SDM 系列智能电表的电能计量数据采集与状态监测"
+            },
+            "METER_OPENDTU": {
+                "NAME": "OpenDTU  智能多功能电表",
+                "DESCRIPTION": "OpenDTU  智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_PHOENIXCONTACT": {
+                "NAME": "PhoenixContact  智能多功能电表",
+                "DESCRIPTION": "PhoenixContact  智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_PLEXLOG_DATALOGGER": {
+                "NAME": "Plexlog Datalogger 智能多功能电表",
+                "DESCRIPTION": "Plexlog Datalogger 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_PQPLUS_UMD96": {
+                "NAME": "PqPlus UMD96 智能多功能电表",
+                "DESCRIPTION": "PqPlus UMD96 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_PQPLUS_UMD97": {
+                "NAME": "PqPlus UMD97 智能多功能电表",
+                "DESCRIPTION": "PqPlus UMD97 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_SMA_SHM20": {
+                "NAME": "SMA SHM20 智能多功能电表",
+                "DESCRIPTION": "实现 SMA 逆变器/储能系统的运行监控与有功无功调度控制"
+            },
+            "METER_SCHNEIDER_ACTI9_SMARTLINK": {
+                "NAME": "施耐德 (Schneider) Acti9.Smartlink 智能多功能电表",
+                "DESCRIPTION": "实现施耐德 (Schneider) 电能计量仪表或充电桩的通信对接与数据监控"
+            },
+            "METER_SIEMENS": {
+                "NAME": "西门子 (Siemens)  智能多功能电表",
+                "DESCRIPTION": "实现西门子 (Siemens) SENTRON PAC 系列多功能电力仪表的测量采集"
+            },
+            "METER_SIEMENS_PAC1600": {
+                "NAME": "西门子 (Siemens) PAC1600 智能多功能电表",
+                "DESCRIPTION": "实现西门子 (Siemens) SENTRON PAC 系列多功能电力仪表的测量采集"
+            },
+            "METER_SIEMENS_SICAMT7KG966": {
+                "NAME": "西门子 (Siemens) SICAMT7KG966 智能多功能电表",
+                "DESCRIPTION": "实现西门子 (Siemens) SENTRON PAC 系列多功能电力仪表的测量采集"
+            },
+            "METER_SOCOMEC_SINGLEPHASE": {
+                "NAME": "溯高美 (Socomec) Singlephase 智能多功能电表",
+                "DESCRIPTION": "溯高美 (Socomec) Singlephase 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_SOCOMEC_THREEPHASE": {
+                "NAME": "溯高美 (Socomec) Threephase 智能多功能电表",
+                "DESCRIPTION": "溯高美 (Socomec) Threephase 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "METER_VIRTUAL_ADD": {
+                "NAME": "虚拟聚合电表 (多路加算)",
+                "DESCRIPTION": "将多个物理电表的功率和电量实时相加，生成虚拟总计量电表"
+            },
+            "METER_VIRTUAL_SUBTRACT": {
+                "NAME": "虚拟差值电表 (减算)",
+                "DESCRIPTION": "将主表测量值减去一个或多个支路分表测量值，得出残余虚拟电表"
+            },
+            "METER_WEIDMUELLER_525": {
+                "NAME": "魏德米勒 (Weidmüller) 525 智能多功能电表",
+                "DESCRIPTION": "实现魏德米勒 (Weidmüller) 智能电力仪表或 I/O 系统的通信连接"
+            },
+            "METER_ZIEHL_EFR4001IP": {
+                "NAME": "Ziehl EFR4001IP 智能多功能电表",
+                "DESCRIPTION": "Ziehl EFR4001IP 智能多功能电表 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ONEWIRE_THERMOMETER": {
+                "NAME": "1-Wire 单总线数字温度传感器",
+                "DESCRIPTION": "OneWire Thermometer (OneWire.Thermometer) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PLCNEXT_ESS_DEVICE": {
+                "NAME": "菲尼克斯 (Phoenix Contact) PLCnext 储能设备",
+                "DESCRIPTION": "Phoenix Contact PLCnext compatible ESS (PLCnext.ESS.Device) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PLCNEXT_LOADCIRCUIT_DEVICE": {
+                "NAME": "菲尼克斯 (Phoenix Contact) PLCnext 负载回路单元 (PCU)",
+                "DESCRIPTION": "Phoenix Contact PLCnext load circuit PCU (PLCnext.LoadCircuit.Device) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PLCNEXT_METER_DEVICE": {
+                "NAME": "菲尼克斯 (Phoenix Contact) PLCnext 电力测量仪表",
+                "DESCRIPTION": "Meter Phoenix Contact PLCnext (PLCnext.Meter.Device) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PLCNEXT_PVINVERTER_DEVICE": {
+                "NAME": "菲尼克斯 (Phoenix Contact) PLCnext 光伏逆变器",
+                "DESCRIPTION": "Phoenix Contact PLCnext compatible PV-Inverter (PLCnext.PvInverter.Device) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PV_INVERTER_FRONIUS": {
+                "NAME": "伏能士 (Fronius)  光伏逆变系统驱动",
+                "DESCRIPTION": "实现伏能士 (Fronius) 逆变器或智能电表的实时数据采集与通信驱动"
+            },
+            "PV_INVERTER_HUAWEI": {
+                "NAME": "华为 (Huawei)  光伏逆变系统驱动",
+                "DESCRIPTION": "华为 (Huawei)  光伏逆变系统驱动 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PV_INVERTER_HUAWEI_SMARTLOGGER": {
+                "NAME": "华为 (Huawei) SmartLogger 光伏逆变系统驱动",
+                "DESCRIPTION": "实现华为 SmartLogger 智能光伏数据采集控制器的通信对接与集中监控"
+            },
+            "PV_INVERTER_KACO_BLUEPLANET": {
+                "NAME": "KACO blueplanet 光伏逆变系统驱动",
+                "DESCRIPTION": "实现 KACO blueplanet 储能变流器与光伏逆变器的状态采集与功率调控"
+            },
+            "PV_INVERTER_KOSTAL": {
+                "NAME": "科士达 (Kostal)  光伏逆变系统驱动",
+                "DESCRIPTION": "实现科士达 (Kostal) 系列逆变器的数据监测与电网并网控制"
+            },
+            "PV_INVERTER_KOSTAL_PIKO": {
+                "NAME": "科士达 (Kostal) Piko 光伏逆变系统驱动",
+                "DESCRIPTION": "科士达 (Kostal) Piko 光伏逆变系统驱动 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PV_INVERTER_SMA_SUNNYTRIPOWER": {
+                "NAME": "SMA SunnyTripower 光伏逆变系统驱动",
+                "DESCRIPTION": "实现 SMA 逆变器/储能系统的运行监控与有功无功调度控制"
+            },
+            "PV_INVERTER_SOLARLOG": {
+                "NAME": "Solar-Log  光伏逆变系统驱动",
+                "DESCRIPTION": "Solar-Log  光伏逆变系统驱动 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PV_INVERTER_SUNGROW": {
+                "NAME": "阳光电源 (Sungrow)  光伏逆变系统驱动",
+                "DESCRIPTION": "阳光电源 (Sungrow)  光伏逆变系统驱动 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PREDICTOR_LSTM": {
+                "NAME": "LSTM 神经网络深度学习预测器",
+                "DESCRIPTION": "基于长短期记忆循环神经网络对未来负荷与发电量进行人工智能预测"
+            },
+            "PREDICTOR_PERSISTENCEMODEL": {
+                "NAME": "惯性自相关负荷预测模型 (Persistence)",
+                "DESCRIPTION": "Predictor Persistence-Model (Predictor.PersistenceModel) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PREDICTOR_PRODUCTION_LINEARMODEL": {
+                "NAME": "光伏发电线性回归预测模型",
+                "DESCRIPTION": "Predictor Production Regression Model (Predictor.Production.LinearModel) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PREDICTOR_PROFILECLUSTERINGMODEL": {
+                "NAME": "典型用电负荷曲线聚类预测模型",
+                "DESCRIPTION": "Predictor Profile Clustering Model (Predictor.ProfileClusteringModel) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PREDICTOR_SIMILARDAYMODEL": {
+                "NAME": "相似日气象关联负荷预测模型",
+                "DESCRIPTION": "Predictor Similarday-Model (Predictor.SimilardayModel) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PROTECTIONRELAY_TELE_NA003M64": {
+                "NAME": "德国 TELE NA003 电网微电网解列保护继电器",
+                "DESCRIPTION": "Protection Relay Tele Haase NA003.COM-M64 (ProtectionRelay.Tele.Na003M64) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "PVINVERTER_CLUSTER": {
+                "NAME": "Cluster  光伏逆变系统驱动",
+                "DESCRIPTION": "Cluster  光伏逆变系统驱动 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SAMSUNG_ESS_CHARGER": {
+                "NAME": "三星 (Samsung) SDI 储能直流充电器",
+                "DESCRIPTION": "Samsung ESS Charger (Samsung.ESS.Charger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SAMSUNG_ESS_GRID_METER": {
+                "NAME": "三星 (Samsung) SDI 储能并网专用电表",
+                "DESCRIPTION": "Samsung ESS Grid-Meter (Samsung.ESS.Grid-Meter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SCHEDULER_ALLALPHABETICALLY": {
+                "NAME": "全字母顺序控制器执行调度器",
+                "DESCRIPTION": "Scheduler All Alphabetically (Scheduler.AllAlphabetically) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SCHEDULER_DAILY": {
+                "NAME": "每日 24 小时控制器执行调度器",
+                "DESCRIPTION": "支持按每天 24 小时时段分别配置控制器执行顺序与优先级的调度器"
+            },
+            "SCHEDULER_FIXEDORDER": {
+                "NAME": "固定优先级控制器执行调度器",
+                "DESCRIPTION": "按预先定义的严格顺序逐个执行控制器的默认基础调度器"
+            },
+            "SCHEDULER_JSCALENDAR": {
+                "NAME": "JSCalendar 标准日历任务调度器",
+                "DESCRIPTION": "JSCalendar 标准日历任务调度器 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_APP": {
+                "NAME": "OpenEMS 仿真模拟组件 (App)",
+                "DESCRIPTION": "OpenEMS 仿真模拟组件 (App) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_DATASOURCE_CSV_DIRECT": {
+                "NAME": "仿真测试数据源注入器 (Datasource.CSV.Direct)",
+                "DESCRIPTION": "从 CSV 文件或自定义时序数据源回放历史数据供系统调试测试"
+            },
+            "SIMULATOR_DATASOURCE_CSV_PREDEFINED": {
+                "NAME": "仿真测试数据源注入器 (Datasource.CSV.Predefined)",
+                "DESCRIPTION": "从 CSV 文件或自定义时序数据源回放历史数据供系统调试测试"
+            },
+            "SIMULATOR_DATASOURCE_SINGLE_CHANNEL": {
+                "NAME": "仿真测试数据源注入器 (Datasource.Single.Channel)",
+                "DESCRIPTION": "从 CSV 文件或自定义时序数据源回放历史数据供系统调试测试"
+            },
+            "SIMULATOR_DATASOURCE_SINGLE_DIRECT": {
+                "NAME": "仿真测试数据源注入器 (Datasource.Single.Direct)",
+                "DESCRIPTION": "从 CSV 文件或自定义时序数据源回放历史数据供系统调试测试"
+            },
+            "SIMULATOR_ESSSINGLEPHASE_REACTING": {
+                "NAME": "OpenEMS 仿真模拟组件 (EssSinglePhase.Reacting)",
+                "DESCRIPTION": "OpenEMS 仿真模拟组件 (EssSinglePhase.Reacting) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_EVCS": {
+                "NAME": "电动汽车充电桩仿真模拟器",
+                "DESCRIPTION": "模拟充电桩车辆插入、握手、充电以及动态限流调节过程"
+            },
+            "SIMULATOR_EVSE_CHARGEPOINT": {
+                "NAME": "OpenEMS 仿真模拟组件 (Evse.ChargePoint)",
+                "DESCRIPTION": "OpenEMS 仿真模拟组件 (Evse.ChargePoint) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_GRIDMETER_ACTING": {
+                "NAME": "电网并网电表仿真模拟器 (GridMeter.Acting)",
+                "DESCRIPTION": "模拟并网点双向电表有功功率、无功功率与频率电压响应"
+            },
+            "SIMULATOR_GRIDMETER_REACTING": {
+                "NAME": "电网并网电表仿真模拟器 (GridMeter.Reacting)",
+                "DESCRIPTION": "模拟并网点双向电表有功功率、无功功率与频率电压响应"
+            },
+            "SIMULATOR_IO_DIGITALINPUTOUTPUT": {
+                "NAME": "OpenEMS 仿真模拟组件 (IO.DigitalInputOutput)",
+                "DESCRIPTION": "OpenEMS 仿真模拟组件 (IO.DigitalInputOutput) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_MODBUS": {
+                "NAME": "OpenEMS 仿真模拟组件 (Modbus)",
+                "DESCRIPTION": "OpenEMS 仿真模拟组件 (Modbus) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_NRCMETER_ACTING": {
+                "NAME": "OpenEMS 仿真模拟组件 (NRCMeter.Acting)",
+                "DESCRIPTION": "OpenEMS 仿真模拟组件 (NRCMeter.Acting) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_PREDICTOR": {
+                "NAME": "OpenEMS 仿真模拟组件 (Predictor)",
+                "DESCRIPTION": "OpenEMS 仿真模拟组件 (Predictor) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SIMULATOR_PRODUCTIONMETER_ACTING": {
+                "NAME": "发电电表仿真模拟器 (ProductionMeter.Acting)",
+                "DESCRIPTION": "模拟光伏、风电等分布式发电单元电表的发电曲线与计量数据"
+            },
+            "SIMULATOR_PVINVERTER": {
+                "NAME": "光伏逆变器仿真模拟器",
+                "DESCRIPTION": "模拟光伏逆变器在不同光照条件下的发电功率输出与通信"
+            },
+            "SIMULATOR_THERMOMETER": {
+                "NAME": "温度传感器仿真模拟器",
+                "DESCRIPTION": "模拟环境温度或设备内部测温探头的温度实时数值"
+            },
+            "SIMULATOR_TIMEDATA": {
+                "NAME": "OpenEMS 仿真模拟组件 (Timedata)",
+                "DESCRIPTION": "OpenEMS 仿真模拟组件 (Timedata) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SOLAREDGE_ESS": {
+                "NAME": "索乐 (SolarEdge) 储能系统",
+                "DESCRIPTION": "SolarEdge ESS (SolarEdge.ESS) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SOLAREDGE_ESS_CHARGER": {
+                "NAME": "索乐 (SolarEdge) 储能直流充电器",
+                "DESCRIPTION": "SolarEdge Charger (SolarEdge.ESS.Charger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SOLAREDGE_GRID_METER": {
+                "NAME": "索乐 (SolarEdge) 并网专用电表",
+                "DESCRIPTION": "Meter SolarEdge (SolarEdge.Grid-Meter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SOLAREDGE_PV_INVERTER": {
+                "NAME": "索乐 (SolarEdge) 组串式光伏逆变器",
+                "DESCRIPTION": "PV-Inverter SolarEdge (SolarEdge.PV-Inverter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "SYSTEM_FENECON_HOME": {
+                "NAME": "FENECON Home 户用光储一体系统",
+                "DESCRIPTION": "System FENECON Home (System.Fenecon.Home) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TARIFF_ENTSO_E_GRIDSELL": {
+                "NAME": "GridSell 动态分时电价接口",
+                "DESCRIPTION": "GridSell 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TARIFF_MANUAL_EEG2025_GRIDSELL": {
+                "NAME": "GridSell 动态分时电价接口",
+                "DESCRIPTION": "GridSell 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TARIFF_MANUAL_FIXED_GRIDSELL": {
+                "NAME": "GridSell 动态分时电价接口",
+                "DESCRIPTION": "GridSell 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TESLA_POWERWALL2_CORE": {
+                "NAME": "特斯拉 (Tesla) Powerwall 2 储能核心网关",
+                "DESCRIPTION": "Tesla Powerwall 2 Core (Tesla.Powerwall2.Core) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_ANCILLARYCOSTS": {
+                "NAME": "AncillaryCosts 动态分时电价接口",
+                "DESCRIPTION": "AncillaryCosts 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_AWATTAR": {
+                "NAME": "Awattar 动态分时电价接口",
+                "DESCRIPTION": "Awattar 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_CORRENTLY": {
+                "NAME": "Corrently 动态分时电价接口",
+                "DESCRIPTION": "Corrently 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_ENTSO_E": {
+                "NAME": "ENTSO-E 动态分时电价接口",
+                "DESCRIPTION": "ENTSO-E 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_EWS": {
+                "NAME": "Ews 动态分时电价接口",
+                "DESCRIPTION": "Ews 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_GROUPEE": {
+                "NAME": "GroupeE 动态分时电价接口",
+                "DESCRIPTION": "GroupeE 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_HASSFURT": {
+                "NAME": "Hassfurt 动态分时电价接口",
+                "DESCRIPTION": "Hassfurt 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_LUOX_ENERGY": {
+                "NAME": "Energy 动态分时电价接口",
+                "DESCRIPTION": "Energy 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_OCTOPUSGO": {
+                "NAME": "OctopusGo 动态分时电价接口",
+                "DESCRIPTION": "OctopusGo 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_OCTOPUSHEAT": {
+                "NAME": "OctopusHeat 动态分时电价接口",
+                "DESCRIPTION": "OctopusHeat 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_RABOTCHARGE": {
+                "NAME": "RabotCharge 动态分时电价接口",
+                "DESCRIPTION": "RabotCharge 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_SWISSPOWER": {
+                "NAME": "Swisspower 动态分时电价接口",
+                "DESCRIPTION": "Swisspower 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEOFUSETARIFF_TIBBER": {
+                "NAME": "Tibber 动态分时电价接口",
+                "DESCRIPTION": "Tibber 动态分时电价接口 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEDATA_INFLUXDB": {
+                "NAME": "InfluxDB 分布式时序数据库存储驱动",
+                "DESCRIPTION": "InfluxDB 分布式时序数据库存储驱动 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "TIMEDATA_RRD4J": {
+                "NAME": "Rrd4j 轻量级本地时序数据库存储驱动",
+                "DESCRIPTION": "采用本地循环归档文件存储历史采样数据，占用空间小且免维护"
+            },
+            "VICTRON_BATTERY_INVERTER": {
+                "NAME": "微创 (Victron) 多功能双向逆变器 (MultiPlus/Quattro)",
+                "DESCRIPTION": "Victron Battery-Inverter RO (Victron.Battery-Inverter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "VICTRON_DC_CHARGER": {
+                "NAME": "微创 (Victron) BlueSolar MPPT 太阳能充电控制器",
+                "DESCRIPTION": "Victron BlueSolar DC Charger (Victron.DC-Charger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "VICTRON_METER_ACIN": {
+                "NAME": "微创 (Victron) AC In 交流输入电表",
+                "DESCRIPTION": "Victron AC In (Victron.Meter.AcIn) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "VICTRON_METER_ACOUT": {
+                "NAME": "微创 (Victron) AC Out 负载用电电表",
+                "DESCRIPTION": "Victron AC Out Consumption (Victron.Meter.AcOut) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "VICTRON_METER_GRID": {
+                "NAME": "微创 (Victron) 电网并网电表",
+                "DESCRIPTION": "Victron Meter Grid (Victron.Meter.Grid) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "VICTRON_PV_INVERTER": {
+                "NAME": "微创 (Victron) 光伏逆变器",
+                "DESCRIPTION": "Victron PV-Inverter (Victron.PV-Inverter) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "VICTRON_PVINVERTER_VIA_DCCHARGER": {
+                "NAME": "微创 (Victron) 直流耦合光伏逆变虚拟组件",
+                "DESCRIPTION": "Victron PV inverter via BlueSolar DC Charger (Victron.PvInverter.via.DCCharger) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "WEATHER_OPENMETEO": {
+                "NAME": "Open-Meteo 全球高精度气象数据服务",
+                "DESCRIPTION": "Weather Open-Meteo (Weather.OpenMeteo) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ORG_APACHE_FELIX_EVENTADMIN_IMPL_EVENTADMIN": {
+                "NAME": "Apache Felix 事件管理核心服务 (Event Admin)",
+                "DESCRIPTION": "Apache Felix Event Admin Implementation (org.apache.felix.eventadmin.impl.EventAdmin) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ORG_APACHE_FELIX_FILEINSTALL": {
+                "NAME": "Apache Felix 动态配置文件热加载服务 (File Install)",
+                "DESCRIPTION": "org.apache.felix.fileinstall (org.apache.felix.fileinstall) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ORG_APACHE_FELIX_HTTP": {
+                "NAME": "Apache Felix Jetty 嵌入式 HTTP 服务",
+                "DESCRIPTION": "Apache Felix Jetty Based Http Service (org.apache.felix.http) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ORG_APACHE_FELIX_SCR_SCRSERVICE": {
+                "NAME": "Apache Felix OSGi 声明式服务运行时 (SCR)",
+                "DESCRIPTION": "Apache Felix Declarative Service Implementation (org.apache.felix.scr.ScrService) 设备驱动组件，提供实时运行监控与参数配置管理"
+            },
+            "ORG_APACHE_FELIX_WEBCONSOLE_INTERNAL_SERVLET_OSGIMANAGER": {
+                "NAME": "Apache Felix OSGi 系统管理控制台",
+                "DESCRIPTION": "Apache Felix OSGi Management Console (org.apache.felix.webconsole.internal.servlet.OsgiManager) 设备驱动组件，提供实时运行监控与参数配置管理"
+            }
+        },
+        "COMMON_PROPERTY": {
+            "ID": {
+                "NAME": "组件 ID",
+                "DESCRIPTION": "该组件在系统内部的唯一标识符（例如 ess0, meter0, ctrlBalancing0 等）"
+            },
+            "ALIAS": {
+                "NAME": "自定义别名",
+                "DESCRIPTION": "方便运维识别的人性化可读名称（留空时默认采用组件 ID）"
+            },
+            "ENABLED": {
+                "NAME": "是否启用",
+                "DESCRIPTION": "设置该组件是否处于激活运行状态"
+            },
+            "ESS_ID": {
+                "NAME": "储能系统 ID",
+                "DESCRIPTION": "关联受控的目标储能系统（ESS）组件标识符"
+            },
+            "METER_ID": {
+                "NAME": "电表 ID",
+                "DESCRIPTION": "关联采样的目标电表（Meter）组件标识符（通常为并网点电表）"
+            },
+            "TARGETGRIDSETPOINT": {
+                "NAME": "并网点目标功率 (W)",
+                "DESCRIPTION": "并网点目标功率设定值（W）。正值代表从电网购电，负值代表向电网送电，0 代表平衡自发自用"
+            },
+            "PHASE": {
+                "NAME": "工作相位",
+                "DESCRIPTION": "组件接入的电网相位（全相、L1、L2 或 L3）"
+            },
+            "MAXACTIVEPOWER": {
+                "NAME": "最大有功功率 (W)",
+                "DESCRIPTION": "允许的最大有功充放电功率限制（W）"
+            },
+            "MINACTIVEPOWER": {
+                "NAME": "最小有功功率 (W)",
+                "DESCRIPTION": "允许的最小有功充放电功率限制（W）"
+            },
+            "POWER": {
+                "NAME": "目标功率 (W)",
+                "DESCRIPTION": "设定的固定充放电功率（W）。正值放电，负值充电"
+            },
+            "REACTIVEPOWER": {
+                "NAME": "目标无功功率 (Var)",
+                "DESCRIPTION": "设定的无功功率值（Var）。正值容性，负值感性"
+            },
+            "SOC": {
+                "NAME": "目标荷电状态 (SOC %)",
+                "DESCRIPTION": "设定的目标电池电量百分比 (%)"
+            },
+            "MINSOC": {
+                "NAME": "最小保留 SOC (%)",
+                "DESCRIPTION": "允许放电的最低电量保护门限 (%)"
+            },
+            "MAXSOC": {
+                "NAME": "最大允许 SOC (%)",
+                "DESCRIPTION": "允许充电的最高电量保护门限 (%)"
+            },
+            "EMERGENCYRESERVESOC": {
+                "NAME": "应急备电保留 SOC (%)",
+                "DESCRIPTION": "为离网或应急备用保留的最低电量阈值 (%)，日常放电至该阈值时自动截止"
+            },
+            "MODBUS_ID": {
+                "NAME": "Modbus 桥接组件 ID",
+                "DESCRIPTION": "底层硬件所连接的 Modbus 总线桥接组件 ID（如 modbus0）"
+            },
+            "MODBUSUNITID": {
+                "NAME": "Modbus 从机地址 (Unit ID)",
+                "DESCRIPTION": "现场硬件设备的 Modbus 通信从机地址（通常在 1 至 247 之间）"
+            },
+            "STARTSTOP": {
+                "NAME": "启停模式",
+                "DESCRIPTION": "设置该组件的启停行为策略（Auto 自动、Start 强制启动、Stop 强制停止）"
+            },
+            "ACTIVATEWATCHDOG": {
+                "NAME": "通信看门狗",
+                "DESCRIPTION": "是否开启通信看门狗保护机制，防止失去上位机控制时持续运行"
+            },
+            "GRIDCODE": {
+                "NAME": "电网规范 (Grid Code)",
+                "DESCRIPTION": "并网适用的电网标准与规范设定（如 VDE-AR-N 4105, VDE-AR-N 4110 等）"
+            },
+            "DCMINVOLTAGE": {
+                "NAME": "直流最低工作电压 (V)",
+                "DESCRIPTION": "变流器直流侧最低工作电压门限，取决于逆变器与电池匹配参数"
+            },
+            "ERRORBEHAVIOUR": {
+                "NAME": "故障恢复策略",
+                "DESCRIPTION": "发生故障时的恢复与重启行为（如 NO_RESTART 不自动重启、ALWAYS_RESTART 自动重启）"
+            },
+            "GRIDMETER_ID": {
+                "NAME": "电网电表 ID",
+                "DESCRIPTION": "关联采样的电网并网点电表组件 ID"
+            },
+            "PRODUCTIONMETER_ID": {
+                "NAME": "发电电表 ID",
+                "DESCRIPTION": "关联采集的光伏或发电设备电表组件 ID"
+            },
+            "CONSUMPTIONMETER_ID": {
+                "NAME": "负载电表 ID",
+                "DESCRIPTION": "关联采集的用电负荷电表组件 ID"
+            },
+            "WATCHDOG": {
+                "NAME": "看门狗超时时间 (秒)",
+                "DESCRIPTION": "通信看门狗超时周期（秒），超过此时间未接收心跳则触发保护"
+            },
+            "PHASEROTATION": {
+                "NAME": "相序物理旋转",
+                "DESCRIPTION": "接线相序方向设定，用于校正现场由于接线反向引起的相序倒置"
+            },
+            "MAXCHARGEPOWER": {
+                "NAME": "最大充电功率 (W)",
+                "DESCRIPTION": "系统允许的最大输入充电功率上限（W）"
+            },
+            "MAXDISCHARGEPOWER": {
+                "NAME": "最大放电功率 (W)",
+                "DESCRIPTION": "系统允许的最大输出放电功率上限（W）"
+            },
+            "MAXAPPARENTPOWER": {
+                "NAME": "最大视在功率 (VA)",
+                "DESCRIPTION": "系统设备允许的最大额定视在功率（VA）"
+            },
+            "INITIALSOC": {
+                "NAME": "初始荷电状态 (%)",
+                "DESCRIPTION": "仿真或初始化时设定的初始电池荷电状态百分比 (%)"
+            },
+            "TYPE": {
+                "NAME": "测量类型 (Meter-Type)",
+                "DESCRIPTION": "指示电表在系统中的角色（GRID 并网点、PRODUCTION 发电、CONSUMPTION 负载用电）"
+            },
+            "INVERT": {
+                "NAME": "逻辑取反 (Invert)",
+                "DESCRIPTION": "开启后将反转开关启闭或逻辑判定的控制输出行为"
+            },
+            "DEBUGMODE": {
+                "NAME": "调试模式",
+                "DESCRIPTION": "是否开启详细的调试诊断日志输出"
+            },
+            "LOGVERBOSITY": {
+                "NAME": "日志详细度",
+                "DESCRIPTION": "控制系统日志打印的粒度级别（NONE 不输出、INFO 标准、DEBUG 详细）"
+            },
+            "READONLY": {
+                "NAME": "只读模式",
+                "DESCRIPTION": "设置为只读状态，禁止任何下行写入与远程控制指令"
+            },
+            "READONLYMODE": {
+                "NAME": "只读运行模式",
+                "DESCRIPTION": "启用只读模式，系统将仅采集监控数据而不下发任何控制"
+            },
+            "IP": {
+                "NAME": "IP 地址",
+                "DESCRIPTION": "目标设备的以太网网络 IP 地址或主机名"
+            },
+            "PORT": {
+                "NAME": "通信端口号",
+                "DESCRIPTION": "目标设备或网络服务的通信网络端口（例如 Modbus/TCP 502, HTTP 80 等）"
+            },
+            "MODE": {
+                "NAME": "运行模式",
+                "DESCRIPTION": "设置组件当前的工作与调控运行模式"
+            },
+            "CONTROLMODE": {
+                "NAME": "控制模式",
+                "DESCRIPTION": "设定算法运行的具体控制策略与工作机制"
+            },
+            "CAPACITY": {
+                "NAME": "额定容量 (kWh)",
+                "DESCRIPTION": "电池组或储能系统的总可用额定标称能量容量（kWh）"
+            },
+            "MINHWCURRENT": {
+                "NAME": "硬件最小充电电流 (mA)",
+                "DESCRIPTION": "充电桩支持的最低硬件充电电流门限（mA）"
+            },
+            "MAXHWCURRENT": {
+                "NAME": "硬件最大充电电流 (mA)",
+                "DESCRIPTION": "充电桩支持的最高硬件充电电流上限（mA）"
+            },
+            "MINHWPOWER": {
+                "NAME": "硬件最小充电功率 (W)",
+                "DESCRIPTION": "充电桩支持的最低输出充电功率门限（W）"
+            },
+            "MAXHWPOWER": {
+                "NAME": "硬件最大充电功率 (W)",
+                "DESCRIPTION": "充电桩支持的最大输出充电功率上限（W）"
+            },
+            "WIRING": {
+                "NAME": "接线制式",
+                "DESCRIPTION": "充电桩或电气设备的交流接线方式（单相或三相）"
+            },
+            "CORE_ID": {
+                "NAME": "核心控制器 ID",
+                "DESCRIPTION": "关联的核心基础架构控制器或机头核心组件 ID"
+            },
+            "BRIDGE_ID": {
+                "NAME": "总线桥接组件 ID",
+                "DESCRIPTION": "连接底层设备所依托的总线通信桥组件 ID"
+            },
+            "DATASOURCE_ID": {
+                "NAME": "仿真数据源 ID",
+                "DESCRIPTION": "仿真模拟器所绑定的历史数据源发生器组件 ID"
+            },
+            "USERNAME": {
+                "NAME": "认证用户名",
+                "DESCRIPTION": "连接受保护通信服务所使用的认证用户名"
+            },
+            "PASSWORD": {
+                "NAME": "认证密码",
+                "DESCRIPTION": "连接受保护通信服务所使用的认证密码或口令"
+            },
+            "ACCESSTOKEN": {
+                "NAME": "访问令牌 (Access Token)",
+                "DESCRIPTION": "用于云端或 API 调用的访问鉴权 Token"
+            },
+            "APIKEY": {
+                "NAME": "API 密钥 (API Key)",
+                "DESCRIPTION": "用于访问第三方开放平台的认证私钥"
+            },
+            "SECURITYTOKEN": {
+                "NAME": "安全令牌 (Security Token)",
+                "DESCRIPTION": "用于平台接口安全鉴权的安全通行证令牌"
+            },
+            "CLIENTID": {
+                "NAME": "客户端标识符 (Client ID)",
+                "DESCRIPTION": "MQTT 或外部长连接中客户端的唯一身份标识符"
+            },
+            "TOPIC": {
+                "NAME": "MQTT 订阅/发布主题",
+                "DESCRIPTION": "消息交互所使用的 MQTT 消息主题（Topic）"
+            },
+            "MDNSNAME": {
+                "NAME": "mDNS 局域网广播名称",
+                "DESCRIPTION": "零配置网络设备在本地局域网所广播的 mDNS 实例名"
+            },
+            "JSCALENDAR": {
+                "NAME": "JSCalendar 排程计划",
+                "DESCRIPTION": "基于 RFC 8984 JSCalendar 规范的日程时间表 JSON 数组"
+            },
+            "SCHEDULE": {
+                "NAME": "自动排程时间表",
+                "DESCRIPTION": "自动模式下生效的排程任务与控制曲线配置"
+            },
+            "APITIMEOUT": {
+                "NAME": "API 通信超时时间 (秒)",
+                "DESCRIPTION": "通过该 API 下发控制指令或更新通道数值的有效超时时限（秒）"
+            },
+            "TIMEOUT": {
+                "NAME": "通信超时时限 (毫秒)",
+                "DESCRIPTION": "底层通信应答等待超时时间（ms）"
+            },
+            "COMPONENT_IDS": {
+                "NAME": "导出组件 ID 列表",
+                "DESCRIPTION": "允许通过外部通信接口对外暴露并读写的组件 ID 集合"
+            },
+            "INPUTCHANNELADDRESS": {
+                "NAME": "输入通道地址",
+                "DESCRIPTION": "用于逻辑采样判定的源通道绝对地址（如 componentId/channelId）"
+            },
+            "OUTPUTCHANNELADDRESS": {
+                "NAME": "输出通道地址",
+                "DESCRIPTION": "受控执行动作的目标数字量或模拟量输出通道绝对地址"
+            },
+            "CHANNELADDRESSES": {
+                "NAME": "监控通道地址列表",
+                "DESCRIPTION": "该组件（如预测器或日志记录器）关联处理的目标通道地址集合"
+            },
+            "PORTNAME": {
+                "NAME": "串口设备路径",
+                "DESCRIPTION": "硬件串行通信物理设备节点路径（例如 /dev/ttyUSB0 或 /dev/ttyS1）"
+            },
+            "BAUDRATE": {
+                "NAME": "串口波特率",
+                "DESCRIPTION": "串行通信波特率（如 9600, 19200, 38400, 57600, 115200 等）"
+            },
+            "DATABITS": {
+                "NAME": "数据位 (Data Bits)",
+                "DESCRIPTION": "串行通信数据位数（通常为 8）"
+            },
+            "STOPBITS": {
+                "NAME": "停止位 (Stop Bits)",
+                "DESCRIPTION": "串行通信停止位数（1、1.5 或 2）"
+            },
+            "PARITY": {
+                "NAME": "校验位 (Parity)",
+                "DESCRIPTION": "串行通信奇偶校验方式（NONE 无校验、EVEN 偶校验、ODD 奇校验）"
+            },
+            "BASEURL": {
+                "NAME": "服务基础 URL",
+                "DESCRIPTION": "外部平台或 API 服务的基准访问网络地址"
+            },
+            "URL": {
+                "NAME": "服务 URL",
+                "DESCRIPTION": "API 服务的完整请求网络 URL"
+            },
+            "URI": {
+                "NAME": "连接 URI",
+                "DESCRIPTION": "连接远端服务器（如 OpenEMS 后端）的统一资源标识符 URI"
+            },
+            "DATAINSTANCENAME": {
+                "NAME": "数据实例空间名",
+                "DESCRIPTION": "现场总线或分布式数据存储服务中的命名空间实例标识"
+            },
+            "PATHAUTHAPI": {
+                "NAME": "身份认证 API 路径",
+                "DESCRIPTION": "第三方网关或系统的鉴权认证接口相对路径"
+            },
+            "PERSISTENCEPRIORITY": {
+                "NAME": "数据归档通道优先级",
+                "DESCRIPTION": "仅持久化记录优先级高于或等于该设定等级的通道历史采样"
+            },
+            "MAXCONCURRENTCONNECTIONS": {
+                "NAME": "最大并发连接数",
+                "DESCRIPTION": "服务端允许建立的最大并发客户端连接数"
+            },
+            "CONNECTIONLIMIT": {
+                "NAME": "连接上限",
+                "DESCRIPTION": "服务允许接入的最大客户端数量"
+            },
+            "NUMBEROFSLAVES": {
+                "NAME": "电池从机/模块数",
+                "DESCRIPTION": "当前电池系统内串并联的从机控制模块数量（最大 20）"
+            },
+            "MINIMALCELLVOLTAGE": {
+                "NAME": "最低电芯截止电压 (mV)",
+                "DESCRIPTION": "单体电芯允许的最低放电截止安全电压门限（mV）"
+            },
+            "MAXIMALCELLVOLTAGE": {
+                "NAME": "最高电芯保护电压 (mV)",
+                "DESCRIPTION": "单体电芯允许的最高充电截止安全保护电压门限（mV）"
+            },
+            "CHARGEMAXVOLTAGE": {
+                "NAME": "最高充电总电压 (V)",
+                "DESCRIPTION": "电池组允许的最大整组端子充电电压（V）"
+            },
+            "STARTTIME": {
+                "NAME": "启动时间",
+                "DESCRIPTION": "设定任务、充放电或时段计划的起始触发时间"
+            },
+            "ENDTIME": {
+                "NAME": "截止时间",
+                "DESCRIPTION": "设定任务、充放电或时段计划的结束终止时间"
+            },
+            "STARTDATE": {
+                "NAME": "开始日期",
+                "DESCRIPTION": "计划生效的起始日历日期"
+            },
+            "ENDDATE": {
+                "NAME": "结束日期",
+                "DESCRIPTION": "计划终止的结束日历日期"
+            },
+            "CYCLETIME": {
+                "NAME": "循环周期时间 (ms)",
+                "DESCRIPTION": "系统主调度引擎执行单次控制周期的目标时长（毫秒）"
+            },
+            "TIMEDELTA": {
+                "NAME": "时间步长 (秒)",
+                "DESCRIPTION": "历史时序采样或仿真回放时两条记录之间的间隔时间（秒）"
+            },
+            "FREQUENCY": {
+                "NAME": "采样与控制频率 (Hz)",
+                "DESCRIPTION": "实时数据采样与计算任务的刷新频率"
+            },
+            "THRESHOLD": {
+                "NAME": "控制动作阈值",
+                "DESCRIPTION": "触发控制动作或保护逻辑的通道临界设定值"
+            },
+            "LOWTHRESHOLD": {
+                "NAME": "低限动作阈值",
+                "DESCRIPTION": "控制触发区间下边界阈值"
+            },
+            "HIGHTHRESHOLD": {
+                "NAME": "高限动作阈值",
+                "DESCRIPTION": "控制触发区间上边界阈值"
+            },
+            "PEAKSHAVINGPOWER": {
+                "NAME": "削峰功率门限 (W)",
+                "DESCRIPTION": "设定的电网最大购电功率阈值，超过该阈值时自动启动放电削峰"
+            },
+            "RECHARGEPOWER": {
+                "NAME": "补充充电功率门限 (W)",
+                "DESCRIPTION": "当电网购电功率低于此设定值时，允许利用电网剩余容量进行平稳回充"
+            },
+            "MAXIMUMSELLTOGRIDPOWER": {
+                "NAME": "最大允许上网送电功率 (W)",
+                "DESCRIPTION": "限制向外部电网输送电力的最大有功功率安全上限（W）"
+            },
+            "MAXSTARTAPPEMPTS": {
+                "NAME": "最大尝试启动次数",
+                "DESCRIPTION": "启动失败后系统允许自动重试的最大启动次数上限"
+            },
+            "MAXSTARTTIME": {
+                "NAME": "启动超时保护时限 (秒)",
+                "DESCRIPTION": "允许系统完成并网自检与启动的最大耗时（秒）"
+            },
+            "ERRORLEVEL2DELAY": {
+                "NAME": "二级故障停机延时 (秒)",
+                "DESCRIPTION": "发生二级故障报警后执行安全切除动作的延时等待时间（秒）"
+            },
+            "PENDINGTOLERANCE": {
+                "NAME": "状态挂起容忍时限 (秒)",
+                "DESCRIPTION": "当硬件由于短暂通信干扰导致状态未决时允许保持的最大等待时间"
+            },
+            "STARTUNSUCCESSFULDELAY": {
+                "NAME": "启动失败停机重试延时 (秒)",
+                "DESCRIPTION": "启动失败进入安全冷却后，距离下一次允许重新尝试的等待时间（秒）"
+            },
+            "MINIMUMSWITCHINGTIME": {
+                "NAME": "状态切换最小驻留时间 (秒)",
+                "DESCRIPTION": "两次继电器动作或状态切换之间必须保持的最短间隔时间，防止设备频繁振荡损坏"
+            },
+            "ADDTOSUM": {
+                "NAME": "计入全局总计 (Add to Sum)",
+                "DESCRIPTION": "该电表测量的数据是否计入系统全局（Sum）汇总计算"
+            },
+            "VALIDATEDEVICE": {
+                "NAME": "设备型号强校验",
+                "DESCRIPTION": "开启后将在通信握手时严格比对设备型号，型号不符时不读取数据"
+            },
+            "FORMAT": {
+                "NAME": "文件格式",
+                "DESCRIPTION": "数据源导入所使用的文件标准格式（如 CSV, JSON 等）"
+            },
+            "ANCILLARYCOSTS": {
+                "NAME": "电价附加成本配置 (JSON)",
+                "DESCRIPTION": "分时现货电价之外的过网费、附加税费等固定与比例成本参数（JSON）"
+            },
+            "REMOTECOMPONENTID": {
+                "NAME": "远程从机组件 ID",
+                "DESCRIPTION": "在级联下级 OpenEMS Edge 从节点中所对应的物理设备组件 ID"
+            },
+            "ISRUNNING": {
+                "NAME": "运行开关",
+                "DESCRIPTION": "直接控制该控制器组件开启运行或处于待机暂停状态"
+            },
+            "CONNECTOR": {
+                "NAME": "物理充电枪接口槽位",
+                "DESCRIPTION": "多枪充电桩中该控制器所绑定的物理充电枪插座编号"
+            },
+            "MODULETYPE": {
+                "NAME": "电池模组型号",
+                "DESCRIPTION": "电池机架内安装的电池模组具体规格型号"
+            },
+            "BATTERYSTATE": {
+                "NAME": "电池强制状态",
+                "DESCRIPTION": "手动将电池强制置为指定的工作或维护状态"
+            },
+            "GRIDMODE": {
+                "NAME": "电网并网/离网模式",
+                "DESCRIPTION": "变流器的工作模式（并网运行 On-Grid 或离网微网独立运行 Off-Grid）"
+            },
+            "HYBRIDESSMODE": {
+                "NAME": "光储混动一体机模式",
+                "DESCRIPTION": "配置直流侧挂接光伏的储能系统优先自发自用还是电网调节"
+            },
+            "ESSORBATTERYINVERTER_ID": {
+                "NAME": "储能系统或逆变器 ID",
+                "DESCRIPTION": "关联的固德威等品牌储能一体机或电池变流器组件 ID"
+            },
+            "IOC_ID": {
+                "NAME": "主控机箱组件 ID",
+                "DESCRIPTION": "多机架储能机柜中所关联的主控 Master Box 组件 ID"
+            },
+            "WRITECHANNELS": {
+                "NAME": "允许写入的通道列表",
+                "DESCRIPTION": "通信接口中授权允许外部客户端改写更新的通道名称集合"
+            },
+            "DIRECTION": {
+                "NAME": "功率因数性质 (感性/容性)",
+                "DESCRIPTION": "调节无功功率时的性质判定（感性滞后 Inductive 或容性超前 Capacitive）"
+            },
+            "INVALIDATEELEMENTSAFTERREADERRORS": {
+                "NAME": "通信失败失效容忍次数",
+                "DESCRIPTION": "发生连续多少次 Modbus 通信读取错误后将测量通道数据标记为失效"
+            }
+        }
+    },
+    "PROFILE": {},
+    "EVSE_SINGLE": {
+        "SETTINGS": {
+            "CHARGE_MODE": "选择充电控制模式"
+        }
+    },
+    "JS_SCHEDULE": {
+        "ADD_EVENT": "添加事件",
+        "ADD_TASK": "添加任务",
+        "EDIT_EVENT": "编辑事件",
+        "EDIT_TASK": "编辑任务",
+        "NEXT_EVENTS": "后续事件",
+        "MANUAL_EVENTS": "手动事件",
+        "SMART_EVENTS": "智能调度事件"
+    }
+}

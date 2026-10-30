@@ -1,0 +1,77 @@
+{
+  "EVSE_SINGLE": {
+    "SETTINGS": {
+      "ENERGY_LIMIT": "单次充电限额"
+    },
+    "HOME": {
+      "MODE": {
+        "LABEL": "基础模式",
+        "ZERO": "关闭",
+        "MINIMUM": "最小功率",
+        "SURPLUS": "光伏余电",
+        "FORCE": "极速快充"
+      },
+      "STATE_MACHINE": {
+        "LABEL": "状态",
+        "EV_NOT_CONNECTED": "车辆未连接",
+        "EV_CONNECTED": "车辆已连接",
+        "CHARGING": "正在充电",
+        "FINISHED_EV_STOP": "车辆主动停止充电",
+        "FINISHED_ENERGY_SESSION_LIMIT": "已达电量限额停止",
+        "PHASE_SWITCH_TO_THREE_PHASE": "切换为三相供电",
+        "PHASE_SWITCH_TO_SINGLE_PHASE": "切换为单相供电",
+        "PHASE_SWITCH": "手动相位切换"
+      },
+      "POWER": "功率",
+      "ENERGY_SINCE_START": "本次充电电量",
+      "VEHICLES": "应用中心绑定车辆",
+      "ACTUAL_MODE": {
+        "LABEL": "实际运行模式"
+      }
+    },
+    "SCHEDULE": {
+      "EDIT": "编辑",
+      "ACCEPT": "保存",
+      "DELETE": "删除",
+      "EDIT_TASK": "编辑任务",
+      "START": "开始时间",
+      "END": "结束时间",
+      "DURATION": "持续时长",
+      "MODE": "充电模式",
+      "FREQUENCY": "重复周期",
+      "ADD": "添加",
+      "SMART_EVENT_TITLE": "智能充电 {{kwh}} kWh",
+      "DAY": {
+        "MONDAY": "周一",
+        "TUESDAY": "周二",
+        "WEDNESDAY": "周三",
+        "THURSDAY": "周四",
+        "FRIDAY": "周五",
+        "SATURDAY": "周六",
+        "SUNDAY": "周日"
+      },
+      "FREQ": {
+        "DAILY": "每天",
+        "WEEKLY": "每周",
+        "MONTHLY": "每月",
+        "YEARLY": "每年"
+      },
+      "MODE_SELECTION_PLACEHOLDER": "请选择",
+      "VALIDATION_ERROR_1": "请指定开始时间",
+      "VALIDATION_ERROR_2": "请指定结束时间",
+      "VALIDATION_ERROR_3": "请选择充电模式",
+      "VALIDATION_ERROR_4": "请以 HH:mm 格式指定开始时间，且必须为整一刻钟（00、15、30 或 45 分）",
+      "VALIDATION_ERROR_5": "请以 HH:mm 格式指定结束时间，且必须为整一刻钟（00、15、30 或 45 分）",
+      "VALIDATION_ERROR_6": "结束时间必须晚于开始时间",
+      "VALIDATION_ERROR_7": "缺少开始时间或持续时长",
+      "VALIDATION_ERROR_8": "请指定重复周期",
+      "VALIDATION_ERROR_9": "请至少设置一个轮巡周期",
+      "ADD_SUCCESS": "任务添加成功",
+      "ADD_ERROR": "任务添加失败",
+      "EDIT_SUCCESS": "任务修改成功",
+      "EDIT_ERROR": "任务修改失败",
+      "DELETE_SUCCESS": "任务删除成功",
+      "DELETE_ERROR": "任务删除失败"
+    }
+  }
+}
